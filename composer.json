@@ -1,0 +1,41 @@
+{
+  "name": "TinyWeb/TinyWeb",
+  "type": "project",
+  "description": "A Simple PHP Framework based on Composer.",
+  "keywords": [
+    "tiny",
+    "web",
+    "framework"
+  ],
+  "homepage": "http://github.com/wowngasb/TinyWeb",
+  "license": "MIT",
+  "support": {
+    "issues": "https://github.com/wowngasb/TinyWeb/issues"
+  },
+  "authors": [
+    {
+      "name": "kong lin",
+      "email": "konglin4216@gmail.com",
+      "homepage": "http://github.com/wowngasb"
+    }
+  ],
+  "require": {
+    "php": ">=5.4.0",
+    "illuminate/database": "5.0.*",
+    "illuminate/validation": "5.0.*",
+    "matthiasmullie/minify": "~1.3"
+  },
+  "require-dev": {
+    "php-console/php-console": "^3.1",
+    "phpunit/phpunit": "4.8.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "TinyWeb\\": "TinyWeb/",
+      "app\\": "app/"
+    }
+  },
+  "config": {
+    "preferred-install": "dist"
+  }
+}

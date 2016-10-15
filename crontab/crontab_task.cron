@@ -1,0 +1,4 @@
+## TinyWeb Task
+*/1  *  *  *  *  /usr/local/php/bin/php /usr/local/tengine/html/crontab/PerMinuteTask.php >/dev/null 2>&1
+00  4  *  *  *  /usr/local/php/bin/php /usr/local/tengine/html/crontab/PerDayTask.php >/dev/null 2>&1
+0   0  *  *  1  /bin/sh /usr/local/tengine/html/crontab/logbackup.sh >/dev/null 2>&1

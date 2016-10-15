@@ -1,0 +1,8 @@
+/.idea
+/vendor/
+node_modules/
+apiMod/
+/config/config.php
+*.md.html
+composer.lock
+run_server.bat
