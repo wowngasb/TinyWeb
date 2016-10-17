@@ -23,9 +23,11 @@ fis.match('**', {
 fis.match('/index.php', {
     release: '/index.php'
 });
-
-fis.match('/htaccess', {
-    release: '/.htaccess'
+fis.match('/index.php', {
+    release: '/index.php'
+});
+fis.match('/robots.txt', {
+    release: '/robots.txt'
 });
 
 //资源配置表	

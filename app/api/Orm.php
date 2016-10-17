@@ -13,6 +13,7 @@ use app\api\abstracts\BaseApi;
 use app\Bootstrap;
 use app\common\Exceptions\ApiDbBuilderError;
 use app\common\Exceptions\ApiParamsError;
+use app\common\Model\Page;
 use Illuminate\Database\Query\Builder;
 use TinyWeb\Helper\DbHelper;
 
@@ -27,6 +28,7 @@ class Orm extends BaseApi
             'default_sort_direction' => 'asc',  // 默认排序方式 asc 升序 desc 降序
             'unique' => ['name', 'api_key'],  // 数据表 唯一索引
             'sort' => ['admin_id', 'name', 'api_key', 'parent_id', 'create_time', 'uptime'],  // 允许排序参数
+            'model'=> Page::class,
         ],
         'wx_ktv.channels_info' => [
             'auto_increment' => 'roomId',
@@ -35,19 +37,10 @@ class Orm extends BaseApi
             'auto_increment' => 'room_id',
             'unique' => ['stream'],
             'sort' => ['room_id', 'admin_id', 'create_time', 'uptime'],
-            'attach' => [
-                'admin_info' => [  // 关联域 自动补全 的键名
-                    'uri' => '/orm/dyy_admin.admin_user/first',  //自动补全 需要调用方法的uri
-                    'params' => [  // 调用方法的参数
-                        'select' => '',
-                        'where' => ['admin_id', '&admin_id'],  //以&开头的字符串表示 用数据条目的对应键值替换
-                    ],
-                ],
-            ]
         ],
     ];
 
-    protected $_rpc_current_table = '';
+    protected $_current_table = '';
     protected static $allow_func = ['where', 'orWhere', 'whereBetween', 'orWhereBetween', 'whereNotBetween', 'orWhereNotBetween', 'whereIn', 'orWhereIn', 'whereNotIn', 'orWhereNotIn', 'whereNull', 'orWhereNull', 'whereDate', 'whereDay', 'whereMonth', 'whereYear', 'groupBy', 'having', 'orHaving'];
 
     public function hookAccessAndFilterRequest(array $request, array $origin_request)
@@ -80,13 +73,13 @@ class Orm extends BaseApi
 
     public function setTable($table_name)
     {
-        $this->_rpc_current_table = $table_name;
+        $this->_current_table = $table_name;
         return $this;
     }
 
     private function builder(array $queries = [])
     {
-        $table = self::table($this->_rpc_current_table);
+        $table = self::table($this->_current_table);
         $table = self::_builderQuery($table, $queries);
 
         $tmp = ['queries'=>$queries, 'sql'=>$table->toSql(), 'bindings'=>$table->getBindings()];
@@ -233,7 +226,7 @@ class Orm extends BaseApi
         if ($take > 0 && $skip >= 0) {
             $table->skip($skip)->take($take);
         }
-        $orderBy = self::fixParamsOrderBy($this->_rpc_current_table, $orderBy);
+        $orderBy = self::fixParamsOrderBy($this->_current_table, $orderBy);
         if (!empty($orderBy[0])) {
             $table->orderBy($orderBy[0], $orderBy[1]);
         }
@@ -255,7 +248,7 @@ class Orm extends BaseApi
     public function update(array $values, array $queries = [])
     {
         $table = $this->builder($queries);
-        $auto_increment = strtolower(self::getTableMapConfig($this->_rpc_current_table, 'auto_increment', 'id'));
+        $auto_increment = strtolower(self::getTableMapConfig($this->_current_table, 'auto_increment', 'id'));
         unset($values[$auto_increment]);
 
         $rst = !empty($values) ? $table->update($values) : 0;
@@ -328,7 +321,7 @@ class Orm extends BaseApi
     public function insert(array $values)
     {
         $table = $this->builder();
-        $auto_increment = strtolower(self::getTableMapConfig($this->_rpc_current_table, 'auto_increment', 'id'));
+        $auto_increment = strtolower(self::getTableMapConfig($this->_current_table, 'auto_increment', 'id'));
         unset($values[$auto_increment]);
         $rst = !empty($values) ? $table->insert($values) : false;
 

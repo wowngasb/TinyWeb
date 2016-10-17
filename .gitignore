@@ -4,5 +4,6 @@ node_modules/
 apiMod/
 /config/config.php
 *.md.html
+*.pyc
 composer.lock
 run_server.bat
