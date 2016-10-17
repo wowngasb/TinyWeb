@@ -6,12 +6,12 @@
  * Time: 10:08
  */
 
-namespace app\common\Models;
+namespace app\common\DbModels;
+
+use app\common\Base\BaseIDbModel;
 
 
-use app\common\Base\BaseDbModel;
-
-class BlogNotifications extends BaseDbModel
+class BlogComments extends BaseIDbModel
 {
 
 }

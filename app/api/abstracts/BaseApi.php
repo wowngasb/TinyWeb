@@ -24,6 +24,9 @@ abstract class BaseApi extends BaseModel {
         if( isset($request['id']) ){
             $request['id'] = intval($request['id']);
         }
+        if( isset($request['state']) ){
+            $request['state'] = intval($request['state']);
+        }
         return $request;  //直接返回请求参数
     }
     

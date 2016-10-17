@@ -6,12 +6,11 @@
  * Time: 10:08
  */
 
-namespace app\common\Models;
+namespace app\common\DbModels;
 
-use app\common\Base\BaseDbModel;
+use app\common\Base\BaseIDbModel;
 
-
-class BlogTags extends BaseDbModel
+class TblUsers extends BaseIDbModel
 {
 
 }

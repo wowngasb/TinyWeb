@@ -23,8 +23,8 @@ fis.match('**', {
 fis.match('/index.php', {
     release: '/index.php'
 });
-fis.match('/index.php', {
-    release: '/index.php'
+fis.match('/htaccess', {
+    release: '/.htaccess'
 });
 fis.match('/robots.txt', {
     release: '/robots.txt'
