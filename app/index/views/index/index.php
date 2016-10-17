@@ -6,7 +6,7 @@
 <?=\TinyWeb\Plugin\Fis::import('static/js/jquery-1.8.1.min.js'); ?>
 </head>
 <body>
-<h1><?= $beforeAction ?>-[AUTO LOAD]</h1>
+<h1><?= $beforeAction ?>-[AUTO]</h1>
 
 <p><?= $a1 ?></p>
 

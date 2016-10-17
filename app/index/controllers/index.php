@@ -6,9 +6,7 @@
  * Time: 15:05
  */
 
-namespace app\controllers;
-
-
+namespace app\index\controllers;
 
 use app\common\Base\BaseController;
 
@@ -19,7 +17,7 @@ class index extends BaseController
     {
         parent::beforeAction();
         $this->assign('beforeAction', 'test');
-        $this->assign(['a1' => 11, 'a2' => 12, 'a3' => 13,]);
+        $this->assign(['a1' => 1211, 'a2' => 4564412, 'a3' => 13,]);
     }
 
     public function index()

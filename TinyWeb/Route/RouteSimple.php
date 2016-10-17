@@ -87,6 +87,6 @@ class RouteSimple implements RouteInterface
      */
     public static function getDefaultRouteInfo()
     {
-        return ['index', 'index', ''];
+        return ['index', 'index', 'index'];
     }
 }

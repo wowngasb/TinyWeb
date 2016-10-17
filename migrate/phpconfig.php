@@ -1,6 +1,7 @@
 <?php
 
 define("ROOT_PATH", dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR );
+define('DEV_MODEL', 'DEBUG');
 
 function jsonEncode($var) {
     if (function_exists('json_encode')) {
