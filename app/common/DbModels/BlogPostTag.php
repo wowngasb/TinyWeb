@@ -8,9 +8,9 @@
 
 namespace app\common\DbModels;
 
-use app\common\Base\BaseIDbModel;
+use app\common\Base\BaseDbModel;
 
-class BlogPostTag extends BaseIDbModel
+class BlogPostTag extends BaseDbModel
 {
 
 }

@@ -11,7 +11,7 @@ namespace app\api;
 
 use app\api\abstracts\BaseApi;
 use app\Bootstrap;
-use app\common\Base\BaseIDbModel;
+use app\common\Base\BaseDbModel;
 use app\common\Exceptions\ApiDbBuilderError;
 use app\common\Exceptions\ApiParamsError;
 use app\common\DbModels\BlogCategories;
@@ -21,6 +21,7 @@ use app\common\DbModels\BlogPostTag;
 use app\common\DbModels\BlogPosts;
 use app\common\DbModels\BlogTags;
 use app\common\DbModels\TblUsers;
+use app\common\Models\CurrentUser;
 use Illuminate\Database\Query\Builder;
 use TinyWeb\Helper\DbHelper;
 
@@ -30,70 +31,64 @@ class Orm extends BaseApi
 
     protected static $table_map = [
         'blog_categories' => [
-            'primary_key' => 'id',  // 数据表自增ID
             'default_sort_column' => 'rank',  // 默认排序参数
-            'default_sort_direction' => 'asc',  // 默认排序方式 asc 升序 desc 降序
             'sort' => ['user_id', 'cate_title', 'state', 'created_at', 'updated_at', 'delete_at'],
-            'model' => BlogCategories::class,
+            'Model' => BlogCategories::class,
         ],
         'blog_comments' => [
-            'primary_key' => 'id',
             'default_sort_column' => 'created_at',  // 默认排序参数
-            'default_sort_direction' => 'asc',  // 默认排序方式 asc 升序 desc 降序
             'sort' => ['user_id', 'post_id', 'comment_id', 'state', 'created_at', 'updated_at', 'delete_at'],
-            'model' => BlogComments::class,
+            'Model' => BlogComments::class,
         ],
         'blog_notifications' => [
-            'primary_key' => 'id',
             'default_sort_column' => 'created_at',  // 默认排序参数
-            'default_sort_direction' => 'desc',  // 默认排序方式 asc 升序 desc 降序
             'sort' => ['user_id', 'post_id', 'state', 'read_at', 'created_at', 'updated_at', 'delete_at'],
-            'model' => BlogNotifications::class,
+            'Model' => BlogNotifications::class,
         ],
         'blog_post_tag' => [
-            'primary_key' => 'id',
             'default_sort_column' => 'created_at',  // 默认排序参数
-            'default_sort_direction' => 'asc',  // 默认排序方式 asc 升序 desc 降序
             'sort' => ['post_id', 'tag_id', 'state', 'created_at', 'updated_at', 'delete_at'],
-            'model' => BlogPostTag::class,
+            'Model' => BlogPostTag::class,
         ],
         'blog_posts' => [
-            'primary_key' => 'id',
             'default_sort_column' => 'published_at',  // 默认排序参数
             'default_sort_direction' => 'desc',  // 默认排序方式 asc 升序 desc 降序
             'sort' => ['user_id', 'category_id', 'title', 'slug', 'view_count', 'state', 'created_at', 'updated_at', 'delete_at'],
-            'model' => BlogPosts::class,
+            'Model' => BlogPosts::class,
         ],
         'blog_tags' => [
-            'primary_key' => 'id',
             'default_sort_column' => 'created_at',  // 默认排序参数
-            'default_sort_direction' => 'asc',  // 默认排序方式 asc 升序 desc 降序
             'sort' => ['tag_name', 'state', 'created_at', 'updated_at', 'delete_at'],
-            'model' => BlogTags::class,
+            'Model' => BlogTags::class,
         ],
         'tbl_users' => [
-            'primary_key' => 'id',
-            'default_sort_column' => 'id',  // 默认排序参数
-            'default_sort_direction' => 'asc',  // 默认排序方式 asc 升序 desc 降序
             'sort' => ['nick', 'email', 'register_from', 'github_id', 'github_name', 'website', 'real_name', 'state', 'created_at', 'updated_at', 'delete_at'],
-            'model' => TblUsers::class,
+            'Model' => TblUsers::class,
         ],
     ];
 
-    protected $_current_table = '';
-    protected static $allow_func = ['where', 'orWhere', 'whereBetween', 'orWhereBetween', 'whereNotBetween', 'orWhereNotBetween', 'whereIn', 'orWhereIn', 'whereNotIn', 'orWhereNotIn', 'whereNull', 'orWhereNull', 'whereDate', 'whereDay', 'whereMonth', 'whereYear', 'groupBy', 'having', 'orHaving'];
-    protected $_current_user = null;
+    private $_current_table = '';
+    private static $allow_func = ['where', 'orWhere', 'whereBetween', 'orWhereBetween', 'whereNotBetween', 'orWhereNotBetween', 'whereIn', 'orWhereIn', 'whereNotIn', 'orWhereNotIn', 'whereNull', 'orWhereNull', 'whereDate', 'whereDay', 'whereMonth', 'whereYear', 'groupBy', 'having', 'orHaving'];
 
     public function __construct()
     {
-        foreach(static::$table_map as $table_name => $val){
-            if( empty($val['primary_key']) ){
+        foreach (static::$table_map as $table_name => &$val) {
+            $val['primary_key'] = !isset($val['primary_key']) ? 'id' : $val['primary_key'];  // 主键默认为 id
+            if (empty($val['primary_key'])) {
                 throw new ApiDbBuilderError("{$table_name} has empty primary_key");
             }
-            if( empty($val['model']) ){
-                throw new ApiDbBuilderError("{$table_name} has empty model");
+            $val['Model'] = !isset($val['Model']) ? BaseDbModel::class : $val['Model'];  // 主键默认为 BaseDbModel
+            if (empty($val['Model'])) {
+                throw new ApiDbBuilderError("{$table_name} has empty Model");
             }
+            $model = new $val['Model'];
+            self::setTableModel($table_name, $model);
+            $val['default_sort_column'] = isset($val['default_sort_column']) ? $val['default_sort_column'] : $val['primary_key'];
+            $val['default_sort_direction'] = isset($val['default_sort_direction']) ? $val['default_sort_direction'] : 'asc';
+            $val['default_sort_direction'] = $val['default_sort_direction'] == 'desc' ? 'desc' : 'asc';
         }
+        $user = new CurrentUser();
+        $this->hookCurrentUser($user);
     }
 
     public function hookAccessAndFilterRequest(array $request, array $origin_request)
@@ -202,8 +197,9 @@ class Orm extends BaseApi
     public static function allowSortField($table_name, $order_field)
     {
         if (empty($order_field)) {
-            throw new ApiParamsError("table:{$table_name} order field empty");
+            return false;
         }
+        $order_field = strtolower($order_field);
         $sort = self::getTableMapConfig($table_name, 'sort', []);
         if (is_string($sort) && trim($sort) == '*') {
             return true;
@@ -219,7 +215,7 @@ class Orm extends BaseApi
         $default_sort_column = strtolower(self::getTableMapConfig($table_name, 'default_sort_column', $primary_key));
         $default_sort_direction = strtolower(self::getTableMapConfig($table_name, 'default_sort_direction', 'asc'));
         $orderBy = empty($orderBy) ? [$default_sort_column, $default_sort_direction] : $orderBy;
-        $orderBy[0] = !empty($orderBy[0]) && self::allowSortField($table_name, $orderBy[0]) ? strtolower($orderBy[0]) : $default_sort_column;
+        $orderBy[0] = isset($orderBy[0]) && self::allowSortField($table_name, $orderBy[0]) ? strtolower($orderBy[0]) : $default_sort_column;
         $orderBy[1] = isset($orderBy[1]) ? strtolower($orderBy[1]) : '';
         $orderBy[1] = ($orderBy[1] == 'asc' || $orderBy[1] == 'desc') ? $orderBy[1] : $default_sort_direction;
         return $orderBy;
@@ -294,14 +290,15 @@ class Orm extends BaseApi
      * @param $id
      * @return array
      */
-    public function getItem($id){
-        $id = $this->getModel()->beforeGetItem($this->_current_user, $id);
+    public function getItem($id)
+    {
+        $id = $this->getModel()->beforeGetItem($id);
         $queries = [
-            'where'=>
+            'where' =>
                 [$this->getConfig('primary_key'), $id],
         ];
         $rst = $this->first(['*'], $queries);
-        $this->getModel()->afterGetItem($this->_current_user, $rst, $id);
+        $this->getModel()->afterGetItem($rst, $id);
 
         self::$detail_log && self::debugArgs(func_get_args(), __METHOD__, __CLASS__, __LINE__);
         self::$detail_log && self::debugResult($rst, __METHOD__, __CLASS__, __LINE__);
@@ -318,7 +315,7 @@ class Orm extends BaseApi
      */
     public function update(array $values, array $queries = [])
     {
-        if(empty($values)){
+        if (empty($values)) {
             throw new ApiParamsError("table:{$this->_current_table} update with empty values");
         }
 
@@ -342,14 +339,15 @@ class Orm extends BaseApi
      * @throws ApiDbBuilderError
      * @throws ApiParamsError
      */
-    public function updateItem($id, array $values){
-        if(empty($values)){
+    public function updateItem($id, array $values)
+    {
+        if (empty($values)) {
             throw new ApiParamsError("table:{$this->_current_table} updateItem with empty values");
         }
-        $id = $this->getModel()->beforeUpdateItem($this->_current_user, $id, $values);
+        $id = $this->getModel()->beforeUpdateItem($id, $values);
 
         $queries = [
-            'where'=>
+            'where' =>
                 [$this->getConfig('primary_key'), $id],
         ];
         $table = $this->builder($queries);
@@ -358,7 +356,7 @@ class Orm extends BaseApi
 
         $rst = $table->update($values);
 
-        $this->getModel()->afterUpdateItem($this->_current_user, $id, $values);
+        $this->getModel()->afterUpdateItem($id, $values);
 
         self::$detail_log && self::debugArgs(func_get_args(), __METHOD__, __CLASS__, __LINE__);
         self::$detail_log && self::debugResult($rst, __METHOD__, __CLASS__, __LINE__);
@@ -413,14 +411,14 @@ class Orm extends BaseApi
     {
         $id_list = $this->lists($this->getConfig('primary_key'), null, $queries);
         foreach ($id_list as $item_id) {
-            $this->getModel()->beforeDeleteItem($this->_current_user, $item_id);
+            $this->getModel()->beforeDeleteItem($item_id);
         }
 
         $table = $this->builder($queries);
         $rst = $table->delete();
 
         foreach ($id_list as $item_id) {
-            $this->getModel()->afterDeleteItem($this->_current_user, $item_id);
+            $this->getModel()->afterDeleteItem($item_id);
         }
         self::$detail_log && self::debugArgs(func_get_args(), __METHOD__, __CLASS__, __LINE__);
         self::$detail_log && self::debugResult($rst, __METHOD__, __CLASS__, __LINE__);
@@ -435,9 +433,9 @@ class Orm extends BaseApi
      */
     public function deleteItem($id)
     {
-        $id = $this->getModel()->beforeDeleteItem($this->_current_user, $id);
+        $id = $this->getModel()->beforeDeleteItem($id);
         $queries = [
-            'where'=>
+            'where' =>
                 [$this->getConfig('primary_key'), $id],
         ];
         $table = $this->builder($queries);
@@ -457,7 +455,7 @@ class Orm extends BaseApi
     public function insertMany(array $values)
     {
         $rst = [];
-        foreach($values as $idx => $val){
+        foreach ($values as $idx => $val) {
             $rst[] = $this->insertItem($val);
         }
         self::$detail_log && self::debugArgs(func_get_args(), __METHOD__, __CLASS__, __LINE__);
@@ -473,7 +471,7 @@ class Orm extends BaseApi
      */
     public function insertItem(array $values)
     {
-        $values = $this->getModel()->beforeInsertItem($this->_current_user, $values);
+        $values = $this->getModel()->beforeInsertItem($values);
 
         $primary_key = strtolower($this->getConfig('primary_key', 'id'));
         unset($values[$primary_key]);
@@ -481,7 +479,7 @@ class Orm extends BaseApi
         $table = $this->builder();
         $rst = $table->insertGetId($values);
 
-        $this->getModel()->afterInsertItem($this->_current_user, $values, $rst);
+        $this->getModel()->afterInsertItem($values, $rst);
 
         self::$detail_log && self::debugArgs(func_get_args(), __METHOD__, __CLASS__, __LINE__);
         self::$detail_log && self::debugResult($rst, __METHOD__, __CLASS__, __LINE__);
@@ -591,21 +589,44 @@ class Orm extends BaseApi
     }
 
     /**
-     * @return BaseIDbModel
+     * @return BaseDbModel
      * @throws ApiDbBuilderError
      * @throws ApiParamsError
      */
     private function getModel()
     {
-        $model = $this->getConfig('model');
-        $obj = new $model;
-        if( !($obj instanceof BaseIDbModel) ){
-            throw new ApiDbBuilderError("{$this->_current_table} model:{$model} must instanceof BaseDbModel");
-        }
-        return $obj;
+        return $this->getTableModel($this->_current_table);
     }
 
-    private function getConfig($key, $default = null){
+    /**
+     * @param string $table_name
+     * @return BaseDbModel
+     * @throws ApiDbBuilderError
+     */
+    private static function getTableModel($table_name)
+    {
+        return self::getTableMapConfig($table_name, 'DbModel');
+    }
+
+    /**
+     * @param string $table_name
+     * @param BaseDbModel $model
+     * @return BaseDbModel
+     */
+    private static function setTableModel($table_name, BaseDbModel $model)
+    {
+        self::$table_map[$table_name]['DbModel'] = $model;
+    }
+
+    public function hookCurrentUser(CurrentUser $user){
+        foreach (self::$table_map as $table_name => $item) {
+            $tmp = self::getTableModel($table_name);
+            $tmp->hookCurrentUser($user);
+        }
+    }
+
+    private function getConfig($key, $default = null)
+    {
         return self::getTableMapConfig($this->_current_table, $key, $default);
     }
 

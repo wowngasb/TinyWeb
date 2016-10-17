@@ -9,9 +9,9 @@
 namespace app\common\DbModels;
 
 
-use app\common\Base\BaseIDbModel;
+use app\common\Base\BaseDbModel;
 
-class BlogNotifications extends BaseIDbModel
+class BlogNotifications extends BaseDbModel
 {
 
 }
