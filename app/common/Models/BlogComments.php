@@ -6,11 +6,12 @@
  * Time: 10:08
  */
 
-namespace app\common\Model;
+namespace app\common\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use app\common\Base\BaseDbModel;
 
-class Page extends Model
+
+class BlogComments extends BaseDbModel
 {
 
 }

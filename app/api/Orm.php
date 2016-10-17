@@ -13,7 +13,14 @@ use app\api\abstracts\BaseApi;
 use app\Bootstrap;
 use app\common\Exceptions\ApiDbBuilderError;
 use app\common\Exceptions\ApiParamsError;
-use app\common\Model\Page;
+use app\common\Models\BlogCategories;
+use app\common\Models\BlogComments;
+use app\common\Models\BlogNotifications;
+use app\common\Models\BlogPostTag;
+use app\common\Models\BlogPosts;
+use app\common\Models\BlogTags;
+use app\common\Models\TblUsers;
+use app\common\Traits\DbMiddleWare;
 use Illuminate\Database\Query\Builder;
 use TinyWeb\Helper\DbHelper;
 
@@ -21,27 +28,80 @@ class Orm extends BaseApi
 {
     protected static $detail_log = true;
 
-    protected static $table_map = [
-        'dyy_admin.admin_user' => [
-            'auto_increment' => 'admin_id',  // 数据表自增ID
-            'default_sort_column' => 'admin_id',  // 默认排序参数
+    private static $table_map = [
+        'xblog.blog_categories' => [
+            'primary_key' => 'id',  // 数据表自增ID
+            'default_sort_column' => 'rank',  // 默认排序参数
             'default_sort_direction' => 'asc',  // 默认排序方式 asc 升序 desc 降序
-            'unique' => ['name', 'api_key'],  // 数据表 唯一索引
-            'sort' => ['admin_id', 'name', 'api_key', 'parent_id', 'create_time', 'uptime'],  // 允许排序参数
-            'model'=> Page::class,
+            'sort' => ['user_id', 'cate_title', 'state', 'created_at', 'updated_at', 'delete_at'],
+            'model' => BlogCategories::class,
         ],
-        'wx_ktv.channels_info' => [
-            'auto_increment' => 'roomId',
+        'xblog.blog_comments' => [
+            'primary_key' => 'id',
+            'default_sort_column' => 'created_at',  // 默认排序参数
+            'default_sort_direction' => 'asc',  // 默认排序方式 asc 升序 desc 降序
+            'sort' => ['user_id', 'post_id', 'comment_id', 'state', 'created_at', 'updated_at', 'delete_at'],
+            'model' => BlogComments::class,
         ],
-        'dyy_admin.room_list' => [
-            'auto_increment' => 'room_id',
-            'unique' => ['stream'],
-            'sort' => ['room_id', 'admin_id', 'create_time', 'uptime'],
+        'xblog.blog_notifications' => [
+            'primary_key' => 'id',
+            'default_sort_column' => 'created_at',  // 默认排序参数
+            'default_sort_direction' => 'desc',  // 默认排序方式 asc 升序 desc 降序
+            'sort' => ['user_id', 'post_id', 'state', 'read_at', 'created_at', 'updated_at', 'delete_at'],
+            'model' => BlogNotifications::class,
+        ],
+        'xblog.blog_post_tag' => [
+            'primary_key' => 'id',
+            'default_sort_column' => 'created_at',  // 默认排序参数
+            'default_sort_direction' => 'asc',  // 默认排序方式 asc 升序 desc 降序
+            'sort' => ['post_id', 'tag_id', 'state', 'created_at', 'updated_at', 'delete_at'],
+            'model' => BlogPostTag::class,
+        ],
+        'xblog.blog_posts' => [
+            'primary_key' => 'id',
+            'default_sort_column' => 'published_at',  // 默认排序参数
+            'default_sort_direction' => 'desc',  // 默认排序方式 asc 升序 desc 降序
+            'sort' => ['user_id', 'category_id', 'title', 'slug', 'view_count', 'state', 'created_at', 'updated_at', 'delete_at'],
+            'model' => BlogPosts::class,
+        ],
+        'xblog.blog_tags' => [
+            'primary_key' => 'id',
+            'default_sort_column' => 'created_at',  // 默认排序参数
+            'default_sort_direction' => 'asc',  // 默认排序方式 asc 升序 desc 降序
+            'sort' => ['tag_name', 'state', 'created_at', 'updated_at', 'delete_at'],
+            'model' => BlogTags::class,
+        ],
+        'xblog.tbl_users' => [
+            'primary_key' => 'id',
+            'default_sort_column' => 'id',  // 默认排序参数
+            'default_sort_direction' => 'asc',  // 默认排序方式 asc 升序 desc 降序
+            'sort' => ['nick', 'email', 'register_from', 'github_id', 'github_name', 'website', 'real_name', 'state', 'created_at', 'updated_at', 'delete_at'],
+            'model' => TblUsers::class,
         ],
     ];
 
     protected $_current_table = '';
     protected static $allow_func = ['where', 'orWhere', 'whereBetween', 'orWhereBetween', 'whereNotBetween', 'orWhereNotBetween', 'whereIn', 'orWhereIn', 'whereNotIn', 'orWhereNotIn', 'whereNull', 'orWhereNull', 'whereDate', 'whereDay', 'whereMonth', 'whereYear', 'groupBy', 'having', 'orHaving'];
+
+    public function __construct()
+    {
+        foreach(static::$table_map as $table_name => $val){
+            if( empty($val['primary_key']) ){
+                throw new ApiDbBuilderError("{$table_name} has empty primary_key");
+            }
+            if( isset($val['model']) ){
+                $tmp = new $val['model'];
+                self::_bindModelToTable($table_name, $tmp);
+            } else {
+                self::_bindModelToTable($table_name, null);
+            }
+        }
+    }
+
+    private static function _bindModelToTable($table_name, DbMiddleWare $model)
+    {
+        self::$table_map[$table_name]['model'] = $model;
+    }
 
     public function hookAccessAndFilterRequest(array $request, array $origin_request)
     {
@@ -82,7 +142,7 @@ class Orm extends BaseApi
         $table = self::table($this->_current_table);
         $table = self::_builderQuery($table, $queries);
 
-        $tmp = ['queries'=>$queries, 'sql'=>$table->toSql(), 'bindings'=>$table->getBindings()];
+        $tmp = ['queries' => $queries, 'sql' => $table->toSql(), 'bindings' => $table->getBindings()];
         Bootstrap::_D($tmp, 'sql');
         return $table;
     }
@@ -109,7 +169,7 @@ class Orm extends BaseApi
                 foreach ($val as $params) {
                     $query_list[] = [$func => $params];
                 }
-            } else if(is_int($func)){
+            } else if (is_int($func)) {
                 $query_list[] = $val;
             }
         }
@@ -165,8 +225,8 @@ class Orm extends BaseApi
 
     private static function fixParamsOrderBy($table_name, array $orderBy)
     {
-        $auto_increment = strtolower(self::getTableMapConfig($table_name, 'auto_increment', ''));
-        $default_sort_column = strtolower(self::getTableMapConfig($table_name, 'default_sort_column', $auto_increment));
+        $primary_key = strtolower(self::getTableMapConfig($table_name, 'primary_key', ''));
+        $default_sort_column = strtolower(self::getTableMapConfig($table_name, 'default_sort_column', $primary_key));
         $default_sort_direction = strtolower(self::getTableMapConfig($table_name, 'default_sort_direction', 'asc'));
         $orderBy = empty($orderBy) ? [$default_sort_column, $default_sort_direction] : $orderBy;
         $orderBy[0] = !empty($orderBy[0]) && self::allowSortField($table_name, $orderBy[0]) ? strtolower($orderBy[0]) : $default_sort_column;
@@ -248,8 +308,8 @@ class Orm extends BaseApi
     public function update(array $values, array $queries = [])
     {
         $table = $this->builder($queries);
-        $auto_increment = strtolower(self::getTableMapConfig($this->_current_table, 'auto_increment', 'id'));
-        unset($values[$auto_increment]);
+        $primary_key = strtolower(self::getTableMapConfig($this->_current_table, 'primary_key', 'id'));
+        unset($values[$primary_key]);
 
         $rst = !empty($values) ? $table->update($values) : 0;
 
@@ -321,8 +381,8 @@ class Orm extends BaseApi
     public function insert(array $values)
     {
         $table = $this->builder();
-        $auto_increment = strtolower(self::getTableMapConfig($this->_current_table, 'auto_increment', 'id'));
-        unset($values[$auto_increment]);
+        $primary_key = strtolower(self::getTableMapConfig($this->_current_table, 'primary_key', 'id'));
+        unset($values[$primary_key]);
         $rst = !empty($values) ? $table->insert($values) : false;
 
         self::$detail_log && self::debugArgs(func_get_args(), __METHOD__, __CLASS__, __LINE__);

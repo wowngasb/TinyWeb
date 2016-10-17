@@ -14,6 +14,7 @@ class BlogCategory(Base):
     user_id = Column(BigInteger, nullable=False, index=True)
     cate_title = Column(String(32, u'utf8_unicode_ci'), nullable=False)
     description = Column(String(255, u'utf8_unicode_ci'), nullable=False, server_default=text("''"))
+    rank = Column(SmallInteger, nullable=False, index=True, server_default=text("'0'"))
     state = Column(SmallInteger, nullable=False, server_default=text("'0'"))
     created_at = Column(DateTime, nullable=False, index=True, server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
