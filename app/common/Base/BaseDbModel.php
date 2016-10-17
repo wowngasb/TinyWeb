@@ -13,6 +13,7 @@ use app\common\Models\CurrentUser;
 
 class BaseDbModel extends BaseModel implements IDbMiddleWare
 {
+    protected $user;
 
     /**
      * @param array $values
@@ -92,7 +93,7 @@ class BaseDbModel extends BaseModel implements IDbMiddleWare
 
     public function hookCurrentUser(CurrentUser $user)
     {
-
+        $this->user = $user;
     }
 
 }

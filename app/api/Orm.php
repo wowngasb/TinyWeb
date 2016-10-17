@@ -81,8 +81,7 @@ class Orm extends BaseApi
             if (empty($val['Model'])) {
                 throw new ApiDbBuilderError("{$table_name} has empty Model");
             }
-            $model = new $val['Model'];
-            self::setTableModel($table_name, $model);
+            self::setTableModel($table_name, new $val['Model']);
             $val['default_sort_column'] = isset($val['default_sort_column']) ? $val['default_sort_column'] : $val['primary_key'];
             $val['default_sort_direction'] = isset($val['default_sort_direction']) ? $val['default_sort_direction'] : 'asc';
             $val['default_sort_direction'] = $val['default_sort_direction'] == 'desc' ? 'desc' : 'asc';
