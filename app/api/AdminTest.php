@@ -32,7 +32,11 @@ class AdminTest extends BaseApi
     }
 
     public function testDb3(){
-        return (new Orm('blog_posts'))->first();
+        return (new Orm('blog_posts'))->first(['slug','title'],[
+            'where'=>[
+                'state'=>1,
+            ]
+        ]);
     }
 
     /**
