@@ -19,6 +19,7 @@ use app\common\DbModels\BlogPostTag;
 use app\common\DbModels\BlogPosts;
 use app\common\DbModels\BlogTags;
 use app\common\DbModels\TblUsers;
+use TinyWeb\Application;
 use TinyWeb\Plugin\CurrentUser;
 use TinyWeb\Plugin\OrmTrait;
 
@@ -64,13 +65,24 @@ class Orm extends BaseApi
             'Model' => TblUsers::class,
         ],
     ];
+    protected static $db_name = '';
 
     protected static function getMap(){
         return static::$table_map;
     }
 
-    public function __construct($current_table = null)
+    protected static function getDb(){
+        return static::$db_name;
+    }
+
+    public function __construct($current_table = null, $current_db = null)
     {
+        $current_db = is_null($current_db) ? Application::app()->getEnv('ENV_MYSQL_DB') : $current_db;
+        $this->hookCurrentDb($current_db);
+        if( !is_null($current_table) ){
+            $this->hookCurrentTable($current_table);
+        }
+
         foreach (static::$table_map as $table_name => &$val) {
             $val['primary_key'] = !isset($val['primary_key']) ? 'id' : $val['primary_key'];  // 主键默认为 id
             if (empty($val['primary_key'])) {
@@ -84,9 +96,6 @@ class Orm extends BaseApi
             $val['default_sort_column'] = isset($val['default_sort_column']) ? $val['default_sort_column'] : $val['primary_key'];
             $val['default_sort_direction'] = isset($val['default_sort_direction']) ? $val['default_sort_direction'] : 'asc';
             $val['default_sort_direction'] = $val['default_sort_direction'] == 'desc' ? 'desc' : 'asc';
-        }
-        if( !is_null($current_table) ){
-            $this->hookCurrentTable($current_table);
         }
         $user = new CurrentUser();
         $this->hookCurrentUser($user);

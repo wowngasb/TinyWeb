@@ -18,6 +18,22 @@ use TinyWeb\ObserversInterface;
 trait OrmTrait
 {
     private $_current_table = '';
+    private $_current_db = '';
+
+    protected static function getMap(){
+        return [];
+    }
+
+    protected static function getDb(){
+        return '';
+    }
+
+    public function hookCurrentDb($current_db){
+        if (empty($current_db)) {
+            throw new OrmStartUpError("db:{$current_db} empty name");
+        }
+        $this->_current_db = $current_db;
+    }
 
     public function hookCurrentTable($current_table){
         if (empty($current_table)) {
@@ -97,18 +113,18 @@ trait OrmTrait
         return self::getTableMapConfig($this->_current_table, $key, $default);
     }
 
-    protected static function getMap(){
-        return [];
-    }
-
     /**
-     * @param $table_name
+     * @param string $db_name
+     * @param string $table_name
      * @return Builder
      * @throws ApiParamsError
      */
-    protected static function table($table_name)
+    protected static function table($db_name, $table_name)
     {
         $table_map = static::getMap();
+        if (empty($db_name)) {
+            throw new ApiParamsError('db name empty');
+        }
         if (empty($table_name)) {
             throw new ApiParamsError('table name empty');
         }
@@ -116,13 +132,13 @@ trait OrmTrait
         if (empty($table_map[$table_name])) {
             throw new ApiParamsError("table:{$table_name} not allowed");
         }
-        $table = DbHelper::initDb()->table($table_name);
+        $table = DbHelper::initDb()->connection($db_name)->table($table_name);
         return $table;
     }
 
     protected function builder(array $queries = [])
     {
-        $table = self::table($this->_current_table);
+        $table = self::table($this->_current_db, $this->_current_table);
         $table = self::_builderQuery($table, $queries);
 
         return $table;
