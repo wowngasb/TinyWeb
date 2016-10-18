@@ -8,7 +8,7 @@
 
 namespace TinyWeb;
 
-use TinyWeb\Exception\StartUpError;
+use TinyWeb\Exception\AppStartUpError;
 
 /**
  * Class Request
@@ -123,15 +123,15 @@ final class Request
     /**
      * @param array $routeInfo
      * @return $this
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     public function setRouteInfo(array $routeInfo)
     {
         if ($this->_routed) {
-            throw new StartUpError('request has been routed.', 5101);
+            throw new AppStartUpError('request has been routed');
         }
         if( count($routeInfo)!==3 ){
-            throw new StartUpError('error routeInfo:' . json_encode($routeInfo), 5102);
+            throw new AppStartUpError('routeInfo:' . json_encode($routeInfo) . ' error length');
         }
         $routeInfo = [strtolower($routeInfo[0]), strtolower($routeInfo[1]), strtolower($routeInfo[2]),];
         $this->_route_info = $routeInfo;
@@ -149,7 +149,7 @@ final class Request
     /**
      * @param array $params
      * @return $this
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     public function setParams(array $params)
     {
@@ -160,12 +160,12 @@ final class Request
     /**
      * @param string $current_route
      * @return $this
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     public function setCurrentRoute($current_route)
     {
         if ($this->_routed) {
-            throw new StartUpError('request has been routed.', 510);
+            throw new AppStartUpError('request has been routed');
         }
         $this->_current_route = $current_route;
         return $this;
@@ -214,7 +214,7 @@ final class Request
 
     /**
      * @return $this
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     public function setUnRouted()
     {

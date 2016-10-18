@@ -8,10 +8,12 @@
 
 namespace app\common\Base;
 
-use app\common\Interfaces\IDbMiddleWare;
-use app\common\Models\CurrentUser;
 
-class BaseDbModel extends BaseModel implements IDbMiddleWare
+
+use TinyWeb\ObserversInterface;
+use TinyWeb\Plugin\CurrentUser;
+
+class BaseDbModel extends BaseModel implements ObserversInterface
 {
     protected $user;
 

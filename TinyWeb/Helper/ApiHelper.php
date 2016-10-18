@@ -3,7 +3,7 @@
 namespace TinyWeb\Helper;
 
 use TinyWeb\Application;
-use TinyWeb\Exception\ApiError;
+use TinyWeb\Exception\ApiParamsError;
 use TinyWeb\Plugin\LogTrait;
 use TinyWeb\Request;
 
@@ -29,7 +29,7 @@ class ApiHelper
         $request = Request::getInstance();
         $reflection = new \ReflectionMethod($class_name, $method);
         if (self::is_ignore_method($method) || $reflection->isProtected() || $reflection->isPrivate()) {
-            throw new ApiError('can not found api.', -1);
+            throw new ApiParamsError("api:{$class_name}->{$method} not found");
         }
         $args = self::fix_args(self::getApiMethodArgs($reflection), $args_input);
 

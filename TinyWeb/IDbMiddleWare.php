@@ -9,8 +9,6 @@
 namespace app\common\Interfaces;
 
 
-use app\common\Models\CurrentUser;
-use Illuminate\Database\Query\Builder;
 
 interface IDbMiddleWare
 {

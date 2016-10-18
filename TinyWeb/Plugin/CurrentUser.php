@@ -6,12 +6,13 @@
  * Time: 16:51
  */
 
-namespace app\common\Models;
+namespace TinyWeb\Plugin;
 
 
-use app\common\DbModels\TblUsers;
 
-class CurrentUser extends TblUsers
+use TinyWeb\BaseAbstract;
+
+class CurrentUser extends BaseAbstract
 {
 
 }

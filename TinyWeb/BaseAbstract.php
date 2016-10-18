@@ -9,7 +9,7 @@
 namespace TinyWeb;
 
 
-use TinyWeb\Exception\StartUpError;
+use TinyWeb\Exception\AppStartUpError;
 
 class BaseAbstract
 {
@@ -30,7 +30,7 @@ class BaseAbstract
     public static function on($event, callable $callback)
     {
         if (!in_array($event, static::$allow_event)) {
-            throw new StartUpError("event:{$event} not support.", 5781);
+            throw new AppStartUpError("event:{$event} not support");
         }
         if (!isset(self::$_event_map[$event])) {
             self::$_event_map[$event] = [];
@@ -42,12 +42,12 @@ class BaseAbstract
      * 触发事件  依次调用注册的回调
      * @param  string $event 事件名称
      * @param array $args 调用触发回调的参数
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     protected static function fire($event, array $args)
     {
         if (!in_array($event, static::$allow_event)) {
-            throw new StartUpError("event:{$event} not support.", 5792);
+            throw new AppStartUpError("event:{$event} not support");
         }
         $callback_list = isset(self::$_event_map[$event]) ? self::$_event_map[$event] : [];
         foreach ($callback_list as $idx => $val) {

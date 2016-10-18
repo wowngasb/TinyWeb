@@ -6,4 +6,6 @@ apiMod/
 *.md.html
 *.pyc
 composer.lock
-run_server.bat
+/run_server.bat
+phpinfo.php
+test.php

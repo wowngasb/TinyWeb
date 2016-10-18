@@ -9,7 +9,7 @@
 namespace TinyWeb\Route;
 
 
-use TinyWeb\Exception\StartUpError;
+use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\Request;
 use TinyWeb\RouteInterface;
 
@@ -21,7 +21,7 @@ class RouteApi implements RouteInterface
     {
         $this->module_name =$module_name;
         if(empty($this->module_name)){
-            throw new StartUpError('RouteApi module_name empty.', 5901);
+            throw new AppStartUpError('RouteApi module_name empty');
         }
     }
 

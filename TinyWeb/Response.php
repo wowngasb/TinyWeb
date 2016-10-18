@@ -1,7 +1,7 @@
 <?php
 namespace TinyWeb;
 
-use TinyWeb\Exception\StartUpError;
+use TinyWeb\Exception\AppStartUpError;
 
 /**
  * Class Response
@@ -42,7 +42,7 @@ final class Response
     public function addHeader($string, $replace = true)
     {
         if ($this->_started) {
-            throw new StartUpError('header has been send.', 530);
+            throw new AppStartUpError('header has been send');
         }
         $this->_header[] = [$string, $replace];
         return $this;
@@ -51,7 +51,7 @@ final class Response
     public function clearResponse()
     {
         if ($this->_started) {
-            throw new StartUpError('header has been send.', 530);
+            throw new AppStartUpError('header has been send');
         }
         $this->_body = [];
         $this->_header = [];
@@ -62,7 +62,7 @@ final class Response
     public function setResponseCode($code)
     {
         if ($this->_started) {
-            throw new StartUpError('header has been send.', 530);
+            throw new AppStartUpError('header has been send');
         }
         $this->_code = intval($code);
         return $this;
@@ -71,12 +71,12 @@ final class Response
     /**
      * 发送响应header给请求端
      * @return $this
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     public function sendHeader()
     {
         if ($this->_started) {
-            throw new StartUpError('header has been send.', 530);
+            throw new AppStartUpError('header has been send');
         }
         foreach ($this->_header as $idx => $val) {
             header($val[0], $val[1]);

@@ -9,7 +9,8 @@
 namespace TinyWeb\Exception;
 
 
-class ApiError extends Error
+class ApiParamsError extends Error
 {
+    public static $errno = 530;
 
 }

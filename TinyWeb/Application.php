@@ -2,7 +2,7 @@
 namespace TinyWeb;
 
 use TinyWeb\Exception\RouteError;
-use TinyWeb\Exception\StartUpError;
+use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\Helper\ApiHelper;
 
 /**
@@ -97,12 +97,12 @@ final class Application extends BaseAbstract
     /**
      * @param $appname
      * @return $this
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     public function setAppName($appname)
     {
         if ($this->_run) {
-            throw new StartUpError('cannot set namespace after run.', 5101);
+            throw new AppStartUpError('cannot setAppName in running');
         }
 
         $this->_appname = $appname;
@@ -120,7 +120,7 @@ final class Application extends BaseAbstract
     /**
      * @param array $routeInfo
      * @return ControllerAbstract
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     public function newRouteController(array $routeInfo)
     {
@@ -129,19 +129,19 @@ final class Application extends BaseAbstract
         $module = isset($routeInfo[2]) ? $routeInfo[2] : '';
         list($controller, $action, $module) = [strtolower($controller), strtolower($action), strtolower($module),];
         if (empty($controller) || empty($action)) {
-            throw new StartUpError("empty controller or action routeInfo:" . json_encode($routeInfo), 5141);
+            throw new AppStartUpError("empty controller or action with routeInfo:" . json_encode($routeInfo));
         }
         $namespace = self::fixNameSpace($this->_appname, $module, $controller);
         if (!class_exists($namespace)) {
-            throw new StartUpError("not class_exists namespace:{$namespace} routeInfo:" . json_encode($routeInfo), 5142);
+            throw new AppStartUpError("class:{$namespace} not exists with routeInfo:" . json_encode($routeInfo));
         }
         $controllerObj = new $namespace();
         if (!($controllerObj instanceof ControllerAbstract)) {
-            throw new StartUpError("class isn't instanceof Controller namespace:{$namespace} routeInfo:" . json_encode($routeInfo), 5143);
+            throw new AppStartUpError("class:{$namespace} isn't instanceof ControllerAbstract with routeInfo:" . json_encode($routeInfo));
         }
         $actionFunc = self::fixActionName($action);
         if (!is_callable([$controllerObj, $actionFunc])) {
-            throw new StartUpError("action not callable action:{$actionFunc}, namespace:{$namespace} routeInfo:" . json_encode($routeInfo), 5144);
+            throw new AppStartUpError("action:{$namespace}->{$actionFunc} not callable with routeInfo:" . json_encode($routeInfo));
         }
         return $controllerObj;
     }
@@ -149,15 +149,15 @@ final class Application extends BaseAbstract
     /**
      * 运行一个Application, 开始接受并处理请求. 这个方法只能成功调用一次.
      * @throws RouteError
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     public function run()
     {
         if ($this->_run) {
-            throw new StartUpError('application is runing.', 5121);
+            throw new AppStartUpError('application is already running');
         }
         if (empty($this->_routes)) {
-            throw new StartUpError('empty _routes.', 5122);
+            throw new AppStartUpError('empty _routes');
         }
         $this->_run = true;
         $request = Request::getInstance();
@@ -166,7 +166,7 @@ final class Application extends BaseAbstract
 
         list($route, list($routeInfo, $params)) = $this->switchRoute(null, $request);  // 必定会 匹配到一条路由 RoutesSimple
         if (empty($routeInfo)) {
-            throw new RouteError('cannot match with request:' . json_encode($request) . ', _routes:' . json_encode(array_keys($this->_routes)), 5211);
+            throw new RouteError('cannot match with request:' . json_encode($request) . ', _routes:' . json_encode(array_keys($this->_routes)));
         }
         $request->setUnRouted()
             ->setCurrentRoute($route)
@@ -199,7 +199,7 @@ final class Application extends BaseAbstract
      * @param array|null $routeInfo
      * @param array|null $params
      * @param null $route
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     public function forward(array $routeInfo = null, array $params = null, $route = null)
     {
@@ -250,15 +250,15 @@ final class Application extends BaseAbstract
      * @param RouteInterface $routeObj
      * @param callable $dispatch 处理分发函数 dispatch(array $routeInfo, array $params)
      * @return $this
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     public function addRoute($route, RouteInterface $routeObj, callable $dispatch = null)
     {
         if ($this->_run) {
-            throw new StartUpError('cannot add route after run.', 5111);
+            throw new AppStartUpError('cannot add route after run');
         }
         if (isset($this->_routes[$route])) {
-            throw new StartUpError("has been added route:{$route}.", 5112);
+            throw new AppStartUpError("route:{$route} has been added");
         }
         $this->_routes[$route] = $routeObj;
         if (!empty($dispatch)) {
@@ -281,13 +281,13 @@ final class Application extends BaseAbstract
      * 根据 名字 获取 路由
      * @param string $route
      * @return RouteInterface
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     public function getRoute($route)
     {
         if (!isset($this->_routes[$route])) {
             {
-                throw new StartUpError("cannot found route name:{$route}, _routes:" . json_encode(array_keys($this->_routes)), 5161);
+                throw new AppStartUpError("route:{$route}, _routes:" . json_encode(array_keys($this->_routes)) . ' not found');
             }
         }
         return $this->_routes[$route];
@@ -359,7 +359,7 @@ final class Application extends BaseAbstract
      * @param string $string 需要加密的字符串
      * @param int $expiry 加密生成的数据 的 有效期 为0表示永久有效， 单位 秒
      * @return string 加密结果 使用了 safe_base64_encode
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     public static function encrypt($string, $expiry = 0)
     {
@@ -367,7 +367,7 @@ final class Application extends BaseAbstract
             return '';
         }
         if (!defined('CRYPT_KEY') || empty(CRYPT_KEY)) {
-            throw new StartUpError("cannot found CRYPT_KEY.", 5171);
+            throw new AppStartUpError("cannot found const CRYPT_KEY");
         }
         return self::authString($string, 'ENCODE', CRYPT_KEY, $expiry);
     }
@@ -376,7 +376,7 @@ final class Application extends BaseAbstract
      * 解密函数 使用 常量 CRYPT_KEY 作为 key  成功返回原字符串  失败或过期 返回 空字符串
      * @param string $string 需解密的 字符串 safe_base64_encode 格式编码
      * @return string 解密结果
-     * @throws StartUpError
+     * @throws AppStartUpError
      */
     public static function decrypt($string)
     {
@@ -384,7 +384,7 @@ final class Application extends BaseAbstract
             return '';
         }
         if (!defined('CRYPT_KEY') || empty(CRYPT_KEY)) {
-            throw new StartUpError("cannot found CRYPT_KEY.", 5172);
+            throw new AppStartUpError("cannot found const CRYPT_KEY");
         }
         return self::authString($string, 'DECODE', CRYPT_KEY);
     }

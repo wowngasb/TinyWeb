@@ -9,9 +9,8 @@
 namespace TinyWeb\Exception;
 
 
-use Exception;
-
-class StartUpError extends Error
+class AppStartUpError extends Error
 {
+    public static $errno = 510;
 
 }
