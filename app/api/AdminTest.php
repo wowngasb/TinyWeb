@@ -3,7 +3,7 @@ namespace app\api;
 
 use app\api\abstracts\BaseApi;
 use app\common\Base\BaseException;
-use app\common\Exceptions\ApiParamsError;
+use TinyWeb\Exception\ApiParamsError;
 
 class AdminTest extends BaseApi
 {
@@ -21,25 +21,14 @@ class AdminTest extends BaseApi
         }
     }
 
-    public function testDb($admin_id){
-        return (new Orm())->setTable('dyy_admin.room_list')->get(0, 20, ['room_id', 'asc'], ['*'], [
-            'where'=>[
-                ['admin_id', $admin_id],
-                ['live_state', 0],
-            ],
-            'whereIn'=>[
-                ['state', [1, 2, 9]],
-            ],
-            'whereNotIn'=>[
-                ['video_type', [0, 3]],
-            ],
+    public function testDb(){
+        return (new Orm('blog_tags'))->get(0, 20, [], ['*'], [
+            'where'=>[],
         ]);
     }
 
-    public function testDb2($room_id){
-        return (new Orm())->setTable('wx_ktv.channels_info')->first(['*'], [
-            ['roomId', $room_id],
-        ]);
+    public function testDb2(){
+        return (new Orm('blog_tags'))->first(['*'], []);
     }
 
     /**

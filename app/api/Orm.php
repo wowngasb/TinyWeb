@@ -11,7 +11,6 @@ namespace app\api;
 
 use app\api\abstracts\BaseApi;
 use app\common\Base\BaseDbModel;
-use app\common\Exceptions\ApiDbBuilderError;
 use app\common\DbModels\BlogCategories;
 use app\common\DbModels\BlogComments;
 use app\common\DbModels\BlogNotifications;
@@ -20,6 +19,7 @@ use app\common\DbModels\BlogPosts;
 use app\common\DbModels\BlogTags;
 use app\common\DbModels\TblUsers;
 use TinyWeb\Application;
+use TinyWeb\Exception\OrmStartUpError;
 use TinyWeb\Plugin\CurrentUser;
 use TinyWeb\Plugin\OrmTrait;
 
@@ -86,11 +86,11 @@ class Orm extends BaseApi
         foreach (static::$table_map as $table_name => &$val) {
             $val['primary_key'] = !isset($val['primary_key']) ? 'id' : $val['primary_key'];  // 主键默认为 id
             if (empty($val['primary_key'])) {
-                throw new ApiDbBuilderError("table:{$table_name} has empty primary_key");
+                throw new OrmStartUpError("table:{$table_name} has empty primary_key");
             }
             $val['Model'] = !isset($val['Model']) ? BaseDbModel::class : $val['Model'];  // 主键默认为 BaseDbModel
             if (empty($val['Model'])) {
-                throw new ApiDbBuilderError("{$table_name} has empty Model");
+                throw new OrmStartUpError("{$table_name} has empty Model");
             }
             self::setTableModel($table_name, new $val['Model']);
             $val['default_sort_column'] = isset($val['default_sort_column']) ? $val['default_sort_column'] : $val['primary_key'];
