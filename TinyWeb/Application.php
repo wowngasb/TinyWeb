@@ -20,15 +20,21 @@ final class Application extends BaseAbstract
     protected static $_app = null;  // Application通过特殊的方式实现了单利模式, 此属性保存当前实例
 
     public static $allow_event = ['routerStartup', 'routerShutdown', 'dispatchLoopStartup', 'preDispatch', 'postDispatch', 'dispatchLoopShutdown',];  // 允许的事件列表
-
+    private static $_microtime = null;
     /**
      * Application constructor.
      * @param array $config 关联数组的配置
      */
     public function __construct(array $config = [])
     {
+        self::$_microtime = microtime(true);
         $this->_config = $config;
         self::$_app = $this;
+    }
+
+    public static function useTimes(){
+        $now = microtime(true);
+        return round($now - self::$_microtime, 3) * 1000 . 'ms';
     }
 
     /**

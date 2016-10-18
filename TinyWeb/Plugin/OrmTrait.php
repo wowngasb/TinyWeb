@@ -20,22 +20,26 @@ trait OrmTrait
     private $_current_table = '';
     private $_current_db = '';
 
-    protected static function getMap(){
+    protected static function getMap()
+    {
         return [];
     }
 
-    protected static function getDb(){
+    protected static function getDb()
+    {
         return '';
     }
 
-    public function hookCurrentDb($current_db){
+    public function hookCurrentDb($current_db)
+    {
         if (empty($current_db)) {
             throw new OrmStartUpError("db:{$current_db} empty name");
         }
         $this->_current_db = $current_db;
     }
 
-    public function hookCurrentTable($current_table){
+    public function hookCurrentTable($current_table)
+    {
         if (empty($current_table)) {
             throw new OrmStartUpError("table:{$current_table} empty name");
         }
@@ -100,7 +104,8 @@ trait OrmTrait
     /**
      * @param CurrentUser $user
      */
-    public function hookCurrentUser(CurrentUser $user){
+    public function hookCurrentUser(CurrentUser $user)
+    {
         $table_map = static::getMap();
         foreach ($table_map as $table_name => $item) {
             $tmp = self::getTableModel($table_name);
@@ -139,8 +144,11 @@ trait OrmTrait
     protected function builder(array $queries = [])
     {
         $table = self::table($this->_current_db, $this->_current_table);
+        $table = $this->getModel()->beforeBuilderQueries($table, $queries);
+
         $table = self::_builderQuery($table, $queries);
 
+        $table = $this->getModel()->afterBuilderQueries($table, $queries);
         return $table;
     }
 
@@ -209,7 +217,7 @@ trait OrmTrait
         $orderBy[0] = isset($orderBy[0]) && self::allowSortField($table_name, $orderBy[0]) ? strtolower($orderBy[0]) : $default_sort_column;
         $orderBy[1] = isset($orderBy[1]) ? strtolower($orderBy[1]) : '';
         $orderBy[1] = ($orderBy[1] == 'asc' || $orderBy[1] == 'desc') ? $orderBy[1] : $default_sort_direction;
-        return $orderBy;
+        return [$orderBy[0], $orderBy[1]];
     }
 
     /**
@@ -220,9 +228,8 @@ trait OrmTrait
      */
     public function pluck($column, array $queries = [])
     {
-        $table = $this->builder($queries);
-        $rst = $table->pluck($column);
-
+        $item = $this->first([$column, ], $queries);
+        $rst = isset($item[$column]) ? $item[$column] : null;
         return $rst;
     }
 
@@ -230,14 +237,13 @@ trait OrmTrait
      * Get an array with the values of a given column.
      *
      * @param  string $column
-     * @param  string $key
      * @param array $queries
      * @return array
      */
-    public function lists($column, $key = null, array $queries = [])
+    public function lists($column, array $queries = [])
     {
         $table = $this->builder($queries);
-        $rst = $table->lists($column, $key);
+        $rst = $table->lists($column);
 
         return $rst;
     }
@@ -254,6 +260,9 @@ trait OrmTrait
      */
     public function get($skip = 0, $take = 20, array $orderBy = [], array $columns = ['*'], array $queries = [])
     {
+        $id_list = $this->lists($this->getConfig('primary_key'), $queries);
+        $this->getModel()->beforeGetMany($id_list);
+
         $table = $this->builder($queries);
         list($skip, $take) = [intval($skip), intval($take)];
         if ($take > 0 && $skip >= 0) {
@@ -266,13 +275,14 @@ trait OrmTrait
         $table->select($columns);
         $rst = $table->get();
 
+        $rst = $this->getModel()->afterGetMany($id_list, $rst);
         return $rst;
     }
 
     /**
      * Get a record from the database by id.
      *
-     * @param $id
+     * @param int $id
      * @return array
      */
     public function getItem($id)
@@ -282,8 +292,7 @@ trait OrmTrait
             'where' =>
                 [$this->getConfig('primary_key'), $id],
         ];
-        $rst = $this->first(['*'], $queries);
-        $this->getModel()->afterGetItem($rst, $id);
+        $rst = $this->first(['*'], $queries);  // afterGetItem 已在 first 中处理
 
         return $rst;
     }
@@ -302,12 +311,16 @@ trait OrmTrait
             throw new ApiParamsError("table:{$this->_current_table} update with empty values");
         }
 
+        $id_list = $this->lists($this->getConfig('primary_key'), $queries);
+        $values = $this->getModel()->beforeUpdateMany($id_list, $values);
+
         $table = $this->builder($queries);
         $primary_key = strtolower($this->getConfig('primary_key', 'id'));
         unset($values[$primary_key]);
 
-        $rst = !empty($values) ? $table->update($values) : 0;
+        $rst = $table->update($values);
 
+        $this->getModel()->afterUpdateMany($id_list, $values);
         return $rst;
     }
 
@@ -325,7 +338,7 @@ trait OrmTrait
         if (empty($values)) {
             throw new ApiParamsError("table:{$this->_current_table} updateItem with empty values");
         }
-        $id = $this->getModel()->beforeUpdateItem($id, $values);
+        $values = $this->getModel()->beforeUpdateItem($id, $values);
 
         $queries = [
             'where' =>
@@ -384,7 +397,7 @@ trait OrmTrait
      */
     public function delete(array $queries = [])
     {
-        $id_list = $this->lists($this->getConfig('primary_key'), null, $queries);
+        $id_list = $this->lists($this->getConfig('primary_key'), $queries);
         foreach ($id_list as $item_id) {
             $this->getModel()->beforeDeleteItem($item_id);
         }
@@ -407,13 +420,14 @@ trait OrmTrait
      */
     public function deleteItem($id)
     {
-        $id = $this->getModel()->beforeDeleteItem($id);
+        $this->getModel()->beforeDeleteItem($id);
         $queries = [
             'where' =>
                 [$this->getConfig('primary_key'), $id],
         ];
         $table = $this->builder($queries);
         $rst = $table->delete();
+        $this->getModel()->afterDeleteItem($id);
 
         return $rst;
     }
@@ -450,7 +464,7 @@ trait OrmTrait
         $table = $this->builder();
         $rst = $table->insertGetId($values);
 
-        $this->getModel()->afterInsertItem($values, $rst);
+        $this->getModel()->afterInsertItem($rst);
 
         return $rst;
     }
@@ -460,7 +474,7 @@ trait OrmTrait
      *
      * @param  array $columns
      * @param array $queries
-     * @return mixed|static
+     * @return array
      */
     public function first(array $columns = ['*'], array $queries = [])
     {
@@ -468,6 +482,7 @@ trait OrmTrait
         $table->select($columns);
         $rst = $table->first();
 
+        $rst = $this->getModel()->afterGetItem($rst);
         return $rst;
     }
 

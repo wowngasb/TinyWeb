@@ -10,12 +10,18 @@ namespace app\common\Base;
 
 
 
+use Illuminate\Database\Query\Builder;
 use TinyWeb\ObserversInterface;
 use TinyWeb\Plugin\CurrentUser;
 
 class BaseDbModel extends BaseModel implements ObserversInterface
 {
     protected $user;
+
+    public function hookCurrentUser(CurrentUser $user)
+    {
+        $this->user = $user;
+    }
 
     /**
      * @param array $values
@@ -28,10 +34,9 @@ class BaseDbModel extends BaseModel implements ObserversInterface
     }
 
     /**
-     * @param array $values
      * @param int $item_id
      */
-    public static function afterInsertItem(array $values, $item_id)
+    public static function afterInsertItem($item_id)
     {
         false && func_get_args();
 
@@ -39,12 +44,11 @@ class BaseDbModel extends BaseModel implements ObserversInterface
 
     /**
      * @param int $item_id
-     * @return int
      */
     public static function beforeDeleteItem($item_id)
     {
         false && func_get_args();
-        return $item_id;
+
     }
 
     /**
@@ -57,45 +61,108 @@ class BaseDbModel extends BaseModel implements ObserversInterface
     }
 
     /**
-     * @param $item_id
+     * @param int $item_id
      * @return int
      */
     public static function beforeGetItem($item_id){
         false && func_get_args();
-        return $item_id;
+
     }
 
     /**
      * @param array $values
-     * @param $item_id
+     * @return array
      */
-    public static function afterGetItem(array &$values, $item_id){
+    public static function afterGetItem(array $values){
         false && func_get_args();
-
+        return $values;
     }
 
     /**
-     * @param $item_id
+     * @param int $item_id
      * @param array $values
-     * @return int
+     * @return array
      */
     public static function beforeUpdateItem($item_id, array $values){
         false && func_get_args();
-        return $item_id;
+        return $values;
     }
 
     /**
+     * @param int $item_id
      * @param array $values
-     * @param $item_id
+     * @return array
      */
     public static function afterUpdateItem($item_id, array $values){
         false && func_get_args();
-
+        return $values;
     }
 
-    public function hookCurrentUser(CurrentUser $user)
+
+
+    /**
+     * @param array $id_list
+     * @param array $values
+     * @return array
+     */
+    public function beforeUpdateMany(array $id_list, array $values)
     {
-        $this->user = $user;
+        false && func_get_args();
+
+        return $values;
     }
 
+    /**
+     * @param array $id_list
+     * @param array $values
+     */
+    public function afterUpdateMany(array $id_list, array $values)
+    {
+        false && func_get_args();
+    }
+
+    /**
+     * @param array $id_list
+     */
+    public function beforeGetMany(array $id_list)
+    {
+        false && func_get_args();
+
+
+    }
+
+    /**
+     * @param array $id_list
+     * @param array $values
+     * @return array
+     */
+    public function afterGetMany(array $id_list, array $values)
+    {
+        false && func_get_args();
+        return $values;
+    }
+
+    /**
+     * @param Builder $table
+     * @param array $queries
+     * @return Builder
+     */
+    public function beforeBuilderQueries(Builder $table, array $queries)
+    {
+        false && func_get_args();
+
+        return $table;
+    }
+
+    /**
+     * @param Builder $table
+     * @param array $queries
+     * @return Builder
+     */
+    public function afterBuilderQueries(Builder $table, array $queries)
+    {
+        false && func_get_args();
+
+        return $table;
+    }
 }

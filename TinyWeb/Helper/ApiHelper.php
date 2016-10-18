@@ -2,7 +2,6 @@
 
 namespace TinyWeb\Helper;
 
-use TinyWeb\Application;
 use TinyWeb\Exception\ApiParamsError;
 use TinyWeb\Plugin\LogTrait;
 use TinyWeb\Request;

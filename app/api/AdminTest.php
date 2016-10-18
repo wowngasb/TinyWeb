@@ -28,7 +28,11 @@ class AdminTest extends BaseApi
     }
 
     public function testDb2(){
-        return (new Orm('blog_tags'))->first(['*'], []);
+        return (new Orm('blog_posts'))->lists('slug');
+    }
+
+    public function testDb3(){
+        return (new Orm('blog_posts'))->first();
     }
 
     /**

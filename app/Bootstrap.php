@@ -26,6 +26,9 @@ class Bootstrap extends BaseModel
 
     public static function _debugConsole($data, $tags = null, $ignoreTraceCalls = 0)
     {
+        if( !empty($tags) ){
+            $tags = strval($tags) . ' @' . Application::useTimes();
+        }
         (DEV_MODEL == 'DEBUG') && Connector::getInstance()->getDebugDispatcher()->dispatchDebug($data, $tags, $ignoreTraceCalls);
     }
 
