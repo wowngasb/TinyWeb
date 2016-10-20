@@ -21,6 +21,7 @@
         <a class="button button-success array_btn" target="new" href="<?=\TinyWeb\Request::urlTo(['Deploy', 'runCrontab', 'develop'], ['script'=>'PerMinuteTask.php'])?>">每分钟任务</a>
         <a class="button button-success array_btn" target="new" href="<?=\TinyWeb\Request::urlTo(['Deploy', 'runCrontab', 'develop'], ['script'=>'PerDayTask.php'])?>">每日任务</a>
         <a class="button button-success array_btn" target="new" href="<?=\TinyWeb\Request::urlTo(['Deploy', 'buildApiModJs', 'develop'], ['dev_debug'=>1,])?>">编译API</a>
+        <a class="button button-success array_btn" target="new" href="<?=\TinyWeb\Request::urlTo(['Deploy', 'phpInfo', 'develop'])?>">phpInfo</a>
         <a class="button button-success array_btn" target="new" href="<?= SYSTEM_HOST . 'index.php' ?>">首页</a>
     </div>
 </div>

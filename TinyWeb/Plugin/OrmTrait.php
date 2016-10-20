@@ -9,8 +9,10 @@
 namespace TinyWeb\Plugin;
 
 
+use app\Bootstrap;
 use Illuminate\Database\Query\Builder;
 use TinyWeb\Exception\ApiParamsError;
+use TinyWeb\Exception\OrmQueryBuilderError;
 use TinyWeb\Exception\OrmStartUpError;
 use TinyWeb\Helper\DbHelper;
 use TinyWeb\ObserversInterface;
@@ -171,22 +173,15 @@ trait OrmTrait
             return $table;
         }
         $query_list = [];
-        foreach ($queries as $func => $val) {
-            if (self::_allowQueryFunc($func)) {
-                foreach ($val as $params) {
-                    $query_list[] = [$func => $params];
-                }
-            } else if (is_int($func)) {
-                $query_list[] = $val;
+        foreach ($queries as $idx => $val) {
+            if( !is_array($val) || count($val)<2 ){
+                throw new OrmQueryBuilderError("error idx:{$idx} query:" . json_encode($val));
             }
-        }
-
-        foreach ($query_list as $query) {
-            foreach ($query as $func => $params) {
-                if (!self::_allowQueryFunc($func)) {
-                    throw new OrmStartUpError("query:{$func} not allowed");
-                }
-                call_user_func_array([$table, $func], $params);
+            if (self::_allowQueryFunc($val[0])) {
+                $func = array_shift($val);
+                call_user_func_array([$table, $func], $val);
+            } else {
+                call_user_func_array([$table, 'where'], $val);
             }
         }
 
