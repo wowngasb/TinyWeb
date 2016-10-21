@@ -164,7 +164,7 @@ class BaseDbModel extends BaseModel implements ObserversInterface
     {
         false && func_get_args();
 
-        Bootstrap::_D(['sql'=>$table->toSql(), 'bind'=>$table->getBindings()], 'query');
+        Bootstrap::_D(['sql'=>$table->toSql(), 'val'=>$table->getBindings(), ], 'Builder');
         return $table;
     }
 }

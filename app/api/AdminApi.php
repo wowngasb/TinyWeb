@@ -5,7 +5,7 @@ use app\api\abstracts\BaseApi;
 use app\common\Base\BaseException;
 use TinyWeb\Exception\ApiParamsError;
 
-class AdminTest extends BaseApi
+class AdminApi extends BaseApi
 {
 
     protected static $detail_log = true;
@@ -23,7 +23,6 @@ class AdminTest extends BaseApi
 
     public function testDb(){
         return (new Orm('blog_tags'))->get(0, 20, [], ['*'], [
-            'where'=>[],
         ]);
     }
 
@@ -32,10 +31,9 @@ class AdminTest extends BaseApi
     }
 
     public function testDb3(){
-        return (new Orm('blog_posts'))->first(['slug','title'],[
-            'where'=>[
-                'state'=>1,
-            ]
+        return (new Orm('blog_posts'))->first(['slug','title', 'view_count', 'state'],[
+            [ 'state', 1],
+            [ 'view_count','>', 100],
         ]);
     }
 

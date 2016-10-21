@@ -29,6 +29,10 @@ class deploy extends BaseController
         }
     }
 
+    public function phpInfo(){
+        phpinfo();
+    }
+
     public function runCrontab()
     {
         $script = Request::_get('script');
