@@ -2,6 +2,7 @@
 namespace app\api;
 
 use app\api\abstracts\BaseApi;
+use app\Bootstrap;
 use app\common\Base\BaseException;
 use TinyWeb\Exception\ApiParamsError;
 
@@ -31,7 +32,11 @@ class AdminApi extends BaseApi
     }
 
     public function testDb3(){
-        return (new Orm('blog_posts'))->first(['slug','title', 'view_count', 'state'],[
+        Bootstrap::_D('in api', __METHOD__);
+        $orm = new Orm('blog_posts');
+        Bootstrap::_D('new orm', __METHOD__);
+
+        return $orm->first(['slug','title', 'view_count', 'state'],[
             [ 'state', 1],
             [ 'view_count','>', 100],
         ]);

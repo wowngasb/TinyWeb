@@ -9,6 +9,7 @@
 namespace app\common;
 
 
+use app\Bootstrap;
 use app\common\Base\BaseModel;
 use Exception;
 use TinyWeb\Application;
@@ -29,15 +30,22 @@ class ApiHub extends BaseModel
             $log_msg = "CSRF ignore [{$request_method}] this_url:" . $request->getThisUrl();
             self::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
         } else {
-            if ( !Application::strCmp($session_id, Application::decrypt($request->getCsrfToken())) ) {
-                $log_msg = "CSRF error [{$request_method}] token:" . $request->getCsrfToken() . ", this_url:" . $request->getThisUrl() . ", referer_url:" . $request->getHttpReferer();
+            $csrf = $request->getCsrfToken();
+            if ( !Application::strCmp($session_id, Application::decrypt($csrf)) ) {
+                $log_msg = "CSRF error [{$request_method}] token:" . $csrf . ", this_url:" . $request->getThisUrl() . ", referer_url:" . $request->getHttpReferer();
                 self::error($log_msg, __METHOD__, __CLASS__, __LINE__);
+            } else {
+                $log_msg = "CSRF pass [{$request_method}] token:" . $csrf . ", this_url:" . $request->getThisUrl() . ", referer_url:" . $request->getHttpReferer();
+                self::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
             }
         }
+        Bootstrap::_D($log_msg, 'csrf');
 
         try {
             $json = ApiHelper::api($class_name, $routeInfo[1], $params);
+            Bootstrap::_D(['class'=>$class_name, 'method'=>$routeInfo[1], 'params'=>$params, 'result'=>$json], 'api');
         } catch (Exception $ex) {
+            Bootstrap::_D((array)$ex, 'api Exception');
             $code = $ex->getCode();  // errno为0 或 无error字段 表示没有错误  errno设置为0 会忽略error字段
             $error = (DEV_MODEL == 'DEBUG') ? ['Exception'=>get_class($ex), 'code' => $ex->getCode(), 'message' => $ex->getMessage(), 'file' => $ex->getFile().' ['.$ex->getLine().']'] : ['code' => $code, 'message' => $ex->getMessage()];
             $json = ['errno' => $code == 0 ? -1 : $code, 'error' =>$error];

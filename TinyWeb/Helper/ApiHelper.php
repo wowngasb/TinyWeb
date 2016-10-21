@@ -31,10 +31,10 @@ class ApiHelper
             throw new ApiParamsError("api:{$class_name}->{$method} not found");
         }
         $args = self::fix_args(self::getApiMethodArgs($reflection), $args_input);
+        $class = new \ReflectionClass($class_name);
+        $instance = empty($init_params) ? $class->newInstanceArgs() : $class->newInstanceArgs($init_params);
 
-        $instance = empty($init_params) ? (new \ReflectionClass($class_name))->newInstanceArgs() : (new \ReflectionClass($class_name))->newInstanceArgs($init_params);
-
-        $args = self::_hasMethod($class_name, 'hookAccessAndFilterRequest') ? $instance->hookAccessAndFilterRequest($args, $args_input) : $args;  //所有API类继承于BaseApi，默认行为直接原样返回参数不作处理
+        $args = $class->hasMethod('hookAccessAndFilterRequest') ? $instance->hookAccessAndFilterRequest($args, $args_input) : $args;  //所有API类继承于BaseApi，默认行为直接原样返回参数不作处理
         $request->setParams($args);
         $data = !empty($args) ? $reflection->invokeArgs($instance, $args) : $reflection->invoke($instance);
 

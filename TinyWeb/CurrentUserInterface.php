@@ -6,13 +6,10 @@
  * Time: 16:51
  */
 
-namespace TinyWeb\Plugin;
+namespace TinyWeb;
 
 
-
-use TinyWeb\BaseAbstract;
-
-class CurrentUser extends BaseAbstract
+interface CurrentUserInterface
 {
 
 }

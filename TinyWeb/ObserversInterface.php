@@ -9,15 +9,15 @@
 namespace TinyWeb;
 
 
-use Illuminate\Database\Query\Builder;
-use TinyWeb\Plugin\CurrentUser;
+
+use TinyWeb\Helper\BuilderHelper;
 
 interface ObserversInterface
 {
     /**
-     * @param CurrentUser $user
+     * @param CurrentUserInterface $user
      */
-    public function hookCurrentUser(CurrentUser $user);
+    public function hookCurrentUser(CurrentUserInterface $user);
 
 
     ##########################################
@@ -113,17 +113,17 @@ interface ObserversInterface
     ###############批量获取处理################
     ##########################################
     /**
-     * @param Builder $table
+     * @param BuilderHelper $table
      * @param array $queries
-     * @return Builder
+     * @return BuilderHelper
      */
-    public function beforeBuilderQueries(Builder $table, array $queries);
+    public function beforeBuilderQueries(BuilderHelper $table, array $queries);
 
     /**
-     * @param Builder $table
+     * @param BuilderHelper $table
      * @param array $queries
-     * @return Builder
+     * @return BuilderHelper
      */
-    public function afterBuilderQueries(Builder $table, array $queries);
+    public function afterBuilderQueries(BuilderHelper $table, array $queries);
 
 }

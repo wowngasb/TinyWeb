@@ -8,27 +8,46 @@
 
 namespace TinyWeb\Plugin;
 
-
-use app\Bootstrap;
-use Illuminate\Database\Query\Builder;
+use TinyWeb\CurrentUserInterface;
 use TinyWeb\Exception\ApiParamsError;
 use TinyWeb\Exception\OrmQueryBuilderError;
 use TinyWeb\Exception\OrmStartUpError;
+use TinyWeb\Helper\BuilderHelper;
 use TinyWeb\Helper\DbHelper;
 use TinyWeb\ObserversInterface;
 
 trait OrmTrait
 {
-    private $_current_table = '';
-    private $_current_db = '';
+    private $_current_table = null;
+    private $_current_db = null;
+    private $_current_user = null;
+    private $model_map = [];
 
     protected static function getMap()
     {
         return [];
     }
 
-    protected static function preTreatmentMap(array $map){
+    public static function  autoHelp(){
+        return static::getMap();
+    }
+
+    protected static function preTreatmentMap(array $map, $default_model){
         foreach ($map as $table_name => &$config) {
+            $config['primary_key'] = !isset($config['primary_key']) ? 'id' : $config['primary_key'];  // 主键默认为 id
+            if (empty($config['primary_key'])) {
+                throw new OrmStartUpError("table:{$table_name} has empty primary_key");
+            }
+            $config['Model'] = !isset($config['Model']) ? $default_model : $config['Model'];  // 默认为 $default_model
+            if (empty($config['Model'])) {
+                throw new OrmStartUpError("{$table_name} has empty Model");
+
+            }
+
+            $config['default_sort_column'] = isset($config['default_sort_column']) ? $config['default_sort_column'] : $config['primary_key'];
+            $config['default_sort_direction'] = isset($config['default_sort_direction']) ? $config['default_sort_direction'] : 'asc';
+            $config['default_sort_direction'] = $config['default_sort_direction'] == 'desc' ? 'desc' : 'asc';
+
             $config['attach'] = isset($config['attach']) ? $config['attach'] : [];
             foreach ($config['attach'] as $key => &$item) {
                 if( empty($item['uri']) ){
@@ -41,27 +60,34 @@ trait OrmTrait
         return $map;
     }
 
+    /**
+     * @param array $params
+     * @param array $dependent
+     * @return array
+     */
     private static function parseAttachDependent(array $params, array $dependent){
         if( empty($params) ){
             return [];
         }
         foreach ($params as $key => $val) {
             if( is_string($key) && strpos($key, '%')===0 ){
-                $dependent[] = substr($key, 1, strpos($key, '%', 1));
+                $dep = substr($key, 1, strpos($key, '%', 1)-1);
+                if( !in_array($dep, $dependent) ){
+                    $dependent[] = $dep;
+                }
             }
             if( is_string($val) && strpos($val, '%')===0 ){
-
+                $dep = substr($val, 1, strpos($val, '%', 1)-1);
+                if( !in_array($dep, $dependent) ){
+                    $dependent[] = $dep;
+                }
             } else if( is_array($val) ){
-
+                $dependent = self::parseAttachDependent($val, $dependent);
             }
         }
         return $dependent;
     }
 
-    protected static function getDb()
-    {
-        return '';
-    }
 
     public function hookCurrentDb($current_db)
     {
@@ -80,40 +106,33 @@ trait OrmTrait
     }
 
     /**
-     * @param CurrentUser $user
+     * @param CurrentUserInterface $user
      */
-    public function hookCurrentUser(CurrentUser $user)
+    public function hookCurrentUser(CurrentUserInterface $user)
     {
-        $table_map = static::getMap();
-        foreach ($table_map as $table_name => $item) {
-            $tmp = self::getTableModel($table_name);
-            $tmp->hookCurrentUser($user);
+        $this->_current_user = $user;
+        /** @var ObserversInterface $model */
+        foreach ($this->model_map as $table_name => $model) {
+            !empty($model) && $model->hookCurrentUser($user);
         }
     }
 
-    public static function getTableMapConfig($table_name, $key, $default = null)
+    public static function _getTableMapConfig($table_name, $key, $default = null)
     {
-        $table_map = static::getMap();
+        $table_map = self::_getTableMap($table_name);
+        return isset($table_map[$key]) ? $table_map[$key] : $default;
+    }
+
+    public static function _getTableMap($table_name)
+    {
         $table_name = strtolower($table_name);
-        if (empty($table_map[$table_name])) {
+        $all_table_map = static::getMap();
+        $table_name = strtolower($table_name);
+        if (empty($all_table_map[$table_name]) || empty($table_name) ) {
             throw new ApiParamsError("table:{$table_name} not allowed");
         }
-        return isset($table_map[$table_name][$key]) ? $table_map[$table_name][$key] : $default;
+        return $all_table_map[$table_name];
     }
-
-    public static function getTableMap($table_name = null, $default = [])
-    {
-        $table_map = static::getMap();
-        if (is_null($table_name)) {
-            return $table_map;
-        }
-        $table_name = strtolower($table_name);
-        if (empty($table_map[$table_name])) {
-            throw new ApiParamsError("table:{$table_name} not allowed");
-        }
-        return isset($table_map[$table_name]) ? $table_map[$table_name] : $default;
-    }
-
 
     /**
      * @return ObserversInterface
@@ -130,9 +149,20 @@ trait OrmTrait
      * @return ObserversInterface
      * @throws OrmStartUpError
      */
-    private static function getTableModel($table_name)
+    private function getTableModel($table_name)
     {
-        return self::getTableMapConfig($table_name, 'DbModel');
+        /** @var ObserversInterface $tmp */
+        $tmp = isset($this->model_map[$table_name]) ? $this->model_map[$table_name] : null;
+
+        if(!empty($tmp)){
+            $tmp->hookCurrentUser($this->_current_user);
+            return $tmp;
+        }
+        $model_str = self::_getTableMapConfig($table_name, 'Model');
+        $tmp = new $model_str();
+        $tmp->hookCurrentUser($this->_current_user);
+        $this->setTableModel($table_name, $tmp);
+        return $tmp;
     }
 
     /**
@@ -140,36 +170,29 @@ trait OrmTrait
      * @param ObserversInterface $model
      * @return ObserversInterface
      */
-    private static function setTableModel($table_name, ObserversInterface $model)
+    private function setTableModel($table_name, ObserversInterface $model)
     {
-        $table_map = static::getMap();
-        $table_map[$table_name]['DbModel'] = $model;
+        $this->model_map[$table_name] = $model;
     }
 
     private function getConfig($key, $default = null)
     {
-        return self::getTableMapConfig($this->_current_table, $key, $default);
+        return self::_getTableMapConfig($this->_current_table, $key, $default);
     }
 
     /**
      * @param string $db_name
      * @param string $table_name
-     * @return Builder
+     * @return BuilderHelper
      * @throws ApiParamsError
      */
     protected static function table($db_name, $table_name)
     {
-        $table_map = static::getMap();
         if (empty($db_name)) {
             throw new ApiParamsError('db name empty');
         }
-        if (empty($table_name)) {
-            throw new ApiParamsError('table name empty');
-        }
-        $table_name = strtolower($table_name);
-        if (empty($table_map[$table_name])) {
-            throw new ApiParamsError("table:{$table_name} not allowed");
-        }
+        self::_getTableMap($table_name);
+
         $table = DbHelper::initDb()->connection($db_name)->table($table_name);
         return $table;
     }
@@ -198,12 +221,12 @@ trait OrmTrait
         return false;
     }
 
-    private static function _builderQuery(Builder $table, array $queries)
+    private static function _builderQuery(BuilderHelper $table, array $queries)
     {
         if (empty($queries)) {
             return $table;
         }
-        $query_list = [];
+
         foreach ($queries as $idx => $val) {
             if( !is_array($val) || count($val)<2 ){
                 throw new OrmQueryBuilderError("error idx:{$idx} query:" . json_encode($val));
@@ -219,13 +242,13 @@ trait OrmTrait
         return $table;
     }
 
-    public static function allowSortField($table_name, $order_field)
+    public static function _allowSortField($table_name, $order_field)
     {
         if (empty($order_field)) {
             return false;
         }
         $order_field = strtolower($order_field);
-        $sort = self::getTableMapConfig($table_name, 'sort', []);
+        $sort = self::_getTableMapConfig($table_name, 'sort', []);
         if (is_string($sort) && trim($sort) == '*') {
             return true;
         } else if (is_array($sort)) {
@@ -236,11 +259,11 @@ trait OrmTrait
 
     private static function fixParamsOrderBy($table_name, array $orderBy)
     {
-        $primary_key = strtolower(self::getTableMapConfig($table_name, 'primary_key', ''));
-        $default_sort_column = strtolower(self::getTableMapConfig($table_name, 'default_sort_column', $primary_key));
-        $default_sort_direction = strtolower(self::getTableMapConfig($table_name, 'default_sort_direction', 'asc'));
+        $primary_key = strtolower(self::_getTableMapConfig($table_name, 'primary_key', ''));
+        $default_sort_column = strtolower(self::_getTableMapConfig($table_name, 'default_sort_column', $primary_key));
+        $default_sort_direction = strtolower(self::_getTableMapConfig($table_name, 'default_sort_direction', 'asc'));
         $orderBy = empty($orderBy) ? [$default_sort_column, $default_sort_direction] : $orderBy;
-        $orderBy[0] = isset($orderBy[0]) && self::allowSortField($table_name, $orderBy[0]) ? strtolower($orderBy[0]) : $default_sort_column;
+        $orderBy[0] = isset($orderBy[0]) && self::_allowSortField($table_name, $orderBy[0]) ? strtolower($orderBy[0]) : $default_sort_column;
         $orderBy[1] = isset($orderBy[1]) ? strtolower($orderBy[1]) : '';
         $orderBy[1] = ($orderBy[1] == 'asc' || $orderBy[1] == 'desc') ? $orderBy[1] : $default_sort_direction;
         return [$orderBy[0], $orderBy[1]];
@@ -508,7 +531,7 @@ trait OrmTrait
         $table->select($columns);
         $rst = $table->first();
 
-        $rst = $this->getModel()->afterGetItem($rst);
+        $rst = !empty($rst) ? $this->getModel()->afterGetItem($rst) : $rst;
         return $rst;
     }
 
@@ -584,6 +607,16 @@ trait OrmTrait
         $rst = $table->sum($column);
 
         return $rst;
+    }
+
+    public  function __call($name, $arguments)
+    {
+        // TODO: Implement __call() method.
+    }
+
+    public static function __callStatic($name, $arguments)
+    {
+        // TODO: Implement __callStatic() method.
     }
 
 }

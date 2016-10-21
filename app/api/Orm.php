@@ -8,7 +8,6 @@
 
 namespace app\api;
 
-
 use app\api\abstracts\BaseApi;
 use app\common\Base\BaseDbModel;
 use app\common\DbModels\BlogCategories;
@@ -18,10 +17,8 @@ use app\common\DbModels\BlogPostTag;
 use app\common\DbModels\BlogPosts;
 use app\common\DbModels\BlogTags;
 use app\common\DbModels\TblUsers;
-
+use app\common\Models\CurrentUser;
 use TinyWeb\Application;
-use TinyWeb\Exception\OrmStartUpError;
-use TinyWeb\Plugin\CurrentUser;
 use TinyWeb\Plugin\OrmTrait;
 
 class Orm extends BaseApi
@@ -95,37 +92,22 @@ class Orm extends BaseApi
             'Model' => TblUsers::class,
         ],
     ];
-    protected static $db_name = '';
+    private static $_has_pre_treatment = false;
 
     protected static function getMap(){
-        return static::$table_map;
+        return self::$table_map;
     }
 
-    protected static function getDb(){
-        return static::$db_name;
-    }
-
-    public function __construct($current_table = null, $current_db = null)
+    public function __construct($current_table = null, $current_db = null, $default_model = BaseDbModel::class)
     {
         $current_db = is_null($current_db) ? Application::app()->getEnv('ENV_MYSQL_DB') : $current_db;
         $this->hookCurrentDb($current_db);
         if( !is_null($current_table) ){
             $this->hookCurrentTable($current_table);
         }
-        static::$table_map = self::preTreatmentMap(static::$table_map);
-        foreach (static::$table_map as $table_name => &$val) {
-            $val['primary_key'] = !isset($val['primary_key']) ? 'id' : $val['primary_key'];  // 主键默认为 id
-            if (empty($val['primary_key'])) {
-                throw new OrmStartUpError("table:{$table_name} has empty primary_key");
-            }
-            $val['Model'] = !isset($val['Model']) ? BaseDbModel::class : $val['Model'];  // 主键默认为 BaseDbModel
-            if (empty($val['Model'])) {
-                throw new OrmStartUpError("{$table_name} has empty Model");
-            }
-            self::setTableModel($table_name, new $val['Model']);
-            $val['default_sort_column'] = isset($val['default_sort_column']) ? $val['default_sort_column'] : $val['primary_key'];
-            $val['default_sort_direction'] = isset($val['default_sort_direction']) ? $val['default_sort_direction'] : 'asc';
-            $val['default_sort_direction'] = $val['default_sort_direction'] == 'desc' ? 'desc' : 'asc';
+        if( !self::$_has_pre_treatment ){
+            self::$table_map = self::preTreatmentMap(self::$table_map, $default_model);
+            self::$_has_pre_treatment = true;
         }
         $user = new CurrentUser();
         $this->hookCurrentUser($user);
@@ -134,10 +116,15 @@ class Orm extends BaseApi
     public function hookAccessAndFilterRequest(array $request, array $origin_request)
     {
         $request = parent::hookAccessAndFilterRequest($request, $origin_request);  //调用父级过滤函数
-        $table_name = isset($origin_request['table']) ? $origin_request['table'] : '';
-        $this->hookCurrentTable($table_name);
+        $table_name = isset($origin_request['table']) ? $origin_request['table'] : null;
+        if(!is_null($table_name)){
+            $this->hookCurrentTable($table_name);
+        }
+
         $user = new CurrentUser();
         $this->hookCurrentUser($user);
         return $request;  //直接返回请求参数
     }
+
+
 }

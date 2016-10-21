@@ -11,15 +11,16 @@ namespace app\common\Base;
 
 
 use app\Bootstrap;
-use Illuminate\Database\Query\Builder;
+use TinyWeb\CurrentUserInterface;
+use TinyWeb\Helper\BuilderHelper;
 use TinyWeb\ObserversInterface;
-use TinyWeb\Plugin\CurrentUser;
+
 
 class BaseDbModel extends BaseModel implements ObserversInterface
 {
     protected $user;
 
-    public function hookCurrentUser(CurrentUser $user)
+    public function hookCurrentUser(CurrentUserInterface $user)
     {
         $this->user = $user;
     }
@@ -144,11 +145,11 @@ class BaseDbModel extends BaseModel implements ObserversInterface
     }
 
     /**
-     * @param Builder $table
+     * @param BuilderHelper $table
      * @param array $queries
-     * @return Builder
+     * @return BuilderHelper
      */
-    public function beforeBuilderQueries(Builder $table, array $queries)
+    public function beforeBuilderQueries(BuilderHelper $table, array $queries)
     {
         false && func_get_args();
 
@@ -156,15 +157,15 @@ class BaseDbModel extends BaseModel implements ObserversInterface
     }
 
     /**
-     * @param Builder $table
+     * @param BuilderHelper $table
      * @param array $queries
-     * @return Builder
+     * @return BuilderHelper
      */
-    public function afterBuilderQueries(Builder $table, array $queries)
+    public function afterBuilderQueries(BuilderHelper $table, array $queries)
     {
         false && func_get_args();
 
-        Bootstrap::_D(['sql'=>$table->toSql(), 'val'=>$table->getBindings(), ], 'Builder');
+        Bootstrap::_D(['sql'=>$table->toSql(), 'val'=>$table->getBindings(), ], 'BuilderHelper');
         return $table;
     }
 }
