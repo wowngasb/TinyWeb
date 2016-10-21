@@ -186,20 +186,21 @@ trait OrmTrait
      * @return BuilderHelper
      * @throws ApiParamsError
      */
-    protected static function table($db_name, $table_name)
+    public static function _table($db_name, $table_name)
     {
         if (empty($db_name)) {
             throw new ApiParamsError('db name empty');
         }
         self::_getTableMap($table_name);
 
-        $table = DbHelper::initDb()->connection($db_name)->table($table_name);
+        $table = DbHelper::table($table_name, $db_name);
+
         return $table;
     }
 
     protected function builder(array $queries = [])
     {
-        $table = self::table($this->_current_db, $this->_current_table);
+        $table = self::_table($this->_current_db, $this->_current_table);
         $table = $this->getModel()->beforeBuilderQueries($table, $queries);
 
         $table = self::_builderQuery($table, $queries);

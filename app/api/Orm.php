@@ -58,6 +58,7 @@ class Orm extends BaseApi
         'blog_posts' => [
             'default_sort_column' => 'published_at',  // 默认排序参数
             'default_sort_direction' => 'desc',  // 默认排序方式 asc 升序 desc 降序
+            'unique_keys' => ['slug'],
             'sort' => ['user_id', 'category_id', 'title', 'slug', 'view_count', 'state', 'created_at', 'updated_at', 'delete_at'],
             'Model' => BlogPosts::class,
             'attach' => [

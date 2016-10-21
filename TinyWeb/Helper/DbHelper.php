@@ -34,6 +34,10 @@ class DbHelper extends Manager
         return self::$instance;
     }
 
+    /**
+     * @param string null $connection
+     * @return \Illuminate\Database\Connection
+     */
     public function getConnection($connection = null)
     {
         $app = Application::app();
@@ -58,10 +62,21 @@ class DbHelper extends Manager
                 $db_config = $connection;
             }
         }
-
         parent::addConnection($db_config, $key);
-
         return $this->manager->connection($key);
+    }
+
+    /**
+     * @param string $table_name
+     * @param string|null $connection
+     * @return BuilderHelper
+     */
+    public static function table($table_name, $connection = null){
+        $connection = self::initDb()->getConnection($connection);
+        $processor = $connection->getPostProcessor();
+        $grammar = $connection->getQueryGrammar();
+        $query = new BuilderHelper($connection, $grammar, $processor);
+        return $query->from($table_name);
     }
 }
 
