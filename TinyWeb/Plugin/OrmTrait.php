@@ -25,6 +25,37 @@ trait OrmTrait
         return [];
     }
 
+    protected static function preTreatmentMap(array $map){
+        foreach ($map as $table_name => &$config) {
+            $config['attach'] = isset($config['attach']) ? $config['attach'] : [];
+            foreach ($config['attach'] as $key => &$item) {
+                if( empty($item['uri']) ){
+                    throw new OrmStartUpError("table:{$table_name} attach:{$key} empty uri");
+                }
+                $item['params'] = isset($item['params']) ? $item['params'] : [];
+                $item['dependent'] = self::parseAttachDependent($item['params'], []);
+            }
+        }
+        return $map;
+    }
+
+    private static function parseAttachDependent(array $params, array $dependent){
+        if( empty($params) ){
+            return [];
+        }
+        foreach ($params as $key => $val) {
+            if( is_string($key) && strpos($key, '%')===0 ){
+                $dependent[] = substr($key, 1, strpos($key, '%', 1));
+            }
+            if( is_string($val) && strpos($val, '%')===0 ){
+
+            } else if( is_array($val) ){
+
+            }
+        }
+        return $dependent;
+    }
+
     protected static function getDb()
     {
         return '';
@@ -44,6 +75,18 @@ trait OrmTrait
             throw new OrmStartUpError("table:{$current_table} empty name");
         }
         $this->_current_table = $current_table;
+    }
+
+    /**
+     * @param CurrentUser $user
+     */
+    public function hookCurrentUser(CurrentUser $user)
+    {
+        $table_map = static::getMap();
+        foreach ($table_map as $table_name => $item) {
+            $tmp = self::getTableModel($table_name);
+            $tmp->hookCurrentUser($user);
+        }
     }
 
     public static function getTableMapConfig($table_name, $key, $default = null)
@@ -99,18 +142,6 @@ trait OrmTrait
     {
         $table_map = static::getMap();
         $table_map[$table_name]['DbModel'] = $model;
-    }
-
-    /**
-     * @param CurrentUser $user
-     */
-    public function hookCurrentUser(CurrentUser $user)
-    {
-        $table_map = static::getMap();
-        foreach ($table_map as $table_name => $item) {
-            $tmp = self::getTableModel($table_name);
-            $tmp->hookCurrentUser($user);
-        }
     }
 
     private function getConfig($key, $default = null)

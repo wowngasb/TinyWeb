@@ -18,6 +18,7 @@ use app\common\DbModels\BlogPostTag;
 use app\common\DbModels\BlogPosts;
 use app\common\DbModels\BlogTags;
 use app\common\DbModels\TblUsers;
+
 use TinyWeb\Application;
 use TinyWeb\Exception\OrmStartUpError;
 use TinyWeb\Plugin\CurrentUser;
@@ -48,12 +49,41 @@ class Orm extends BaseApi
             'default_sort_column' => 'created_at',  // 默认排序参数
             'sort' => ['post_id', 'tag_id', 'state', 'created_at', 'updated_at', 'delete_at'],
             'Model' => BlogPostTag::class,
+            'attach' => [
+                'tag' => [
+                    'uri' => '/api/Orm/blog_tags.getItem',
+                    'params' => [
+                        'id' => '%tag_id%'
+                    ],
+                ],
+            ],
         ],
         'blog_posts' => [
             'default_sort_column' => 'published_at',  // 默认排序参数
             'default_sort_direction' => 'desc',  // 默认排序方式 asc 升序 desc 降序
             'sort' => ['user_id', 'category_id', 'title', 'slug', 'view_count', 'state', 'created_at', 'updated_at', 'delete_at'],
             'Model' => BlogPosts::class,
+            'attach' => [
+                'category' => [
+                    'uri' => '/api/Orm/blog_categories.getItem',
+                    'params' => [
+                        'id' => '%category_id%'
+                    ],
+                ],
+                'tags' => [
+                    'uri' => '/api/Orm/blog_post_tag.lists',
+                    'params' => [
+                        'column' => ['tag'],
+                        'queries' => ['post_id', '%id%']
+                    ],
+                ],
+                'user' => [
+                    'uri' => '/api/Orm/tbl_users.getItem',
+                    'params' => [
+                        'id' => '%user_id%'
+                    ],
+                ],
+            ],
         ],
         'blog_tags' => [
             'default_sort_column' => 'created_at',  // 默认排序参数
@@ -82,7 +112,7 @@ class Orm extends BaseApi
         if( !is_null($current_table) ){
             $this->hookCurrentTable($current_table);
         }
-
+        static::$table_map = self::preTreatmentMap(static::$table_map);
         foreach (static::$table_map as $table_name => &$val) {
             $val['primary_key'] = !isset($val['primary_key']) ? 'id' : $val['primary_key'];  // 主键默认为 id
             if (empty($val['primary_key'])) {

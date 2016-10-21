@@ -10,6 +10,7 @@ namespace app\common\Base;
 
 
 
+use app\Bootstrap;
 use Illuminate\Database\Query\Builder;
 use TinyWeb\ObserversInterface;
 use TinyWeb\Plugin\CurrentUser;
@@ -163,6 +164,7 @@ class BaseDbModel extends BaseModel implements ObserversInterface
     {
         false && func_get_args();
 
+        Bootstrap::_D(['sql'=>$table->toSql(), 'bind'=>$table->getBindings()], 'query');
         return $table;
     }
 }
