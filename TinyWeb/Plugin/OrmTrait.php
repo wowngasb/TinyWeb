@@ -22,17 +22,19 @@ trait OrmTrait
     private $_current_db = null;
     private $_current_user = null;
     private $model_map = [];
-
-    protected static function getMap()
-    {
-        return [];
-    }
-
+    private static $_table_map = [];
+    
     public static function  autoHelp(){
-        return static::getMap();
+        return self::$_table_map;
     }
 
-    protected static function preTreatmentMap(array $map, $default_model){
+    protected static function initTableMap(array $map, $default_model){
+        if(empty($map) || empty($default_model) ){
+            throw new OrmStartUpError("map empty or default_model empty");
+        }
+        if( !empty(self::$_table_map) ){
+            return false;
+        }
         foreach ($map as $table_name => &$config) {
             $config['primary_key'] = !isset($config['primary_key']) ? 'id' : $config['primary_key'];  // 主键默认为 id
             if (empty($config['primary_key'])) {
@@ -57,7 +59,8 @@ trait OrmTrait
                 $item['dependent'] = self::parseAttachDependent($item['params'], []);
             }
         }
-        return $map;
+        self::$_table_map = $map;
+        return true;
     }
 
     /**
@@ -126,12 +129,11 @@ trait OrmTrait
     public static function _getTableMap($table_name)
     {
         $table_name = strtolower($table_name);
-        $all_table_map = static::getMap();
         $table_name = strtolower($table_name);
-        if (empty($all_table_map[$table_name]) || empty($table_name) ) {
+        if (empty(self::$_table_map[$table_name]) || empty($table_name) ) {
             throw new ApiParamsError("table:{$table_name} not allowed");
         }
-        return $all_table_map[$table_name];
+        return self::$_table_map[$table_name];
     }
 
     /**

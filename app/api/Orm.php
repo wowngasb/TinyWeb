@@ -93,11 +93,6 @@ class Orm extends BaseApi
             'Model' => TblUsers::class,
         ],
     ];
-    private static $_has_pre_treatment = false;
-
-    protected static function getMap(){
-        return self::$table_map;
-    }
 
     public function __construct($current_table = null, $current_db = null, $default_model = BaseDbModel::class)
     {
@@ -106,10 +101,7 @@ class Orm extends BaseApi
         if( !is_null($current_table) ){
             $this->hookCurrentTable($current_table);
         }
-        if( !self::$_has_pre_treatment ){
-            self::$table_map = self::preTreatmentMap(self::$table_map, $default_model);
-            self::$_has_pre_treatment = true;
-        }
+        self::initTableMap(self::$table_map, $default_model);
         $user = new CurrentUser();
         $this->hookCurrentUser($user);
     }
