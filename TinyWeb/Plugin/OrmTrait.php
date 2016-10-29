@@ -56,6 +56,11 @@ trait OrmTrait
             if (empty($config['primary_key'])) {
                 throw new OrmStartUpError("table:{$table_name} has empty primary_key");
             }
+
+            $config['unique_keys'] = isset($config['unique_keys']) ? $config['unique_keys'] : [];
+            $config['unique_keys'][] = $config['primary_key'];
+            $config['unique_keys'] = array_unique($config['unique_keys']);
+
             $config['Model'] = isset($config['Model']) ? $config['Model'] : '';
             if (empty($config['Model'])) {
                 throw new OrmStartUpError("{$table_name} has empty Model");
