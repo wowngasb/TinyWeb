@@ -15,52 +15,46 @@ class DbHelper extends Manager
         if (!empty(self::$instance)) {
             return self::$instance;
         }
-        $app = Application::app();
-        $db_config = [
-            'driver' => 'mysql',
-            'host' => $app->getEnv('ENV_MYSQL_HOST'),
-            'port' => $app->getEnv('ENV_MYSQL_PORT'),
-            'database' => $app->getEnv('ENV_MYSQL_DB'),
-            'username' => $app->getEnv('ENV_MYSQL_USER'),
-            'password' => $app->getEnv('ENV_MYSQL_PASS'),
-            'charset' => 'utf8',
-            'collation' => 'utf8_unicode_ci',
-            'prefix' => ''
-        ];
-
+        $db_config = self::getBaseConfig();
         $db = new DbHelper();
-        $db->addConnection($db_config);
+        $db->addConnection($db_config, $db_config['database']);
         $db->setAsGlobal();
         return self::$instance;
     }
 
-    /**
-     * @param string null $connection
-     * @return \Illuminate\Database\Connection
-     */
-    public function getConnection($connection = null)
+    private static function getBaseConfig()
     {
         $app = Application::app();
         $db_config = [
             'driver' => 'mysql',
             'host' => $app->getEnv('ENV_MYSQL_HOST'),
             'port' => $app->getEnv('ENV_MYSQL_PORT'),
-            'database' => $app->getEnv('ENV_MYSQL_DB'),
+            'database' => strtolower($app->getEnv('ENV_MYSQL_DB')),
             'username' => $app->getEnv('ENV_MYSQL_USER'),
             'password' => $app->getEnv('ENV_MYSQL_PASS'),
             'charset' => 'utf8',
             'collation' => 'utf8_unicode_ci',
-            'prefix' => ''
+            'prefix' => '',
         ];
+        return $db_config;
+    }
 
-        $key = is_string($connection) ? $connection : substr(md5(serialize($connection)), 0, 8);
-
-        if ($connection != null) {
-            if (is_string($connection)) {
-                $db_config['database'] = $key;
-            } else {
-                $db_config = $connection;
-            }
+    /**
+     * @param string|array $config
+     * @return \Illuminate\Database\Connection
+     */
+    public function getConnection($config = null)
+    {
+        if ( is_string($config) ) {
+            $db_config = self::getBaseConfig();
+            $db_config['database'] = strtolower($config);
+            $key = $db_config['database'];
+        } else if ( is_array($config) ){
+            $db_config = $config;
+            $key = "{$db_config['host']}:{$db_config['port']}@{$db_config['username']}#{$db_config['database']}";
+        } else {
+            $db_config = $config;
+            $key = $db_config['database'];
         }
         parent::addConnection($db_config, $key);
         return $this->manager->connection($key);
@@ -68,14 +62,19 @@ class DbHelper extends Manager
 
     /**
      * @param string $table_name
-     * @param string|null $connection
+     * @param string $db_name
+     * @param array $table_config
+     * @param array $db_config
      * @return BuilderHelper
      */
-    public static function table($table_name, $connection = null){
-        $connection = self::initDb()->getConnection($connection);
+    public static function _table($table_name, $db_name = null, array $table_config = [], array $db_config = [])
+    {
+        $connection = self::initDb()->getConnection(!empty($db_config) ? $db_config : $db_name);
         $processor = $connection->getPostProcessor();
         $grammar = $connection->getQueryGrammar();
-        $query = new BuilderHelper($connection, $grammar, $processor);
+
+        BuilderHelper::registerTable($db_name, $table_name, $table_config);
+        $query = new BuilderHelper($db_name, $connection, $grammar, $processor);
         return $query->from($table_name);
     }
 }

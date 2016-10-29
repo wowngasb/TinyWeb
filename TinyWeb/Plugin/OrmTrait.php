@@ -8,6 +8,7 @@
 
 namespace TinyWeb\Plugin;
 
+use TinyWeb\Application;
 use TinyWeb\CurrentUserInterface;
 use TinyWeb\Exception\ApiParamsError;
 use TinyWeb\Exception\OrmQueryBuilderError;
@@ -23,14 +24,26 @@ trait OrmTrait
     private $_current_user = null;
     private $model_map = [];
     private static $_table_map = [];
-    
+
+    /**
+     * 必须是一个 静态函数 函数体内不可使用$this
+     * @return void
+     */
+    abstract protected function initOrm();
+
     public static function  autoHelp(){
+        static::initOrm();
         return self::$_table_map;
     }
 
-    protected static function initTableMap(array $map, $default_model){
-        if(empty($map) || empty($default_model) ){
-            throw new OrmStartUpError("map empty or default_model empty");
+    protected static function hasTableMap()
+    {
+        return empty(self::$_table_map);
+    }
+
+    protected static function initTableMap(array $map){
+        if(empty($map) ){
+            throw new OrmStartUpError("table map empty");
         }
         if( !empty(self::$_table_map) ){
             return false;
@@ -40,10 +53,9 @@ trait OrmTrait
             if (empty($config['primary_key'])) {
                 throw new OrmStartUpError("table:{$table_name} has empty primary_key");
             }
-            $config['Model'] = !isset($config['Model']) ? $default_model : $config['Model'];  // 默认为 $default_model
+            $config['Model'] = isset($config['Model']) ? $config['Model'] : '';
             if (empty($config['Model'])) {
                 throw new OrmStartUpError("{$table_name} has empty Model");
-
             }
 
             $config['default_sort_column'] = isset($config['default_sort_column']) ? $config['default_sort_column'] : $config['primary_key'];
@@ -120,20 +132,20 @@ trait OrmTrait
         }
     }
 
-    public static function _getTableMapConfig($table_name, $key, $default = null)
+    public static function _getTableMapConfig($db_table, $key, $default = null)
     {
-        $table_map = self::_getTableMap($table_name);
+        $table_map = self::_getTableMap($db_table);
         return isset($table_map[$key]) ? $table_map[$key] : $default;
     }
 
-    public static function _getTableMap($table_name)
+    public static function _getTableMap($db_table)
     {
-        $table_name = strtolower($table_name);
-        $table_name = strtolower($table_name);
-        if (empty(self::$_table_map[$table_name]) || empty($table_name) ) {
-            throw new ApiParamsError("table:{$table_name} not allowed");
+        static::initOrm();
+        $db_table = strtolower($db_table);
+        if (empty(self::$_table_map[$db_table]) || empty($db_table) ) {
+            throw new ApiParamsError("table:{$db_table} not allowed");
         }
-        return self::$_table_map[$table_name];
+        return self::$_table_map[$db_table];
     }
 
     /**
@@ -143,27 +155,27 @@ trait OrmTrait
      */
     private function getModel()
     {
-        return $this->getTableModel($this->_current_table);
+        return $this->getTableModel("{$this->_current_db}.{$this->_current_table}");
     }
 
     /**
-     * @param string $table_name
+     * @param string $db_table
      * @return ObserversInterface
      * @throws OrmStartUpError
      */
-    private function getTableModel($table_name)
+    private function getTableModel($db_table)
     {
         /** @var ObserversInterface $tmp */
-        $tmp = isset($this->model_map[$table_name]) ? $this->model_map[$table_name] : null;
+        $tmp = isset($this->model_map[$db_table]) ? $this->model_map[$db_table] : null;
 
         if(!empty($tmp)){
             $tmp->hookCurrentUser($this->_current_user);
             return $tmp;
         }
-        $model_str = self::_getTableMapConfig($table_name, 'Model');
+        $model_str = self::_getTableMapConfig($db_table, 'Model');
         $tmp = new $model_str();
         $tmp->hookCurrentUser($this->_current_user);
-        $this->setTableModel($table_name, $tmp);
+        $this->setTableModel($db_table, $tmp);
         return $tmp;
     }
 
@@ -179,7 +191,7 @@ trait OrmTrait
 
     private function getConfig($key, $default = null)
     {
-        return self::_getTableMapConfig($this->_current_table, $key, $default);
+        return self::_getTableMapConfig("{$this->_current_db}.{$this->_current_table}", $key, $default);
     }
 
     /**
@@ -188,21 +200,22 @@ trait OrmTrait
      * @return BuilderHelper
      * @throws ApiParamsError
      */
-    public static function _table($db_name, $table_name)
+    public static function table($table_name, $db_name=null)
     {
-        if (empty($db_name)) {
-            throw new ApiParamsError('db name empty');
-        }
-        self::_getTableMap($table_name);
+        static::initOrm();
+        $db_name = is_null($db_name) ? Application::app()->getEnv('ENV_MYSQL_DB') : $db_name;
+        $table_name = strtolower($table_name);
+        $db_name = strtolower($db_name);
 
-        $table = DbHelper::table($table_name, $db_name);
+        $table_config = self::_getTableMap("{$db_name}.{$table_name}");
+        $table = DbHelper::_table($table_name, $db_name, $table_config);
 
         return $table;
     }
 
-    protected function builder(array $queries = [])
+    private function builder(array $queries = [])
     {
-        $table = self::_table($this->_current_db, $this->_current_table);
+        $table = self::table($this->_current_db, $this->_current_table);
         $table = $this->getModel()->beforeBuilderQueries($table, $queries);
 
         $table = self::_builderQuery($table, $queries);
@@ -245,13 +258,14 @@ trait OrmTrait
         return $table;
     }
 
-    public static function _allowSortField($table_name, $order_field)
+    public static function _allowSortField($db_table, $order_field)
     {
+        static::initOrm();
         if (empty($order_field)) {
             return false;
         }
         $order_field = strtolower($order_field);
-        $sort = self::_getTableMapConfig($table_name, 'sort', []);
+        $sort = self::_getTableMapConfig($db_table, 'sort', []);
         if (is_string($sort) && trim($sort) == '*') {
             return true;
         } else if (is_array($sort)) {
@@ -260,13 +274,13 @@ trait OrmTrait
         return false;
     }
 
-    private static function fixParamsOrderBy($table_name, array $orderBy)
+    private static function fixParamsOrderBy($db_table, array $orderBy)
     {
-        $primary_key = strtolower(self::_getTableMapConfig($table_name, 'primary_key', ''));
-        $default_sort_column = strtolower(self::_getTableMapConfig($table_name, 'default_sort_column', $primary_key));
-        $default_sort_direction = strtolower(self::_getTableMapConfig($table_name, 'default_sort_direction', 'asc'));
+        $primary_key = strtolower(self::_getTableMapConfig($db_table, 'primary_key', ''));
+        $default_sort_column = strtolower(self::_getTableMapConfig($db_table, 'default_sort_column', $primary_key));
+        $default_sort_direction = strtolower(self::_getTableMapConfig($db_table, 'default_sort_direction', 'asc'));
         $orderBy = empty($orderBy) ? [$default_sort_column, $default_sort_direction] : $orderBy;
-        $orderBy[0] = isset($orderBy[0]) && self::_allowSortField($table_name, $orderBy[0]) ? strtolower($orderBy[0]) : $default_sort_column;
+        $orderBy[0] = isset($orderBy[0]) && self::_allowSortField($db_table, $orderBy[0]) ? strtolower($orderBy[0]) : $default_sort_column;
         $orderBy[1] = isset($orderBy[1]) ? strtolower($orderBy[1]) : '';
         $orderBy[1] = ($orderBy[1] == 'asc' || $orderBy[1] == 'desc') ? $orderBy[1] : $default_sort_direction;
         return [$orderBy[0], $orderBy[1]];
@@ -320,7 +334,7 @@ trait OrmTrait
         if ($take > 0 && $skip >= 0) {
             $table->skip($skip)->take($take);
         }
-        $orderBy = self::fixParamsOrderBy($this->_current_table, $orderBy);
+        $orderBy = self::fixParamsOrderBy("{$this->_current_db}.{$this->_current_table}", $orderBy);
         if (!empty($orderBy[0])) {
             $table->orderBy($orderBy[0], $orderBy[1]);
         }
@@ -360,7 +374,7 @@ trait OrmTrait
     public function update(array $values, array $queries = [])
     {
         if (empty($values)) {
-            throw new ApiParamsError("table:{$this->_current_table} update with empty values");
+            throw new ApiParamsError("table:{$this->_current_db}.{$this->_current_table} update with empty values");
         }
 
         $id_list = $this->lists($this->getConfig('primary_key'), $queries);
@@ -388,7 +402,7 @@ trait OrmTrait
     public function updateItem($id, array $values)
     {
         if (empty($values)) {
-            throw new ApiParamsError("table:{$this->_current_table} updateItem with empty values");
+            throw new ApiParamsError("table:{$this->_current_db}.{$this->_current_table} updateItem with empty values");
         }
         $values = $this->getModel()->beforeUpdateItem($id, $values);
 
@@ -610,16 +624,6 @@ trait OrmTrait
         $rst = $table->sum($column);
 
         return $rst;
-    }
-
-    public  function __call($name, $arguments)
-    {
-        // TODO: Implement __call() method.
-    }
-
-    public static function __callStatic($name, $arguments)
-    {
-        // TODO: Implement __callStatic() method.
     }
 
 }

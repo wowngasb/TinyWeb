@@ -8,30 +8,43 @@
 
 namespace TinyWeb\Helper;
 
-
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\Grammars\Grammar;
+use Illuminate\Database\Query\Processors\Processor;
 
 class BuilderHelper extends Builder
 {
-    private static $_table_attach_map = [];
-    private static $_table_primary_key_map = [];
-    private static $_table_unique_keys = [];
+    private static $_table_ext_map = [];
+    private $_this_table = '';
+    private $_this_db = '';
 
-    public static function registerAttach($db_name, $table_name, array $attach){
-        $key = $db_name.'.'.$table_name;
-        self::$_table_attach_map[$key] = isset(self::$_table_attach_map[$key]) ?  : [];
-        self::$_table_attach_map[$key] = array_merge(self::$_table_attach_map[$key], $attach);
+    /**
+     * BuilderHelper constructor.
+     * @param string $db_name
+     * @param ConnectionInterface $connection
+     * @param Grammar $grammar
+     * @param Processor $processor
+     */
+    public function __construct($db_name,ConnectionInterface $connection,Grammar $grammar,Processor $processor)
+    {
+        parent::__construct($connection, $grammar, $processor);
+        $this->_this_db = $db_name;
     }
 
-    public static function registerPrimaryKey($db_name, $table_name, $primary_key){
-        $key = $db_name.'.'.$table_name;
-        self::$_table_primary_key_map[$key] = $primary_key;
+    public function from($table)
+    {
+        $this->_this_table = $table;
+        return parent::from($table);
     }
 
-    public static function registerUniqueKeys($db_name, $table_name, array $unique_keys){
+    public static function registerTable($db_name, $table_name, array $table_config=[]){
         $key = $db_name.'.'.$table_name;
-        self::$_table_unique_keys[$key] = isset(self::$_table_unique_keys[$key]) ?  : [];
-        self::$_table_unique_keys[$key] = array_unique(array_merge(self::$_table_unique_keys[$key], $unique_keys));
+        if( isset(self::$_table_ext_map[$key]) || empty($table_config) ){
+            return false;
+        }
+        self::$_table_ext_map[$key] = $table_config;
+        return true;
     }
 
     public function get($columns = array('*'))
