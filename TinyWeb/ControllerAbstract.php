@@ -7,22 +7,22 @@
  */
 
 namespace TinyWeb;
+use TinyWeb\Plugin\EventTrait;
 
 /**
  * Class Controller
  * @package TinyWeb
  */
-abstract class ControllerAbstract extends BaseAbstract
+abstract class ControllerAbstract
 {
+    use EventTrait;
+
     protected $request = null;
     protected $response = null;
     protected $_view = null;
 
     protected $routeInfo = [];  // 在路由完成后, 请求被分配到的路由信息 [$_controller, $_action, $_module]
     protected $appname = '';
-
-    public static $allow_event = ['preDisplay', 'preWidget'];
-
 
     final public function __construct()
     {
@@ -81,9 +81,9 @@ abstract class ControllerAbstract extends BaseAbstract
     public function display($tpl_path = '')
     {
         if (empty($tpl_path)) {
-            $tpl_path = ROOT_PATH . self::join(DIRECTORY_SEPARATOR, [$this->appname, $this->routeInfo[2], 'views', $this->routeInfo[0], $this->routeInfo[1] . '.php']);
+            $tpl_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$this->appname, $this->routeInfo[2], 'views', $this->routeInfo[0], $this->routeInfo[1] . '.php']);
         } else {
-            $tpl_path = ROOT_PATH . self::join(DIRECTORY_SEPARATOR, [$this->appname, $this->routeInfo[2], 'views', $tpl_path]);
+            $tpl_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$this->appname, $this->routeInfo[2], 'views', $tpl_path]);
         }
         $view = $this->getView();
         $params = $view->getAssign();
@@ -102,11 +102,25 @@ abstract class ControllerAbstract extends BaseAbstract
         $appname = $this->appname;
         $params['routeInfo'] = $routeInfo;
         $params['appname'] = $appname;
-        $tpl_path = ROOT_PATH . self::join(DIRECTORY_SEPARATOR, [$appname, 'widget', $tpl_path]);
+        $tpl_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$appname, 'widget', $tpl_path]);
 
         self::fire('preWidget', [$this, $tpl_path, $params]);
         $buffer = $this->getView()->widget($tpl_path, $params);
         return $buffer;
+    }
+
+
+    /**
+     *  注册回调函数  回调参数为 callback($this, $tpl_path, $params)
+     *  1、preDisplay	在模板渲染之前触发
+     *  2、preWidget	在组件渲染之前触发
+     * @param string $event
+     * @return bool
+     */
+    protected static function isAllowedEvent($event)
+    {
+        static $allow_event = ['preDisplay', 'preWidget',];
+        return in_array($event, $allow_event);
     }
 
 }

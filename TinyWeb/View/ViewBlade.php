@@ -13,7 +13,7 @@ use TinyWeb\BaseAbstract;
 use TinyWeb\ViewInterface;
 
 
-class ViewBlade extends BaseAbstract implements ViewInterface
+class ViewBlade implements ViewInterface
 {
 
     protected $_tpl_vars = [];

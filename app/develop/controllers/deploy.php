@@ -80,7 +80,7 @@ EOT;
     public function buildApiModJs()
     {
         $dev_debug = Request::_get('dev_debug', 0) == 1;
-        $api_path = ROOT_PATH . self::join(DIRECTORY_SEPARATOR, [$this->appname, 'api' . DIRECTORY_SEPARATOR]);
+        $api_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$this->appname, 'api' . DIRECTORY_SEPARATOR]);
         $api_list = ApiHelper::getApiFileList($api_path);
         foreach ($api_list as $key => $val) {
             $class = str_replace('.php', '', $val['name']);
@@ -88,7 +88,7 @@ EOT;
             $class_name = "\\{$this->appname}\\api\\{$class}";
             $method_list = ApiHelper::getApiMethodList($class_name);
             $js_str = ApiHelper::model2js($class, $method_list, $dev_debug);
-            $out_path = ROOT_PATH . self::join(DIRECTORY_SEPARATOR, [$this->appname, 'static', 'apiMod' . DIRECTORY_SEPARATOR]);
+            $out_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$this->appname, 'static', 'apiMod' . DIRECTORY_SEPARATOR]);
             if (!is_dir($out_path)) {
                 mkdir($out_path, 0777, true);
             }

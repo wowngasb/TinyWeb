@@ -9,6 +9,7 @@
 namespace app\api;
 
 use app\api\abstracts\BaseApi;
+use app\Bootstrap;
 use app\common\DbModels\BlogCategories;
 use app\common\DbModels\BlogComments;
 use app\common\DbModels\BlogNotifications;
@@ -29,7 +30,7 @@ class Orm extends BaseApi
      * 必须是一个 静态函数 函数体内不可使用$this
      * @return void
      */
-    protected function initOrm()
+    protected static function initOrm()
     {
         if( self::hasTableMap() ){
             return ;

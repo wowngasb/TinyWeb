@@ -32,7 +32,7 @@ class AdminApi extends BaseApi
 
     public function testDb2()
     {
-        return (new Orm('blog_posts'))->lists('slug');
+        return Orm::table('blog_posts')->lists('slug');
     }
 
     public function testDbOther($db, $table)
@@ -42,11 +42,12 @@ class AdminApi extends BaseApi
 
     public function testDb3()
     {
-        Bootstrap::_D('in api', __METHOD__);
-        $orm = new Orm('blog_posts');
-        Bootstrap::_D('new orm', __METHOD__);
+        return  Orm::table('blog_posts')->first(['slug', 'title', 'view_count',]);
+    }
 
-        return $orm->first(['slug', 'title', 'view_count', 'category', 'tags', 'user'], [
+    public function testDbJson()
+    {
+        return  Orm::table('blog_posts')->first(['slug', 'title', 'view_count', 'category', 'tags', 'user'], [
             ['state', 1],
             ['view_count', '>', 100],
         ]);

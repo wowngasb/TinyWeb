@@ -16,7 +16,7 @@ use TinyWeb\ViewInterface;
  * Class View
  * @package TinyWeb
  */
-class ViewSimple  extends BaseAbstract implements ViewInterface
+class ViewSimple  implements ViewInterface
 {
 
     protected $_tpl_vars = [];

@@ -4,13 +4,16 @@ namespace TinyWeb;
 use TinyWeb\Exception\RouteError;
 use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\Helper\ApiHelper;
+use TinyWeb\Plugin\EventTrait;
 
 /**
  * Class Application
  * @package TinyWeb
  */
-final class Application extends BaseAbstract
+final class Application
 {
+    use EventTrait;
+
     protected $_config = [];  // 全局配置
     protected $_appname = '';  // app 目录，用于 拼接命名空间 和 定位模板文件
     protected $_run = false;  // 布尔值, 指明当前的Application是否已经运行
@@ -18,9 +21,8 @@ final class Application extends BaseAbstract
     protected $_dispatch = [];  // 分发列表
 
     protected static $_app = null;  // Application通过特殊的方式实现了单利模式, 此属性保存当前实例
-
-    public static $allow_event = ['routerStartup', 'routerShutdown', 'dispatchLoopStartup', 'preDispatch', 'postDispatch', 'dispatchLoopShutdown',];  // 允许的事件列表
     private static $_microtime = null;
+
     /**
      * Application constructor.
      * @param array $config 关联数组的配置
@@ -520,4 +522,38 @@ final class Application extends BaseAbstract
         }
     }
 
+    /**
+     * 使用 seq 把 list 数组中的非空字符串连接起来  _join('_', [1,2,3]) = '1_2_3_'
+     * @param string $seq
+     * @param array $list
+     * @return string
+     */
+    public static function join($seq, array $list)
+    {
+        $tmp_list = [];
+        foreach ($list as $item) {
+            $item = trim($item);
+            if (!empty($item)) {
+                $tmp_list[] = strval($item);
+            }
+        }
+        return join($seq, $tmp_list);
+    }
+
+    /**
+     *  注册回调函数  回调参数为 callback(Request $request, Response $response)  两个参数都为单实例
+     *  1、routerStartup	在路由之前触发	这个是7个事件中, 最早的一个. 但是一些全局自定的工作, 还是应该放在Bootstrap中去完成
+     *  2、routerShutdown	路由结束之后触发	此时路由一定正确完成, 否则这个事件不会触发
+     *  3、dispatchLoopStartup	分发循环开始之前被触发
+     *  4、preDispatch	分发之前触发	如果在一个请求处理过程中, 发生了forward, 则这个事件会被触发多次
+     *  5、postDispatch	分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
+     *  6、dispatchLoopShutdown	分发循环结束之后触发	此时表示所有的业务逻辑都已经运行完成, 但是响应还没有发送
+     * @param string $event
+     * @return bool
+     */
+    protected static function isAllowedEvent($event)
+    {
+        static $allow_event = ['routerStartup', 'routerShutdown', 'dispatchLoopStartup', 'preDispatch', 'postDispatch', 'dispatchLoopShutdown',];
+        return in_array($event, $allow_event);
+    }
 }

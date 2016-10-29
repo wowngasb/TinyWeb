@@ -8,6 +8,7 @@
 
 namespace TinyWeb\Plugin;
 
+use app\Bootstrap;
 use TinyWeb\Application;
 use TinyWeb\CurrentUserInterface;
 use TinyWeb\Exception\ApiParamsError;
@@ -22,14 +23,16 @@ trait OrmTrait
     private $_current_table = null;
     private $_current_db = null;
     private $_current_user = null;
-    private $model_map = [];
+    private $_model_map = [];
     private static $_table_map = [];
 
     /**
      * 必须是一个 静态函数 函数体内不可使用$this
      * @return void
      */
-    abstract protected function initOrm();
+    protected static function initOrm(){
+        return ;
+    }
 
     public static function  autoHelp(){
         static::initOrm();
@@ -38,7 +41,7 @@ trait OrmTrait
 
     protected static function hasTableMap()
     {
-        return empty(self::$_table_map);
+        return !empty(self::$_table_map);
     }
 
     protected static function initTableMap(array $map){
@@ -127,7 +130,7 @@ trait OrmTrait
     {
         $this->_current_user = $user;
         /** @var ObserversInterface $model */
-        foreach ($this->model_map as $table_name => $model) {
+        foreach ($this->_model_map as $table_name => $model) {
             !empty($model) && $model->hookCurrentUser($user);
         }
     }
@@ -166,7 +169,7 @@ trait OrmTrait
     private function getTableModel($db_table)
     {
         /** @var ObserversInterface $tmp */
-        $tmp = isset($this->model_map[$db_table]) ? $this->model_map[$db_table] : null;
+        $tmp = isset($this->_model_map[$db_table]) ? $this->_model_map[$db_table] : null;
 
         if(!empty($tmp)){
             $tmp->hookCurrentUser($this->_current_user);
@@ -186,7 +189,7 @@ trait OrmTrait
      */
     private function setTableModel($table_name, ObserversInterface $model)
     {
-        $this->model_map[$table_name] = $model;
+        $this->_model_map[$table_name] = $model;
     }
 
     private function getConfig($key, $default = null)
@@ -203,6 +206,7 @@ trait OrmTrait
     public static function table($table_name, $db_name=null)
     {
         static::initOrm();
+        Bootstrap::_D(self::$_table_map, 'table_map');
         $db_name = is_null($db_name) ? Application::app()->getEnv('ENV_MYSQL_DB') : $db_name;
         $table_name = strtolower($table_name);
         $db_name = strtolower($db_name);
