@@ -24,6 +24,9 @@ class ApiHub extends BaseModel
     public static function apiHub(array $routeInfo, array $params)
     {
         $class_name = "\\" . Application::join("\\", [Application::app()->getAppName(), 'api', $routeInfo[0]]);
+        if( $routeInfo[0]=='Orm' ){
+            $routeInfo[1] = $routeInfo[1];
+        }
 
         try {
             self::checkCsrfToken();

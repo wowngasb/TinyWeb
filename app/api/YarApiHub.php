@@ -2,7 +2,7 @@
 
 namespace app\api;
 
-use app\api\abstracts\BaseApi;
+use app\common\Base\BaseApiModel;
 use TinyWeb\Helper\ApiHelper;
 
 /**
@@ -10,7 +10,7 @@ use TinyWeb\Helper\ApiHelper;
  *
  * @package api
  */
-class YarApiHub extends BaseApi {
+class YarApiHub extends BaseApiModel {
     
     public function __construct() {
         parent::__construct();

@@ -1,11 +1,8 @@
 <?php
 
-namespace app\api\abstracts;
+namespace app\common\Base;
 
-
-use app\common\Base\BaseModel;
-
-abstract class BaseApi extends BaseModel {
+abstract class BaseApiModel extends BaseModel {
 
     public function __construct() {
         # code...

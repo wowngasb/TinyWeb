@@ -8,7 +8,7 @@
 
 namespace app\api;
 
-use app\api\abstracts\BaseApi;
+use app\common\Base\BaseApiModel;
 use app\common\DbModels\BlogCategories;
 use app\common\DbModels\BlogComments;
 use app\common\DbModels\BlogNotifications;
@@ -20,7 +20,7 @@ use app\common\Models\CurrentUser;
 use TinyWeb\Application;
 use TinyWeb\Plugin\OrmTrait;
 
-class Orm extends BaseApi
+class Orm extends BaseApiModel
 {
     protected static $detail_log = true;
     use OrmTrait;

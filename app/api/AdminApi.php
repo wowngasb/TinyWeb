@@ -1,12 +1,12 @@
 <?php
 namespace app\api;
 
-use app\api\abstracts\BaseApi;
+use app\common\Base\BaseApiModel;
 use TinyWeb\Exception\ApiParamsError;
 use TinyWeb\Exception\Error;
 use TinyWeb\Helper\DbHelper;
 
-class AdminApi extends BaseApi
+class AdminApi extends BaseApiModel
 {
 
     protected static $detail_log = true;
