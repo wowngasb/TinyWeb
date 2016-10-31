@@ -2,9 +2,8 @@
 namespace app\api;
 
 use app\api\abstracts\BaseApi;
-use app\Bootstrap;
-use app\common\Base\BaseException;
 use TinyWeb\Exception\ApiParamsError;
+use TinyWeb\Exception\Error;
 use TinyWeb\Helper\DbHelper;
 
 class AdminApi extends BaseApi
@@ -47,7 +46,7 @@ class AdminApi extends BaseApi
 
     public function testDbJson()
     {
-        return  Orm::table('blog_posts')->first(['slug', 'title', 'view_count', 'category', 'tags', 'user'], [
+        return  Orm::table('blog_posts')->get(['slug', 'title', 'view_count', 'category', 'tags', 'user'], [
             ['state', 1],
             ['view_count', '>', 100],
         ]);
@@ -63,7 +62,7 @@ class AdminApi extends BaseApi
     {
         try {
             self::validName($name);
-        } catch (BaseException $ex) {
+        } catch (Error $ex) {
             throw new ApiParamsError('Validation Failed', $ex);
         }
 

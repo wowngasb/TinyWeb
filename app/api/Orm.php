@@ -9,7 +9,6 @@
 namespace app\api;
 
 use app\api\abstracts\BaseApi;
-use app\Bootstrap;
 use app\common\DbModels\BlogCategories;
 use app\common\DbModels\BlogComments;
 use app\common\DbModels\BlogNotifications;
@@ -58,7 +57,7 @@ class Orm extends BaseApi
                 'Model' => BlogPostTag::class,
                 'attach' => [
                     'tag' => [
-                        'uri' => '/api/Orm/blog_tags.getItem',
+                        'uri' => "/api/Orm/{$db_name}.blog_tags.getItem",
                         'params' => [
                             'id' => '%tag_id%'
                         ],
@@ -73,20 +72,20 @@ class Orm extends BaseApi
                 'Model' => BlogPosts::class,
                 'attach' => [
                     'category' => [
-                        'uri' => '/api/Orm/blog_categories.getItem',
+                        'uri' => "/api/Orm/{$db_name}.blog_categories.getItem",
                         'params' => [
                             'id' => '%category_id%'
                         ],
                     ],
                     'tags' => [
-                        'uri' => '/api/Orm/blog_post_tag.lists',
+                        'uri' => "/api/Orm/{$db_name}.blog_post_tag.lists",
                         'params' => [
                             'column' => ['tag'],
                             'queries' => ['post_id', '%id%']
                         ],
                     ],
                     'user' => [
-                        'uri' => '/api/Orm/tbl_users.getItem',
+                        'uri' => "/api/Orm/{$db_name}.tbl_users.getItem",
                         'params' => [
                             'id' => '%user_id%'
                         ],

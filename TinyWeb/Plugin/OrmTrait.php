@@ -30,11 +30,13 @@ trait OrmTrait
      * 必须是一个 静态函数 函数体内不可使用$this
      * @return void
      */
-    protected static function initOrm(){
-        return ;
+    protected static function initOrm()
+    {
+        return;
     }
 
-    public static function  autoHelp(){
+    public static function  autoHelp()
+    {
         static::initOrm();
         return self::$_table_map;
     }
@@ -44,11 +46,12 @@ trait OrmTrait
         return !empty(self::$_table_map);
     }
 
-    protected static function initTableMap(array $map){
-        if(empty($map) ){
+    protected static function initTableMap(array $map)
+    {
+        if (empty($map)) {
             throw new OrmStartUpError("table map empty");
         }
-        if( !empty(self::$_table_map) ){
+        if (!empty(self::$_table_map)) {
             return false;
         }
         foreach ($map as $table_name => &$config) {
@@ -72,7 +75,7 @@ trait OrmTrait
 
             $config['attach'] = isset($config['attach']) ? $config['attach'] : [];
             foreach ($config['attach'] as $key => &$item) {
-                if( empty($item['uri']) ){
+                if (empty($item['uri'])) {
                     throw new OrmStartUpError("table:{$table_name} attach:{$key} empty uri");
                 }
                 $item['params'] = isset($item['params']) ? $item['params'] : [];
@@ -84,33 +87,122 @@ trait OrmTrait
     }
 
     /**
+     * @param string $db_table
+     * @param string $attach
+     * @param array $item
+     * @param array $dependent
+     * @param array $params
+     * @param string $stag
+     * @param string $etag
+     * @return array
+     */
+    private static function replaceAttachDependent($db_table, $attach, array $item, array $dependent, array $params, $stag = '%', $etag = '%')
+    {
+        if (empty($item) || empty($params)) {
+            return [];
+        }
+        if (empty($dependent)) {
+            return $params;
+        }
+        $search = [];
+        $replace = [];
+        foreach ($dependent as $key) {
+            if( !isset($item[$key]) ){
+                throw new OrmQueryBuilderError("table:{$db_table} attach:{$attach} dependent:{$key} not found in item:" . json_encode($item));
+            }
+            $search[] = "{$stag}{$key}{$etag}";
+            $replace[] = $item[$key];
+        }
+
+        return self::replaceDependentArr($search, $replace, $params);
+    }
+
+    public function aTest(){
+        $db_table = 'tiny.blog_posts';
+        $attach = 'category';
+        static::initOrm();
+
+        Bootstrap::_D(self::$_table_map[$db_table]);
+        $params = self::$_table_map[$db_table]['attach'][$attach]['params'];
+        $dependent = self::$_table_map[$db_table]['attach'][$attach]['dependent'];
+        $item = [
+            'category_id' => 123,
+        ];
+        return self::replaceAttachDependent($db_table, $attach, $item, $dependent, $params);
+    }
+
+    private static function replaceDependentArr($search, $replace, array $params)
+    {
+        $result = [];
+        foreach ($params as $key => $val) {
+            if (is_string($key)) {
+                $key = str_replace($search, $replace, $key);
+            }
+            if (is_string($val)) {
+                $val = str_replace($search, $replace, $val);
+            } else if (is_array($val)) {
+                $val = self::replaceDependentArr($search, $replace, $val);
+            }
+            $result[$key] = $val;
+        }
+        return $result;
+    }
+
+    /**
+     * @param string $str 源字符串
+     * @param int $idx
+     * @param string $stag
+     * @param string $etag
+     * @return string
+     */
+    private static function parseDependentStr($str, $idx, $stag = '%', $etag = '%')
+    {
+        $s_len = strlen($stag);
+        $e_len = strlen($etag);
+        $s_idx = strpos($str, $stag, $idx);
+        $e_idx = strpos($str, $etag, $s_idx + $s_len);
+        if ($s_idx !== false && $e_idx !== false && $s_idx < $e_idx) {
+            $dep = substr($str, $s_idx + $s_len, $e_idx - $s_idx - $e_len);
+            return [$dep, $e_idx + 1];
+        }
+        return ['', 0];
+    }
+
+    /**
+     * 从 attach 的 $params 中解析出依赖 只会尝试解析字符串中的 %c% 格式的 为依赖
      * @param array $params
      * @param array $dependent
      * @return array
      */
-    private static function parseAttachDependent(array $params, array $dependent){
-        if( empty($params) ){
+    private static function parseAttachDependent(array $params, array $dependent)
+    {
+        if (empty($params)) {
             return [];
         }
         foreach ($params as $key => $val) {
-            if( is_string($key) && strpos($key, '%')===0 ){
-                $dep = substr($key, 1, strpos($key, '%', 1)-1);
-                if( !in_array($dep, $dependent) ){
-                    $dependent[] = $dep;
-                }
+            if (is_string($key)) {
+                $idx = 0;
+                do {
+                    list($dep, $idx) = self::parseDependentStr($key, intval($idx));
+                    if (!empty($dep) && !in_array($dep, $dependent)) {
+                        $dependent[] = $dep;
+                    }
+                } while ($idx > 0);
             }
-            if( is_string($val) && strpos($val, '%')===0 ){
-                $dep = substr($val, 1, strpos($val, '%', 1)-1);
-                if( !in_array($dep, $dependent) ){
-                    $dependent[] = $dep;
-                }
-            } else if( is_array($val) ){
+            if (is_string($val)) {
+                $idx = 0;
+                do {
+                    list($dep, $idx) = self::parseDependentStr($val, intval($idx));
+                    if (!empty($dep) && !in_array($dep, $dependent)) {
+                        $dependent[] = $dep;
+                    }
+                } while ($idx > 0);
+            } else if (is_array($val)) {
                 $dependent = self::parseAttachDependent($val, $dependent);
             }
         }
         return $dependent;
     }
-
 
     public function hookCurrentDb($current_db)
     {
@@ -150,7 +242,7 @@ trait OrmTrait
     {
         static::initOrm();
         $db_table = strtolower($db_table);
-        if (empty(self::$_table_map[$db_table]) || empty($db_table) ) {
+        if (empty(self::$_table_map[$db_table]) || empty($db_table)) {
             throw new ApiParamsError("table:{$db_table} not allowed");
         }
         return self::$_table_map[$db_table];
@@ -176,7 +268,7 @@ trait OrmTrait
         /** @var ObserversInterface $tmp */
         $tmp = isset($this->_model_map[$db_table]) ? $this->_model_map[$db_table] : null;
 
-        if(!empty($tmp)){
+        if (!empty($tmp)) {
             $tmp->hookCurrentUser($this->_current_user);
             return $tmp;
         }
@@ -208,7 +300,7 @@ trait OrmTrait
      * @return BuilderHelper
      * @throws ApiParamsError
      */
-    public static function table($table_name, $db_name=null)
+    public static function table($table_name, $db_name = null)
     {
         static::initOrm();
         Bootstrap::_D(self::$_table_map, 'table_map');
@@ -253,7 +345,7 @@ trait OrmTrait
         }
 
         foreach ($queries as $idx => $val) {
-            if( !is_array($val) || count($val)<2 ){
+            if (!is_array($val) || count($val) < 2) {
                 throw new OrmQueryBuilderError("error idx:{$idx} query:" . json_encode($val));
             }
             if (self::_allowQueryFunc($val[0])) {
@@ -303,7 +395,7 @@ trait OrmTrait
      */
     public function pluck($column, array $queries = [])
     {
-        $item = $this->first([$column, ], $queries);
+        $item = $this->first([$column,], $queries);
         $rst = isset($item[$column]) ? $item[$column] : null;
         return $rst;
     }
