@@ -10,26 +10,50 @@ namespace app\common;
 
 
 use app\Bootstrap;
+use app\common\Base\BaseApiModel;
 use app\common\Base\BaseModel;
 use Exception;
 use TinyWeb\Application;
 use TinyWeb\Exception\ApiParamsError;
+use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\Helper\ApiHelper;
 use TinyWeb\Request;
 use TinyWeb\Response;
 
 class ApiHub extends BaseModel
 {
+    /**
+     * @param array $routeInfo
+     * @return BaseApiModel
+     * @throws AppStartUpError
+     */
+    public function newRouteController(array $routeInfo)
+    {
+        $namespace = "\\" . Application::join("\\", [Application::app()->getAppName(), 'api', $routeInfo[0]]);
+        $controllerObj = new $namespace();
+        if (!($controllerObj instanceof BaseApiModel)) {
+            throw new AppStartUpError("class:{$namespace} isn't instanceof ControllerAbstract with routeInfo:" . json_encode($routeInfo));
+        }
+        $actionFunc = self::fixActionName($routeInfo[2]);
+        if (!is_callable([$controllerObj, $actionFunc])) {
+            throw new AppStartUpError("action:{$namespace}->{$actionFunc} not callable with routeInfo:" . json_encode($routeInfo));
+        }
+        return $controllerObj;
+    }
+
 
     public static function apiHub(array $routeInfo, array $params)
     {
-        $class_name = "\\" . Application::join("\\", [Application::app()->getAppName(), 'api', $routeInfo[0]]);
+
         if( $routeInfo[0]=='Orm' ){
             $routeInfo[1] = $routeInfo[1];
         }
 
         try {
             self::checkCsrfToken();
+            $class = new \ReflectionClass($class_name);
+            $instance = empty($init_params) ? $class->newInstanceArgs() : $class->newInstanceArgs($init_params);
+
             $json = ApiHelper::api($class_name, $routeInfo[1], $params);
             Bootstrap::_D(['class'=>$class_name, 'method'=>$routeInfo[1], 'params'=>$params, 'result'=>$json], 'api');
         } catch (Exception $ex) {

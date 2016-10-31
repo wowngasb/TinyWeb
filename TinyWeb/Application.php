@@ -10,7 +10,7 @@ use TinyWeb\Plugin\EventTrait;
  * Class Application
  * @package TinyWeb
  */
-final class Application
+final class Application extends Dispatcher
 {
     use EventTrait;
 
@@ -130,7 +130,7 @@ final class Application
      * @return ControllerAbstract
      * @throws AppStartUpError
      */
-    public function newRouteController(array $routeInfo)
+    public function objRouteInfo(array $routeInfo)
     {
         $controller = (isset($routeInfo[0]) && !empty($routeInfo[0])) ? $routeInfo[0] : '';
         $action = (isset($routeInfo[1]) && !empty($routeInfo[1])) ? $routeInfo[1] : '';
@@ -235,7 +235,7 @@ final class Application
         $response->clearResponse();  // 清空已设置的 信息
         $this->fire('preDispatch', [$this, $request, $response]);  // 分发之前触发	如果在一个请求处理过程中, 发生了forward, 则这个事件会被触发多次
 
-        $controller = $this->newRouteController($routeInfo);
+        $controller = $this->objRouteInfo($routeInfo);
         $controller->beforeAction();
         $actionFunc = self::fixActionName($routeInfo[1]);
         $params = self::fixActionParams($controller, $actionFunc, $params);
