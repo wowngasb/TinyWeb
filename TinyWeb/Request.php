@@ -242,7 +242,7 @@ final class Request
     public static function urlTo(array $routerArr, array $params=[])
     {
         $route = self::getInstance() ->getCurrentRoute();
-        return Application::app()->switchFord($route, $routerArr, $params);
+        return Application::app()->routeFord($route, $routerArr, $params);
     }
 
 

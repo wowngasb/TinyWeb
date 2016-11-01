@@ -10,7 +10,7 @@ use TinyWeb\Plugin\EventTrait;
  * Class Application
  * @package TinyWeb
  */
-final class Application extends Dispatcher
+final class Application implements DispatchInterface
 {
     use EventTrait;
 
@@ -18,7 +18,7 @@ final class Application extends Dispatcher
     protected $_appname = '';  // app 目录，用于 拼接命名空间 和 定位模板文件
     protected $_run = false;  // 布尔值, 指明当前的Application是否已经运行
     protected $_routes = [];  // 路由列表
-    protected $_dispatch = [];  // 分发列表
+    protected $_dispatches = [];  // 分发列表
 
     protected static $_app = null;  // Application通过特殊的方式实现了单利模式, 此属性保存当前实例
     private static $_microtime = null;
@@ -34,9 +34,9 @@ final class Application extends Dispatcher
         self::$_app = $this;
     }
 
-    public static function useTimes(){
-        $now = microtime(true);
-        return round($now - self::$_microtime, 3) * 1000 . 'ms';
+    public static function usedMilliSecond()
+    {
+        return round(microtime(true) - self::$_microtime, 3) * 1000;
     }
 
     /**
@@ -70,39 +70,6 @@ final class Application extends Dispatcher
     }
 
     /**
-     * 根据对象和方法名 获取 修复后的参数
-     * @param ControllerAbstract $controller
-     * @param $action
-     * @param array $params
-     * @return array
-     */
-    public static function fixActionParams(ControllerAbstract $controller, $action, array $params)
-    {
-        return ApiHelper::fixActionParams($controller, $action, $params);
-    }
-
-    /**
-     * @param string $action
-     * @return string
-     */
-    public static function fixActionName($action)
-    {
-        return $action;
-    }
-
-    /**
-     * @param string $appname
-     * @param string $module
-     * @param string $controller
-     * @return string
-     */
-    public static function fixNameSpace($appname, $module, $controller)
-    {
-        $namespace = "\\" . self::join("\\", [$appname, $module, 'controllers', $controller]);
-        return $namespace;
-    }
-
-    /**
      * @param $appname
      * @return $this
      * @throws AppStartUpError
@@ -126,55 +93,23 @@ final class Application extends Dispatcher
     }
 
     /**
-     * @param array $routeInfo
-     * @return ControllerAbstract
-     * @throws AppStartUpError
-     */
-    public function objRouteInfo(array $routeInfo)
-    {
-        $controller = (isset($routeInfo[0]) && !empty($routeInfo[0])) ? $routeInfo[0] : '';
-        $action = (isset($routeInfo[1]) && !empty($routeInfo[1])) ? $routeInfo[1] : '';
-        $module = isset($routeInfo[2]) ? $routeInfo[2] : '';
-        list($controller, $action, $module) = [strtolower($controller), strtolower($action), strtolower($module),];
-        if (empty($controller) || empty($action)) {
-            throw new AppStartUpError("empty controller or action with routeInfo:" . json_encode($routeInfo));
-        }
-        $namespace = self::fixNameSpace($this->_appname, $module, $controller);
-        if (!class_exists($namespace)) {
-            throw new AppStartUpError("class:{$namespace} not exists with routeInfo:" . json_encode($routeInfo));
-        }
-        $controllerObj = new $namespace();
-        if (!($controllerObj instanceof ControllerAbstract)) {
-            throw new AppStartUpError("class:{$namespace} isn't instanceof ControllerAbstract with routeInfo:" . json_encode($routeInfo));
-        }
-        $actionFunc = self::fixActionName($action);
-        if (!is_callable([$controllerObj, $actionFunc])) {
-            throw new AppStartUpError("action:{$namespace}->{$actionFunc} not callable with routeInfo:" . json_encode($routeInfo));
-        }
-        return $controllerObj;
-    }
-
-    /**
      * 运行一个Application, 开始接受并处理请求. 这个方法只能成功调用一次.
      * @throws RouteError
      * @throws AppStartUpError
      */
     public function run()
     {
-        if ($this->_run) {
-            throw new AppStartUpError('application is already running');
-        }
         if (empty($this->_routes)) {
-            throw new AppStartUpError('empty _routes');
+            throw new AppStartUpError('empty routes');
         }
         $this->_run = true;
         $request = Request::getInstance();
         $response = Response::getInstance();
         $this->fire('routerStartup', [$this, $request, $response]);  // 在路由之前触发	这个是7个事件中, 最早的一个. 但是一些全局自定的工作, 还是应该放在Bootstrap中去完成
 
-        list($route, list($routeInfo, $params)) = $this->switchRoute(null, $request);  // 必定会 匹配到一条路由 RoutesSimple
+        list($route, list($routeInfo, $params)) = $this->chooseRoute(null, $request);  // 必定会 匹配到一条路由 RoutesSimple
         if (empty($routeInfo)) {
-            throw new RouteError('cannot match with request:' . json_encode($request) . ', _routes:' . json_encode(array_keys($this->_routes)));
+            throw new RouteError('cannot match with request:' . json_encode($request) . ', routes:' . json_encode(array_keys($this->_routes)));
         }
         $request->setUnRouted()
             ->setCurrentRoute($route)
@@ -183,24 +118,11 @@ final class Application extends Dispatcher
             ->setRouted();
 
         $this->fire('routerShutdown', [$this, $request, $response]);  // 路由结束之后触发	此时路由一定正确完成, 否则这个事件不会触发
-
         $this->fire('dispatchLoopStartup', [$this, $request, $response]);  // 分发循环开始之前被触发
-
-        if (isset($this->_dispatch[$route])) {
-            $dispatchFunc = $this->_dispatch[$route];
-            $dispatchFunc($routeInfo, $params);  // 使用 注册路由时 自定义的分发
-        } else {
-            $this->dispatch($routeInfo, $params);  // 使用默认 分发
-        }
-
+        $this->forward($routeInfo, $params, $route);
         $this->fire('dispatchLoopShutdown', [$this, $request, $response]);  // 分发循环结束之后触发	此时表示所有的业务逻辑都已经运行完成, 但是响应还没有发送
 
         $response->sendBody();
-    }
-
-    public function dispatch(array $routeInfo, array $params)
-    {
-        $this->forward($routeInfo, $params);
     }
 
     /**
@@ -219,48 +141,50 @@ final class Application extends Dispatcher
             $route = $request->getCurrentRoute();
         }
         $this->getRoute($route);  // 检查对应 route 是否注册过
-
         if (is_null($routeInfo)) {
             $routeInfo = $request->getRouteInfo();
         }
-
         if (is_null($params)) {
             $params = $request->getParams();
 
         }
 
-
-        $request->setUnRouted()->setCurrentRoute($route)->setRouteInfo($routeInfo)->setParams($params)->setRouted();  // 根据新的参数 再次设置 $request 的路由信息
+        $request->setUnRouted()
+            ->setCurrentRoute($route)
+            ->setRouteInfo($routeInfo)
+            ->setParams($params)
+            ->setRouted();  // 根据新的参数 再次设置 $request 的路由信息
         // 设置完成 锁定 $request
+
         $response->clearResponse();  // 清空已设置的 信息
         $this->fire('preDispatch', [$this, $request, $response]);  // 分发之前触发	如果在一个请求处理过程中, 发生了forward, 则这个事件会被触发多次
 
-        $controller = $this->objRouteInfo($routeInfo);
-        $controller->beforeAction();
-        $actionFunc = self::fixActionName($routeInfo[1]);
-        $params = self::fixActionParams($controller, $actionFunc, $params);
-        $request->setParams($params);
-
-        ob_start();
-        call_user_func_array([$controller, $actionFunc], $params);
-        $buffer = ob_get_contents();
-        ob_end_clean();
-        if (!empty($buffer)) {
-            $response->apendBody($buffer);
-        }
+        $dispatcher = $this->getDispatch($route);
+        $dispatcher::dispatch($routeInfo, $params);  //分发
 
         $this->fire('postDispatch', [$this, $request, $response]);  // 分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
+    }
+
+    /**
+     * 重定向请求到新的路径  HTTP 302 自带 exit 效果
+     * @param string $url 要重定向到的URL
+     * @return void
+     */
+    public static function redirect($url)
+    {
+        header("Location: {$url}");  // Redirect browser
+        exit;  // Make sure that code below does not get executed when we redirect.
     }
 
     /**
      * 添加路由到 路由列表 接受请求后 根据添加的先后顺序依次进行匹配 直到成功
      * @param string $route
      * @param RouteInterface $routeObj
-     * @param callable $dispatch 处理分发函数 dispatch(array $routeInfo, array $params)
+     * @param DispatchInterface $dispatch 处理分发接口
      * @return $this
      * @throws AppStartUpError
      */
-    public function addRoute($route, RouteInterface $routeObj, callable $dispatch = null)
+    public function addRoute($route, RouteInterface $routeObj, DispatchInterface $dispatch = null)
     {
         if ($this->_run) {
             throw new AppStartUpError('cannot add route after run');
@@ -270,19 +194,9 @@ final class Application extends Dispatcher
         }
         $this->_routes[$route] = $routeObj;
         if (!empty($dispatch)) {
-            $this->_dispatch[$route] = $dispatch;
+            $this->_dispatches[$route] = $dispatch;
         }
-
         return $this;
-    }
-
-    /**
-     * 获取 路由列表
-     * @return array [IRoute, ]
-     */
-    public function getRoutes()
-    {
-        return $this->_routes;
     }
 
     /**
@@ -295,10 +209,24 @@ final class Application extends Dispatcher
     {
         if (!isset($this->_routes[$route])) {
             {
-                throw new AppStartUpError("route:{$route}, _routes:" . json_encode(array_keys($this->_routes)) . ' not found');
+                throw new AppStartUpError("route:{$route}, routes:" . json_encode(array_keys($this->_routes)) . ' not found');
             }
         }
         return $this->_routes[$route];
+    }
+
+    /**
+     * 根据 名字 获取 分发器  默认返回this
+     * @param string $route
+     * @return DispatchInterface
+     * @throws AppStartUpError
+     */
+    public function getDispatch($route)
+    {
+        if (!isset($this->_routes[$route])) {
+            return $this;
+        }
+        return $this->_dispatches[$route];
     }
 
     /**
@@ -307,9 +235,9 @@ final class Application extends Dispatcher
      * 一般参数应使用 php 原始 $_GET,$_POST 保存 保持一致性
      * @param Request $request 请求对象
      * @param string $route 指定路由名称  null 表示 依次尝试 路由列表
-     * @return array 匹配成功 $route, [$routeInfo, $params]  失败 '', [null, null]
+     * @return array 匹配成功 [$route, [$routeInfo, $params], ]  失败 ['', [null, null], ]
      */
-    public function switchRoute($route, Request $request)
+    public function chooseRoute($route, Request $request)
     {
         if (!is_null($route)) {
             $tmp = $this->getRoute($route)->route($request);
@@ -331,25 +259,127 @@ final class Application extends Dispatcher
      * @param string $route 指定路由名称
      * @return string
      */
-    public function switchFord($route, array $routerArr, array $params)
+    public function routeFord($route, array $routerArr, array $params)
     {
         return $this->getRoute($route)->ford($routerArr, $params);
     }
 
+    ###############################################################
+    ############ 实现 DispatchInterface 默认分发器 ################
+    ###############################################################
+
     /**
-     * 重定向请求到新的路径  HTTP 302 自带 exit 效果
-     * @param string $url 要重定向到的URL
-     * @return void
+     * 根据对象和方法名 获取 修复后的参数
+     * @param ExecutableEmptyInterface $object
+     * @param $action
+     * @param array $params
+     * @return array
      */
-    public static function redirect($url)
+    public static function fixActionParams(ExecutableEmptyInterface $object, $action, array $params)
     {
-        header("Location: {$url}");  // Redirect browser
-        exit;  // Make sure that code below does not get executed when we redirect.
+        return ApiHelper::fixActionParams($object, $action, $params);
     }
 
-    /*
-     * 常用 辅助函数 放在这里方便使用
+    /**
+     * @param string $action
+     * @return string
      */
+    public static function fixActionName($action)
+    {
+        return $action;
+    }
+
+    /**
+     * @param array $routeInfo
+     * @param string $actionFunc
+     * @return ControllerAbstract
+     * @throws AppStartUpError
+     */
+    public static function fixActionObject(array $routeInfo, $actionFunc)
+    {
+        $controller = (isset($routeInfo[0]) && !empty($routeInfo[0])) ? $routeInfo[0] : '';
+        $action = (isset($routeInfo[1]) && !empty($routeInfo[1])) ? $routeInfo[1] : '';
+        $module = isset($routeInfo[2]) ? $routeInfo[2] : '';
+        list($controller, $action, $module) = [strtolower($controller), strtolower($action), strtolower($module),];
+        if (empty($controller) || empty($action)) {
+            throw new AppStartUpError("empty controller or action with routeInfo:" . json_encode($routeInfo));
+        }
+
+        $appname = Application::app()->getAppName();
+        $namespace = "\\" . Application::join("\\", [$appname, $module, 'controllers', $controller]);
+
+        if (!class_exists($namespace)) {
+            throw new AppStartUpError("class:{$namespace} not exists with routeInfo:" . json_encode($routeInfo));
+        }
+        $controllerObject = new $namespace();
+        if (!($controllerObject instanceof ControllerAbstract)) {
+            throw new AppStartUpError("class:{$namespace} isn't instanceof ControllerAbstract with routeInfo:" . json_encode($routeInfo));
+        }
+        if (!is_callable([$controllerObject, $actionFunc])) {
+            throw new AppStartUpError("action:{$namespace}->{$actionFunc} not callable with routeInfo:" . json_encode($routeInfo));
+        }
+        return $controllerObject;
+    }
+
+    /**
+     * 调用分发 请在方法开头加上 固定流程 调用自身接口
+     *        $request = Request::getInstance();
+     *        $response = Response::getInstance();
+     *        $actionFunc = self::fixActionName($routeInfo[1]);
+     *        $controller = self::fixActionObject($routeInfo, $actionFunc);
+     *        $params = self::fixActionParams($controller, $actionFunc, $params);
+     *        $request->setParams($params);
+     * @param array $routeInfo
+     * @param array $params
+     * @return void
+     */
+    public static function dispatch(array $routeInfo, array $params)
+    {
+        $request = Request::getInstance();
+        $response = Response::getInstance();
+        $actionFunc = self::fixActionName($routeInfo[1]);
+        $controller = self::fixActionObject($routeInfo, $actionFunc);
+        $params = self::fixActionParams($controller, $actionFunc, $params);
+        $request->setParams($params);
+
+        $controller->beforeAction();  //控制器 beforeAction 不允许显式输出
+
+        ob_start();
+        call_user_func_array([$controller, $actionFunc], $params);
+        $buffer = ob_get_contents();
+        ob_end_clean();
+        if (!empty($buffer)) {
+            $response->apendBody($buffer);
+        }
+        return ;
+    }
+
+    ###############################################################
+    ############## 重写 EventTrait::isAllowedEvent ################
+    ###############################################################
+
+    /**
+     *  注册回调函数  回调参数为 callback(Request $request, Response $response)  两个参数都为单实例
+     *  1、routerStartup    在路由之前触发    这个是7个事件中, 最早的一个. 但是一些全局自定的工作, 还是应该放在Bootstrap中去完成
+     *  2、routerShutdown    路由结束之后触发    此时路由一定正确完成, 否则这个事件不会触发
+     *  3、dispatchLoopStartup    分发循环开始之前被触发
+     *  4、preDispatch    分发之前触发    如果在一个请求处理过程中, 发生了forward, 则这个事件会被触发多次
+     *  5、postDispatch    分发结束之后触发    此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
+     *  6、dispatchLoopShutdown    分发循环结束之后触发    此时表示所有的业务逻辑都已经运行完成, 但是响应还没有发送
+     * @param string $event
+     * @return bool
+     */
+    protected static function isAllowedEvent($event)
+    {
+        static $allow_event = ['routerStartup', 'routerShutdown', 'dispatchLoopStartup', 'preDispatch', 'postDispatch', 'dispatchLoopShutdown',];
+        return in_array($event, $allow_event);
+    }
+
+
+    ###############################################################
+    ############## 常用 辅助函数 放在这里方便使用 #################
+    ###############################################################
+
     public static function safe_base64_encode($str)
     {
         $str = rtrim(strtr(base64_encode($str), '+/', '-_'), '=');
@@ -540,20 +570,4 @@ final class Application extends Dispatcher
         return join($seq, $tmp_list);
     }
 
-    /**
-     *  注册回调函数  回调参数为 callback(Request $request, Response $response)  两个参数都为单实例
-     *  1、routerStartup	在路由之前触发	这个是7个事件中, 最早的一个. 但是一些全局自定的工作, 还是应该放在Bootstrap中去完成
-     *  2、routerShutdown	路由结束之后触发	此时路由一定正确完成, 否则这个事件不会触发
-     *  3、dispatchLoopStartup	分发循环开始之前被触发
-     *  4、preDispatch	分发之前触发	如果在一个请求处理过程中, 发生了forward, 则这个事件会被触发多次
-     *  5、postDispatch	分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
-     *  6、dispatchLoopShutdown	分发循环结束之后触发	此时表示所有的业务逻辑都已经运行完成, 但是响应还没有发送
-     * @param string $event
-     * @return bool
-     */
-    protected static function isAllowedEvent($event)
-    {
-        static $allow_event = ['routerStartup', 'routerShutdown', 'dispatchLoopStartup', 'preDispatch', 'postDispatch', 'dispatchLoopShutdown',];
-        return in_array($event, $allow_event);
-    }
 }

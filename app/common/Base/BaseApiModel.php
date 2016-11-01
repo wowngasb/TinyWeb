@@ -2,7 +2,9 @@
 
 namespace app\common\Base;
 
-abstract class BaseApiModel extends BaseModel {
+use TinyWeb\ExecutableEmptyInterface;
+
+abstract class BaseApiModel extends BaseModel implements ExecutableEmptyInterface {
 
     public function __construct() {
         # code...

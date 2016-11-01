@@ -13,7 +13,7 @@ use TinyWeb\Plugin\EventTrait;
  * Class Controller
  * @package TinyWeb
  */
-abstract class ControllerAbstract
+abstract class ControllerAbstract implements ExecutableEmptyInterface
 {
     use EventTrait;
 

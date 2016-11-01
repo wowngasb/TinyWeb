@@ -122,5 +122,4 @@ class Orm extends BaseApiModel
         return $request;  //直接返回请求参数
     }
 
-
 }

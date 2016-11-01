@@ -22,6 +22,7 @@ trait EventTrait
      * @return bool
      */
     protected static function isAllowedEvent($event){
+        false && func_get_args();
         return false;
     }
 

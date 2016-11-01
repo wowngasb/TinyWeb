@@ -95,6 +95,7 @@ trait OrmTrait
      * @param string $stag
      * @param string $etag
      * @return array
+     * @throws OrmQueryBuilderError
      */
     private static function replaceAttachDependent($db_table, $attach, array $item, array $dependent, array $params, $stag = '%', $etag = '%')
     {
