@@ -47,7 +47,7 @@ class ControllerFis extends ControllerAbstract
         $appname = $this->appname;
         $params['routeInfo'] = $routeInfo;
         $params['appname'] = $appname;
-        $tpl_path = self::join(DIRECTORY_SEPARATOR, ['widget', $tpl_path]);
+        $tpl_path = Application::join(DIRECTORY_SEPARATOR, ['widget', $tpl_path]);
 
         self::fire('preWidget', [$this, $tpl_path, $params]);
         $buffer = $this->getView()->widget($tpl_path, $params);

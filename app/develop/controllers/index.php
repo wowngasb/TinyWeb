@@ -19,7 +19,7 @@ class index extends BaseController
 
     public function index()
     {
-        Application::app()->forward(['Index', 'auth', 'develop']);
+        Application::instance()->forward(['Index', 'auth', 'develop']);
     }
 
     public function auth()

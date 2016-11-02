@@ -55,7 +55,8 @@ trait LogTrait
     {
         if (!empty($method)) {
             try {
-                $reflection = new \ReflectionMethod($method);
+                $tmp = explode('::', $method);
+                $reflection = new \ReflectionMethod($tmp[0], $tmp[1]);
                 $param = $reflection->getParameters();
                 $tmp_args = [];
                 foreach ($param as $arg) {

@@ -9,7 +9,7 @@
 
 namespace app;
 
-use app\common\ApiHub;
+use app\common\ApiDispatch;
 use app\common\Base\BaseModel;
 use PhpConsole\Connector;
 use TinyWeb\Application;
@@ -50,9 +50,7 @@ class Bootstrap extends BaseModel
     public static function bootstrap(Application $app)
     {
         $app->setAppName('app')
-            ->addRoute('api', new RouteApi('api'), function (array $routeInfo, array $params) {
-                ApiHub::apiHub($routeInfo, $params);
-            })
+            ->addRoute('api', new RouteApi('api'), ApiDispatch::instance())
             ->addRoute('simple', new RouteSimple('m', 'c', 'a'));  // 添加默认路由
         //->addRoute('supervar', new RouteSupervar());   // 添加 r 路由
 

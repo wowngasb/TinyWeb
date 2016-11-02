@@ -20,7 +20,7 @@ final class Response
     /**
      * @return Response
      */
-    public static function getInstance()
+    public static function instance()
     {
         if (!(self::$instance instanceof self)) {
             self::$instance = new static();

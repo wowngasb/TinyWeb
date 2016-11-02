@@ -36,7 +36,7 @@ final class Request
     /**
      * @return Request
      */
-    public static function getInstance()
+    public static function instance()
     {
         if (!(self::$instance instanceof self)) {
             self::$instance = new static();
@@ -241,8 +241,8 @@ final class Request
      */
     public static function urlTo(array $routerArr, array $params=[])
     {
-        $route = self::getInstance() ->getCurrentRoute();
-        return Application::app()->routeFord($route, $routerArr, $params);
+        $route = self::instance() ->getCurrentRoute();
+        return Application::instance()->routeFord($route, $routerArr, $params);
     }
 
 

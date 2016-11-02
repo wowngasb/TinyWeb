@@ -2,6 +2,7 @@
 namespace app\api;
 
 use app\common\Base\BaseApiModel;
+use app\common\Models\CurrentUser;
 use TinyWeb\Exception\ApiParamsError;
 use TinyWeb\Exception\Error;
 use TinyWeb\Helper\DbHelper;
@@ -46,7 +47,8 @@ class AdminApi extends BaseApiModel
 
     public function testDbJson()
     {
-        return  Orm::table('blog_posts')->get(['slug', 'title', 'view_count', 'category', 'tags', 'user'], [
+        $user = new CurrentUser();
+        return  (new Orm())->hookCurrentDb('tiny')->hookCurrentTable('blog_posts')->hookCurrentUser($user)->get(['slug', 'title', 'view_count', 'category', 'tags', 'user'], [
             ['state', 1],
             ['view_count', '>', 100],
         ]);

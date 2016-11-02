@@ -34,7 +34,7 @@ class Orm extends BaseApiModel
         if( self::hasTableMap() ){
             return ;
         }
-        $db_name = strtolower(Application::app()->getEnv('ENV_MYSQL_DB'));
+        $db_name = strtolower(Application::instance()->getEnv('ENV_MYSQL_DB'));
         self::initTableMap([
             "{$db_name}.blog_categories" => [
                 'default_sort_column' => 'rank',  // 默认排序参数

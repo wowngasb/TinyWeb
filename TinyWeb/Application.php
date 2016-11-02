@@ -20,7 +20,7 @@ final class Application implements DispatchInterface
     protected $_routes = [];  // 路由列表
     protected $_dispatches = [];  // 分发列表
 
-    protected static $_app = null;  // Application通过特殊的方式实现了单利模式, 此属性保存当前实例
+    protected static $instance = null;  // Application通过特殊的方式实现了单利模式, 此属性保存当前实例
     private static $_microtime = null;
 
     /**
@@ -31,21 +31,12 @@ final class Application implements DispatchInterface
     {
         self::$_microtime = microtime(true);
         $this->_config = $config;
-        self::$_app = $this;
+        self::$instance = $this;
     }
 
     public static function usedMilliSecond()
     {
         return round(microtime(true) - self::$_microtime, 3) * 1000;
-    }
-
-    /**
-     * 获取当前的Application实例
-     * @return Application
-     */
-    public static function app()
-    {
-        return self::$_app;
     }
 
     /**
@@ -103,8 +94,8 @@ final class Application implements DispatchInterface
             throw new AppStartUpError('empty routes');
         }
         $this->_run = true;
-        $request = Request::getInstance();
-        $response = Response::getInstance();
+        $request = Request::instance();
+        $response = Response::instance();
         $this->fire('routerStartup', [$this, $request, $response]);  // 在路由之前触发	这个是7个事件中, 最早的一个. 但是一些全局自定的工作, 还是应该放在Bootstrap中去完成
 
         list($route, list($routeInfo, $params)) = $this->chooseRoute(null, $request);  // 必定会 匹配到一条路由 RoutesSimple
@@ -133,8 +124,8 @@ final class Application implements DispatchInterface
      */
     public function forward(array $routeInfo = null, array $params = null, $route = null)
     {
-        $request = Request::getInstance();
-        $response = Response::getInstance();
+        $request = Request::instance();
+        $response = Response::instance();
 
         // 对使用默认值 null 的参数 用当前值补全
         if (is_null($route)) {
@@ -291,34 +282,32 @@ final class Application implements DispatchInterface
 
     /**
      * @param array $routeInfo
-     * @param string $actionFunc
+     * @param string $action
      * @return ControllerAbstract
      * @throws AppStartUpError
      */
-    public static function fixActionObject(array $routeInfo, $actionFunc)
+    public static function fixActionObject(array $routeInfo, $action)
     {
         $controller = (isset($routeInfo[0]) && !empty($routeInfo[0])) ? $routeInfo[0] : '';
-        $action = (isset($routeInfo[1]) && !empty($routeInfo[1])) ? $routeInfo[1] : '';
         $module = isset($routeInfo[2]) ? $routeInfo[2] : '';
-        list($controller, $action, $module) = [strtolower($controller), strtolower($action), strtolower($module),];
-        if (empty($controller) || empty($action)) {
-            throw new AppStartUpError("empty controller or action with routeInfo:" . json_encode($routeInfo));
+        list($controller, $module) = [strtolower($controller), strtolower($module),];
+        if (empty($controller) ) {
+            throw new AppStartUpError("empty controller with routeInfo:" . json_encode($routeInfo));
         }
 
-        $appname = Application::app()->getAppName();
-        $namespace = "\\" . Application::join("\\", [$appname, $module, 'controllers', $controller]);
+        $namespace = "\\" . Application::join("\\", [Application::instance()->getAppName(), $module, 'controllers', $controller]);
 
         if (!class_exists($namespace)) {
             throw new AppStartUpError("class:{$namespace} not exists with routeInfo:" . json_encode($routeInfo));
         }
-        $controllerObject = new $namespace();
-        if (!($controllerObject instanceof ControllerAbstract)) {
+        $object = new $namespace();
+        if (!($object instanceof ControllerAbstract)) {
             throw new AppStartUpError("class:{$namespace} isn't instanceof ControllerAbstract with routeInfo:" . json_encode($routeInfo));
         }
-        if (!is_callable([$controllerObject, $actionFunc])) {
-            throw new AppStartUpError("action:{$namespace}->{$actionFunc} not callable with routeInfo:" . json_encode($routeInfo));
+        if (!is_callable([$object, $action])) {
+            throw new AppStartUpError("action:{$namespace}->{$action} not allowed with routeInfo:" . json_encode($routeInfo));
         }
-        return $controllerObject;
+        return $object;
     }
 
     /**
@@ -335,23 +324,44 @@ final class Application implements DispatchInterface
      */
     public static function dispatch(array $routeInfo, array $params)
     {
-        $request = Request::getInstance();
-        $response = Response::getInstance();
-        $actionFunc = self::fixActionName($routeInfo[1]);
-        $controller = self::fixActionObject($routeInfo, $actionFunc);
-        $params = self::fixActionParams($controller, $actionFunc, $params);
+        $request = Request::instance();
+        $response = Response::instance();
+        $action = self::fixActionName($routeInfo[1]);
+        $object = self::fixActionObject($routeInfo, $action);
+        $params = self::fixActionParams($object, $action, $params);
         $request->setParams($params);
 
-        $controller->beforeAction();  //控制器 beforeAction 不允许显式输出
+        $object->beforeAction();  //控制器 beforeAction 不允许显式输出
+        $buffer = self::execute($object, $action, $params);
 
-        ob_start();
-        call_user_func_array([$controller, $actionFunc], $params);
-        $buffer = ob_get_contents();
-        ob_end_clean();
         if (!empty($buffer)) {
             $response->apendBody($buffer);
         }
-        return ;
+    }
+
+    /**
+     * 根据对象和方法名 获取 执行结果
+     * @param ExecutableEmptyInterface $object
+     * @param string $action
+     * @param array $params
+     * @return mixed
+     */
+    public static function execute(ExecutableEmptyInterface $object, $action, array $params)
+    {
+        ob_start();
+        call_user_func_array([$object, $action], $params);
+        $buffer = ob_get_contents();
+        ob_end_clean();
+        return $buffer;
+    }
+
+    /**
+     * 获取当前的Application实例
+     * @return Application
+     */
+    public static function instance()
+    {
+        return self::$instance;
     }
 
     ###############################################################

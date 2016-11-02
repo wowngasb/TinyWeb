@@ -8,7 +8,6 @@
 
 namespace TinyWeb\View;
 
-use TinyWeb\BaseAbstract;
 use TinyWeb\ViewInterface;
 
 

@@ -9,6 +9,7 @@
 namespace TinyWeb\Plugin;
 
 use app\Bootstrap;
+use app\common\Models\CurrentUser;
 use TinyWeb\Application;
 use TinyWeb\CurrentUserInterface;
 use TinyWeb\Exception\ApiParamsError;
@@ -205,32 +206,68 @@ trait OrmTrait
         return $dependent;
     }
 
+    /**
+     * @param string $current_db
+     * @return $this
+     * @throws OrmStartUpError
+     */
     public function hookCurrentDb($current_db)
     {
+        self::initOrm();
         if (empty($current_db)) {
             throw new OrmStartUpError("db:{$current_db} empty name");
         }
         $this->_current_db = $current_db;
+        return $this;
     }
 
+    /**
+     * @param string $current_table
+     * @return $this
+     * @throws OrmStartUpError
+     */
     public function hookCurrentTable($current_table)
     {
+        self::initOrm();
         if (empty($current_table)) {
             throw new OrmStartUpError("table:{$current_table} empty name");
         }
         $this->_current_table = $current_table;
+        return $this;
     }
 
     /**
      * @param CurrentUserInterface $user
+     * @return $this
      */
     public function hookCurrentUser(CurrentUserInterface $user)
     {
+        self::initOrm();
         $this->_current_user = $user;
         /** @var ObserversInterface $model */
         foreach ($this->_model_map as $table_name => $model) {
             !empty($model) && $model->hookCurrentUser($user);
         }
+        return $this;
+    }
+
+    /**
+     * @param string $table_name
+     * @param CurrentUserInterface $user
+     * @param string $db_name
+     * @return $this
+     */
+    public function hookCurrent($table_name, CurrentUserInterface $user=null, $db_name = null)
+    {
+        self::initOrm();
+        Bootstrap::_D(self::$_table_map, 'table_map');
+        $db_name = is_null($db_name) ? Application::instance()->getEnv('ENV_MYSQL_DB') : $db_name;
+        $table_name = strtolower($table_name);
+        $db_name = strtolower($db_name);
+        $user = !is_null($user) ? new CurrentUser() : $user;
+
+        $this->hookCurrentDb($table_name)->hookCurrentDb($db_name)->hookCurrentUser($user);
+        return $this;
     }
 
     public static function _getTableMapConfig($db_table, $key, $default = null)
@@ -305,7 +342,7 @@ trait OrmTrait
     {
         static::initOrm();
         Bootstrap::_D(self::$_table_map, 'table_map');
-        $db_name = is_null($db_name) ? Application::app()->getEnv('ENV_MYSQL_DB') : $db_name;
+        $db_name = is_null($db_name) ? Application::instance()->getEnv('ENV_MYSQL_DB') : $db_name;
         $table_name = strtolower($table_name);
         $db_name = strtolower($db_name);
 

@@ -45,7 +45,8 @@ class RouteApi implements RouteInterface
         preg_match("/{$reg_str}/i", $uri, $matches);
 
         if ( isset($matches[1]) && isset($matches[2]) ) {
-            return [[$matches[1], $matches[2], $this->module_name], $_REQUEST];
+            $routeInfo = [$matches[1], $matches[2], $this->module_name];
+            return [$routeInfo, $_REQUEST];
         } else {
             return [null, null];
         }

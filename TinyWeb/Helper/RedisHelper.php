@@ -16,9 +16,9 @@ class RedisHelper
         if (!isset(self::$instance)) {
             try {
                 self::$instance = new Redis();
-                $host = Application::app()->getEnv('ENV_REDIS_HOST', 'localhost');
-                $port = Application::app()->getEnv('ENV_REDIS_PORT', 6379);
-                $pass = Application::app()->getEnv('ENV_REDIS_PASS', '');
+                $host = Application::instance()->getEnv('ENV_REDIS_HOST', 'localhost');
+                $port = Application::instance()->getEnv('ENV_REDIS_PORT', 6379);
+                $pass = Application::instance()->getEnv('ENV_REDIS_PASS', '');
                 if (!self::$instance->connect($host, $port)) {
                     throw new Exception('connect Redis server failed!');
                 }

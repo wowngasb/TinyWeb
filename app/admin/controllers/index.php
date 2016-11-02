@@ -25,7 +25,7 @@ class index extends BaseController
 
     public function index()
     {
-        Application::app()->forward(['index', 'forward', 'admin'], ['name'=>'abc', 'id'=>123456], 'simple');
+        Application::instance()->forward(['index', 'forward', 'admin'], ['name'=>'abc', 'id'=>123456], 'simple');
     }
 
 
@@ -36,7 +36,7 @@ class index extends BaseController
         $this->assign('age', $age);
 
         $this->assign('title', 'Index Test');
-        $this->assign('config', Application::app()->getConfig());
+        $this->assign('config', Application::instance()->getConfig());
         $this->display();
     }
 

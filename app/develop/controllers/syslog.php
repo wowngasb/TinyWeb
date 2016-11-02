@@ -20,7 +20,7 @@ class sysLog extends BaseController
     }
 
     public function index() {
-        Application::app()->forward(['syslog', 'showLogDir', 'develop']);
+        Application::instance()->forward(['syslog', 'showLogDir', 'develop']);
     }
 
     public function showLogDir()

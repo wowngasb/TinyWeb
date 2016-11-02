@@ -26,8 +26,8 @@ abstract class ControllerAbstract implements ExecutableEmptyInterface
 
     final public function __construct()
     {
-        $request = Request::getInstance();
-        $response = Response::getInstance();
+        $request = Request::instance();
+        $response = Response::instance();
 
         if (!$request->isRouted()) {
             $request->setRouted();
@@ -36,7 +36,7 @@ abstract class ControllerAbstract implements ExecutableEmptyInterface
         $this->response = $response;
 
         $this->routeInfo = $request->getRouteInfo();
-        $this->appname = Application::app()->getAppName();
+        $this->appname = Application::instance()->getAppName();
     }
 
     /**

@@ -25,9 +25,9 @@ class ApiHelper
     public static function api($class_name, $method, $args_input, $init_params = [])
     {
         $t1 = microtime(true);
-        $request = Request::getInstance();
+        $request = Request::instance();
         $reflection = new \ReflectionMethod($class_name, $method);
-        if (self::is_ignore_method($method) || $reflection->isProtected() || $reflection->isPrivate()) {
+        if (self::isIgnoreMethod($method) || $reflection->isProtected() || $reflection->isPrivate()) {
             throw new ApiParamsError("api:{$class_name}->{$method} not found");
         }
         $args = self::fix_args(self::getApiMethodArgs($reflection), $args_input);
@@ -252,7 +252,7 @@ EOT;
         $all_method_list = $class->getMethods(\ReflectionMethod::IS_PUBLIC);
         foreach ($all_method_list as $key => $val) {
             $name = strtolower($val->getName());
-            if (self::is_ignore_method($name)) {
+            if (self::isIgnoreMethod($name)) {
                 continue;
             } else {
                 $method_list[] = [
@@ -280,7 +280,7 @@ EOT;
         return $param_obj;
     }
 
-    private static function is_ignore_method($name)
+    public static function isIgnoreMethod($name)
     {
         if ($name == '__construct' || stripos($name, 'hook', 0) === 0 || stripos($name, 'crontab', 0) === 0 || stripos($name, '_', 0) === 0) {
             return true;

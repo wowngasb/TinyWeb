@@ -9,7 +9,6 @@
 namespace TinyWeb\View;
 
 use Philo\Blade\Blade;
-use TinyWeb\BaseAbstract;
 use TinyWeb\ViewInterface;
 
 
