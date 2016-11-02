@@ -167,7 +167,7 @@ class ApiDispatch extends BaseModel implements DispatchInterface
             self::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
         } else {
             $csrf = $request->getCsrfToken();
-            if (!Application::strCmp($session_id, Application::decrypt($csrf))) {
+            if ( !self::validCsrfToken($csrf) ) {
                 $log_msg = "CSRF error [{$request_method}] token:" . $csrf . ", this_url:" . $request->getThisUrl() . ", referer_url:" . $request->getHttpReferer();
                 self::error($log_msg, __METHOD__, __CLASS__, __LINE__);
                 throw new ApiParamsError($log_msg);
@@ -177,6 +177,10 @@ class ApiDispatch extends BaseModel implements DispatchInterface
             }
         }
         Bootstrap::_D($log_msg, 'csrf');
+    }
+
+    private static function validCsrfToken($csrf){
+        return true;
     }
 
 }

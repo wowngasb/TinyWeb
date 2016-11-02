@@ -10,18 +10,21 @@ use TinyWeb\Plugin\EventTrait;
  * Class Application
  * @package TinyWeb
  */
-final class Application implements DispatchInterface
+final class Application implements DispatchInterface, RouteInterface
 {
     use EventTrait;
 
-    protected $_config = [];  // 全局配置
-    protected $_appname = '';  // app 目录，用于 拼接命名空间 和 定位模板文件
-    protected $_run = false;  // 布尔值, 指明当前的Application是否已经运行
-    protected $_routes = [];  // 路由列表
-    protected $_dispatches = [];  // 分发列表
+    private $_config = [];  // 全局配置
+    private $_app_name = '';  // app 目录，用于 拼接命名空间 和 定位模板文件
+    private $_route_name = 'default';  // 默认路由名字，总是会路由到 index
+    private $_micro_timestamp = null;
+    private $_run = false;  // 布尔值, 指明当前的Application是否已经运行
+    private $_routes = [];  // 路由列表
+    private $_dispatches = [];  // 分发列表
 
-    protected static $instance = null;  // Application通过特殊的方式实现了单利模式, 此属性保存当前实例
-    private static $_microtime = null;
+    private static $instance = null;  // Application通过特殊的方式实现了单利模式, 此属性保存当前实例
+
+
 
     /**
      * Application constructor.
@@ -29,14 +32,14 @@ final class Application implements DispatchInterface
      */
     public function __construct(array $config = [])
     {
-        self::$_microtime = microtime(true);
+        $this->_micro_timestamp = microtime(true);
         $this->_config = $config;
         self::$instance = $this;
     }
 
-    public static function usedMilliSecond()
+    public function usedMilliSecond()
     {
-        return round(microtime(true) - self::$_microtime, 3) * 1000;
+        return round(microtime(true) - $this->_micro_timestamp, 3) * 1000;
     }
 
     /**
@@ -71,7 +74,7 @@ final class Application implements DispatchInterface
             throw new AppStartUpError('cannot setAppName in running');
         }
 
-        $this->_appname = $appname;
+        $this->_app_name = $appname;
         return $this;
     }
 
@@ -80,7 +83,7 @@ final class Application implements DispatchInterface
      */
     public function getAppName()
     {
-        return $this->_appname;
+        return $this->_app_name;
     }
 
     /**
@@ -98,7 +101,7 @@ final class Application implements DispatchInterface
         $response = Response::instance();
         $this->fire('routerStartup', [$this, $request, $response]);  // 在路由之前触发	这个是7个事件中, 最早的一个. 但是一些全局自定的工作, 还是应该放在Bootstrap中去完成
 
-        list($route, list($routeInfo, $params)) = $this->chooseRoute(null, $request);  // 必定会 匹配到一条路由 RoutesSimple
+        list($route, list($routeInfo, $params)) = $this->route($request);  // 必定会 匹配到一条路由 RoutesSimple
         if (empty($routeInfo)) {
             throw new RouteError('cannot match with request:' . json_encode($request) . ', routes:' . json_encode(array_keys($this->_routes)));
         }
@@ -177,8 +180,12 @@ final class Application implements DispatchInterface
      */
     public function addRoute($route, RouteInterface $routeObj, DispatchInterface $dispatch = null)
     {
+        $route = strtolower($route);
         if ($this->_run) {
             throw new AppStartUpError('cannot add route after run');
+        }
+        if( $route==$this->_route_name ){
+            throw new AppStartUpError("route:{$route} is default route");
         }
         if (isset($this->_routes[$route])) {
             throw new AppStartUpError("route:{$route} has been added");
@@ -191,13 +198,17 @@ final class Application implements DispatchInterface
     }
 
     /**
-     * 根据 名字 获取 路由
+     * 根据 名字 获取 路由  default 会返回 $this
      * @param string $route
      * @return RouteInterface
      * @throws AppStartUpError
      */
     public function getRoute($route)
     {
+        $route = strtolower($route);
+        if( $route==$this->_route_name ){
+            return $this;
+        }
         if (!isset($this->_routes[$route])) {
             {
                 throw new AppStartUpError("route:{$route}, routes:" . json_encode(array_keys($this->_routes)) . ' not found');
@@ -207,52 +218,61 @@ final class Application implements DispatchInterface
     }
 
     /**
-     * 根据 名字 获取 分发器  默认返回this
+     * 根据 名字 获取 分发器  无匹配则返回 $this
      * @param string $route
      * @return DispatchInterface
      * @throws AppStartUpError
      */
     public function getDispatch($route)
     {
-        if (!isset($this->_routes[$route])) {
+        $route = strtolower($route);
+        if (!isset($this->_dispatches[$route])) {
             return $this;
         }
         return $this->_dispatches[$route];
     }
 
+    ###############################################################
+    ############ 实现 RouteInterface 默认分发器 ################
+    ###############################################################
+
     /**
      * 根据请求 $request 的 $_method $_request_uri $_language 得出 路由信息 及 参数
-     * 匹配成功后 获取 [$routeInfo, $params]  失败 [null, null]
+     * 匹配成功后 获取 [$routeInfo, $params]  永远不会失败 默认返回 [$this->_routename, [$this->getDefaultRouteInfo(), []]];
      * 一般参数应使用 php 原始 $_GET,$_POST 保存 保持一致性
      * @param Request $request 请求对象
-     * @param string $route 指定路由名称  null 表示 依次尝试 路由列表
      * @return array 匹配成功 [$route, [$routeInfo, $params], ]  失败 ['', [null, null], ]
      */
-    public function chooseRoute($route, Request $request)
+    public function route(Request $request)
     {
-        if (!is_null($route)) {
-            $tmp = $this->getRoute($route)->route($request);
-            return [$route, $tmp,];
-        }
         foreach ($this->_routes as $route => $val) {
             $tmp = $this->getRoute($route)->route($request);
             if (!empty($tmp[0])) {
                 return [$route, $tmp,];
             }
         }
-        return ['', [null, []],];
+        return [$this->_route_name, [$this->getDefaultRouteInfo(), []]];
     }
 
     /**
      * 根据 路由信息 和 参数 按照路由规则生成 url
      * @param array $routerArr
      * @param array $params
-     * @param string $route 指定路由名称
      * @return string
      */
-    public function routeFord($route, array $routerArr, array $params)
+    public function ford(array $routerArr, array $params=[])
     {
-        return $this->getRoute($route)->ford($routerArr, $params);
+        $request = Request::instance();
+        return $request::urlTo($routerArr, $params);
+    }
+
+    /**
+     * 获取路由 默认参数 用于url参数不齐全时 补全
+     * @return array  $routeInfo [$controller, $action, $module]
+     */
+    public static function getDefaultRouteInfo()
+    {
+        return ['index', 'index', 'index'];
     }
 
     ###############################################################

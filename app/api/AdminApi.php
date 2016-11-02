@@ -26,7 +26,7 @@ class AdminApi extends BaseApiModel
 
     public function testDb()
     {
-        return (new Orm('blog_tags'))->get(0, 20, [], ['*'], [
+        return (new Orm())->hookCurrent('blog_posts')->get(0, 20, [], ['*'], [
         ]);
     }
 

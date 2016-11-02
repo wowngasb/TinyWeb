@@ -264,9 +264,9 @@ trait OrmTrait
         $db_name = is_null($db_name) ? Application::instance()->getEnv('ENV_MYSQL_DB') : $db_name;
         $table_name = strtolower($table_name);
         $db_name = strtolower($db_name);
-        $user = !is_null($user) ? new CurrentUser() : $user;
+        $user = is_null($user) ? new CurrentUser() : $user;
 
-        $this->hookCurrentDb($table_name)->hookCurrentDb($db_name)->hookCurrentUser($user);
+        $this->hookCurrentDb($db_name)->hookCurrentTable($table_name)->hookCurrentUser($user);
         return $this;
     }
 
@@ -354,7 +354,7 @@ trait OrmTrait
 
     private function builder(array $queries = [])
     {
-        $table = self::table($this->_current_db, $this->_current_table);
+        $table = self::table($this->_current_table, $this->_current_db);
         $table = $this->getModel()->beforeBuilderQueries($table, $queries);
 
         $table = self::_builderQuery($table, $queries);
