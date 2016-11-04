@@ -24,8 +24,6 @@ final class Application implements DispatchInterface, RouteInterface
 
     private static $instance = null;  // Application通过特殊的方式实现了单利模式, 此属性保存当前实例
 
-
-
     /**
      * Application constructor.
      * @param array $config 关联数组的配置
@@ -99,7 +97,7 @@ final class Application implements DispatchInterface, RouteInterface
         $this->_run = true;
         $request = Request::instance();
         $response = Response::instance();
-        $this->fire('routerStartup', [$this, $request, $response]);  // 在路由之前触发	这个是7个事件中, 最早的一个. 但是一些全局自定的工作, 还是应该放在Bootstrap中去完成
+        static::fire('routerStartup', [$this, $request, $response]);  // 在路由之前触发	这个是7个事件中, 最早的一个. 但是一些全局自定的工作, 还是应该放在Bootstrap中去完成
 
         list($route, list($routeInfo, $params)) = $this->route($request);  // 必定会 匹配到一条路由 RoutesSimple
         if (empty($routeInfo)) {
@@ -111,10 +109,10 @@ final class Application implements DispatchInterface, RouteInterface
             ->setRouteInfo($routeInfo)
             ->setRouted();
 
-        $this->fire('routerShutdown', [$this, $request, $response]);  // 路由结束之后触发	此时路由一定正确完成, 否则这个事件不会触发
-        $this->fire('dispatchLoopStartup', [$this, $request, $response]);  // 分发循环开始之前被触发
-        $this->forward($routeInfo, $params, $route);
-        $this->fire('dispatchLoopShutdown', [$this, $request, $response]);  // 分发循环结束之后触发	此时表示所有的业务逻辑都已经运行完成, 但是响应还没有发送
+        static::fire('routerShutdown', [$this, $request, $response]);  // 路由结束之后触发	此时路由一定正确完成, 否则这个事件不会触发
+        static::fire('dispatchLoopStartup', [$this, $request, $response]);  // 分发循环开始之前被触发
+        static::forward($routeInfo, $params, $route);
+        static::fire('dispatchLoopShutdown', [$this, $request, $response]);  // 分发循环结束之后触发	此时表示所有的业务逻辑都已经运行完成, 但是响应还没有发送
 
         $response->sendBody();
     }
@@ -122,11 +120,12 @@ final class Application implements DispatchInterface, RouteInterface
     /**
      * @param array|null $routeInfo
      * @param array|null $params
-     * @param null $route
+     * @param string|null $route
      * @throws AppStartUpError
      */
-    public function forward(array $routeInfo = null, array $params = null, $route = null)
+    public static function forward(array $routeInfo = null, array $params = null, $route = null)
     {
+        $app = static::instance();
         $request = Request::instance();
         $response = Response::instance();
 
@@ -134,7 +133,7 @@ final class Application implements DispatchInterface, RouteInterface
         if (is_null($route)) {
             $route = $request->getCurrentRoute();
         }
-        $this->getRoute($route);  // 检查对应 route 是否注册过
+        $app->getRoute($route);  // 检查对应 route 是否注册过
         if (is_null($routeInfo)) {
             $routeInfo = $request->getRouteInfo();
         }
@@ -151,12 +150,12 @@ final class Application implements DispatchInterface, RouteInterface
         // 设置完成 锁定 $request
 
         $response->clearResponse();  // 清空已设置的 信息
-        $this->fire('preDispatch', [$this, $request, $response]);  // 分发之前触发	如果在一个请求处理过程中, 发生了forward, 则这个事件会被触发多次
+        static::fire('preDispatch', [$app, $request, $response]);  // 分发之前触发	如果在一个请求处理过程中, 发生了forward 或 callfunc, 则这个事件会被触发多次
 
-        $dispatcher = $this->getDispatch($route);
+        $dispatcher = $app->getDispatch($route);
         $dispatcher::dispatch($routeInfo, $params);  //分发
 
-        $this->fire('postDispatch', [$this, $request, $response]);  // 分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
+        static::fire('postDispatch', [$app, $request, $response]);  // 分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
     }
 
     /**
@@ -168,6 +167,47 @@ final class Application implements DispatchInterface, RouteInterface
     {
         header("Location: {$url}");  // Redirect browser
         exit;  // Make sure that code below does not get executed when we redirect.
+    }
+
+    /**
+     * @param array|null $routeInfo
+     * @param array|null $params
+     * @param string|null $route
+     * @return mixed
+     * @throws AppStartUpError
+     */
+    public static function callfunc(array $routeInfo = null, array $params = null, $route = null){
+        $app = static::instance();
+        $request = Request::instance();
+        $response = Response::instance();
+
+        // 对使用默认值 null 的参数 用当前值补全
+        if (is_null($route)) {
+            $route = $request->getCurrentRoute();
+        }
+        $app->getRoute($route);  // 检查对应 route 是否注册过
+        if (is_null($routeInfo)) {
+            $routeInfo = $request->getRouteInfo();
+        }
+        if (is_null($params)) {
+            $params = $request->getParams();
+
+        }
+
+        $request->setUnRouted()
+            ->setCurrentRoute($route)
+            ->setRouteInfo($routeInfo)
+            ->setParams($params)
+            ->setRouted();  // 根据新的参数 再次设置 $request 的路由信息
+        // 设置完成 锁定 $request
+
+        static::fire('preDispatch', [$app, $request, $response]);  // 分发之前触发	如果在一个请求处理过程中, 发生了forward 或 callfunc, 则这个事件会被触发多次
+
+        $dispatcher = $app->getDispatch($route);
+        $result = $dispatcher::execute($routeInfo, $params);  //分发
+
+        static::fire('postDispatch', [$app, $request, $response]);  // 分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
+        return $result;
     }
 
     /**
@@ -308,6 +348,8 @@ final class Application implements DispatchInterface, RouteInterface
      */
     public static function fixActionObject(array $routeInfo, $action)
     {
+        Request::instance()->setSessionStart(true);  // 开启 session
+
         $controller = (isset($routeInfo[0]) && !empty($routeInfo[0])) ? $routeInfo[0] : '';
         $module = isset($routeInfo[2]) ? $routeInfo[2] : '';
         list($controller, $module) = [strtolower($controller), strtolower($module),];
@@ -333,7 +375,6 @@ final class Application implements DispatchInterface, RouteInterface
     /**
      * 调用分发 请在方法开头加上 固定流程 调用自身接口
      *        $request = Request::getInstance();
-     *        $response = Response::getInstance();
      *        $actionFunc = self::fixActionName($routeInfo[1]);
      *        $controller = self::fixActionObject($routeInfo, $actionFunc);
      *        $params = self::fixActionParams($controller, $actionFunc, $params);
@@ -345,29 +386,40 @@ final class Application implements DispatchInterface, RouteInterface
     public static function dispatch(array $routeInfo, array $params)
     {
         $request = Request::instance();
-        $response = Response::instance();
         $action = self::fixActionName($routeInfo[1]);
         $object = self::fixActionObject($routeInfo, $action);
         $params = self::fixActionParams($object, $action, $params);
         $request->setParams($params);
 
         $object->beforeAction();  //控制器 beforeAction 不允许显式输出
-        $buffer = self::execute($object, $action, $params);
+        ob_start();
+        call_user_func_array([$object, $action], $params);
+        $buffer = ob_get_contents();
+        ob_end_clean();
 
         if (!empty($buffer)) {
+            $response = Response::instance();
             $response->apendBody($buffer);
         }
     }
 
     /**
-     * 根据对象和方法名 获取 执行结果
-     * @param ExecutableEmptyInterface $object
-     * @param string $action
+     * 调用分发 获得方法的返回数据  请在方法开头加上 固定流程 调用自身接口
+     *        $request = Request::getInstance();
+     *        $actionFunc = self::fixActionName($routeInfo[1]);
+     *        $controller = self::fixActionObject($routeInfo, $actionFunc);
+     *        $params = self::fixActionParams($controller, $actionFunc, $params);
+     *        $request->setParams($params);
+     * @param array $routeInfo
      * @param array $params
-     * @return mixed
+     * @return string
      */
-    public static function execute(ExecutableEmptyInterface $object, $action, array $params)
+    public static function execute(array $routeInfo, array $params)
     {
+        $action = self::fixActionName($routeInfo[1]);
+        $object = self::fixActionObject($routeInfo, $action);
+        $params = self::fixActionParams($object, $action, $params);
+
         ob_start();
         call_user_func_array([$object, $action], $params);
         $buffer = ob_get_contents();

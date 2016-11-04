@@ -32,7 +32,7 @@ class ControllerFis extends ControllerAbstract
         }
         $view = $this->getView();
         $params = $view->getAssign();
-        self::fire('preDisplay', [$this, $tpl_path, $params]);
+        static::fire('preDisplay', [$this, $tpl_path, $params]);
         $view->display($tpl_path, $params);
     }
 
@@ -49,7 +49,7 @@ class ControllerFis extends ControllerAbstract
         $params['appname'] = $appname;
         $tpl_path = Application::join(DIRECTORY_SEPARATOR, ['widget', $tpl_path]);
 
-        self::fire('preWidget', [$this, $tpl_path, $params]);
+        static::fire('preWidget', [$this, $tpl_path, $params]);
         $buffer = $this->getView()->widget($tpl_path, $params);
         return $buffer;
     }

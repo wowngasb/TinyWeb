@@ -87,7 +87,7 @@ abstract class ControllerAbstract implements ExecutableEmptyInterface
         }
         $view = $this->getView();
         $params = $view->getAssign();
-        self::fire('preDisplay', [$this, $tpl_path, $params]);
+        static::fire('preDisplay', [$this, $tpl_path, $params]);
         $view->display($tpl_path, $params);
     }
 
@@ -104,7 +104,7 @@ abstract class ControllerAbstract implements ExecutableEmptyInterface
         $params['appname'] = $appname;
         $tpl_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$appname, 'widget', $tpl_path]);
 
-        self::fire('preWidget', [$this, $tpl_path, $params]);
+        static::fire('preWidget', [$this, $tpl_path, $params]);
         $buffer = $this->getView()->widget($tpl_path, $params);
         return $buffer;
     }

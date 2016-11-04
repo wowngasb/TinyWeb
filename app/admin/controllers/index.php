@@ -25,7 +25,7 @@ class index extends BaseController
 
     public function index()
     {
-        Application::instance()->forward(['index', 'forward', 'admin'], ['name'=>'abc', 'id'=>123456], 'simple');
+        Application::forward(['index', 'forward', 'admin'], ['name'=>'abc', 'id'=>123456], 'simple');
     }
 
 

@@ -90,28 +90,27 @@ class ApiDispatch extends BaseModel implements DispatchInterface
      *        $params = self::fixActionParams($controller, $actionFunc, $params);
      *        $request->setParams($params);
      * @param array $routeInfo
-     * @param array $_params
+     * @param array $params
      * @return mixed
      * @throws AppStartUpError
      */
-    public static function dispatch(array $routeInfo, array $_params)
+    public static function dispatch(array $routeInfo, array $params)
     {
         $request = Request::instance();
-        $response = Response::instance();
         $action = self::fixActionName($routeInfo[1]);
         $object = self::fixActionObject($routeInfo, $action);
-        $params = self::fixActionParams($object, $action, $_params);
-        $request->setParams($params);
+        $fixed_params = self::fixActionParams($object, $action, $params);
+        $request->setParams($fixed_params);
 
         try {
             self::checkCsrfToken();
-            $params = $object->hookAccessAndFilterRequest($params, $_params);  //所有API类继承于BaseApi，默认行为直接原样返回参数不作处理
-
-            $result = self::execute($object, $action, $params);
+            $fixed_params = $object->hookAccessAndFilterRequest($fixed_params, $params);  //所有API类继承于BaseApi，默认行为直接原样返回参数不作处理
+            $request->setParams($fixed_params);
+            $result = call_user_func_array([$object, $action], $fixed_params);
             (DEV_MODEL == 'DEBUG') && Bootstrap::_D([
                 'class' => get_class($object),
                 'method' => $action,
-                'params' => $params,
+                'params' => $fixed_params,
                 'result' => $result
             ], 'api');
         } catch (Exception $ex) {
@@ -120,23 +119,32 @@ class ApiDispatch extends BaseModel implements DispatchInterface
         }
 
         $json_str = isset($params['callback']) && !empty($params['callback']) ? "{$params['callback']}(" . json_encode($result) . ');' : json_encode($result);
+        $response = Response::instance();
         $response->addHeader('Content-Type: application/json;charset=utf-8', false)->apendBody($json_str);
     }
 
     /**
-     * 根据对象和方法名 获取 执行结果
-     * @param ExecutableEmptyInterface $object
-     * @param string $action
+     * 调用分发 获得方法的返回数据  请在方法开头加上 固定流程 调用自身接口
+     *        $request = Request::getInstance();
+     *        $actionFunc = self::fixActionName($routeInfo[1]);
+     *        $controller = self::fixActionObject($routeInfo, $actionFunc);
+     *        $params = self::fixActionParams($controller, $actionFunc, $params);
+     *        $request->setParams($params);
+     * @param array $routeInfo
      * @param array $params
      * @return array
      */
-    public static function execute(ExecutableEmptyInterface $object, $action, array $params)
+    public static function execute(array $routeInfo, array $params)
     {
-        $result = call_user_func_array([$object, $action], $params);
+        $action = self::fixActionName($routeInfo[1]);
+        $object = self::fixActionObject($routeInfo, $action);
+        $fixed_params = self::fixActionParams($object, $action, $params);
+        $result = call_user_func_array([$object, $action], $fixed_params);
         return $result;
     }
 
-    private static function getTraceAsResult(Exception $ex){
+    private static function getTraceAsResult(Exception $ex)
+    {
         $code = $ex->getCode();  // errno为0 或 无error字段 表示没有错误  errno设置为0 会忽略error字段
         $error = (DEV_MODEL == 'DEBUG') ? [
             'Exception' => get_class($ex),
@@ -163,11 +171,11 @@ class ApiDispatch extends BaseModel implements DispatchInterface
         $request_method = $request->getMethod();
         $session_id = $request->getSessionId();
         if ($request_method == 'HEAD' || $request_method == 'GET' || $request_method == 'OPTIONS' || empty($session_id)) {
-            $log_msg = "CSRF ignore [{$request_method}] this_url:" . $request->getThisUrl();
+            $log_msg = "CSRF ignore [{$request_method}] session_id:{$session_id}, this_url:" . $request->getThisUrl();
             self::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
         } else {
             $csrf = $request->getCsrfToken();
-            if ( !self::validCsrfToken($csrf) ) {
+            if (!self::validCsrfToken($csrf)) {
                 $log_msg = "CSRF error [{$request_method}] token:" . $csrf . ", this_url:" . $request->getThisUrl() . ", referer_url:" . $request->getHttpReferer();
                 self::error($log_msg, __METHOD__, __CLASS__, __LINE__);
                 throw new ApiParamsError($log_msg);
@@ -179,7 +187,9 @@ class ApiDispatch extends BaseModel implements DispatchInterface
         Bootstrap::_D($log_msg, 'csrf');
     }
 
-    private static function validCsrfToken($csrf){
+    private static function validCsrfToken($csrf)
+    {
+        false && func_get_args();
         return true;
     }
 
