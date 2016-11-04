@@ -54,7 +54,7 @@ trait RpcTrait
     protected static function _syncApi($class_name, $method_name, $params_arr, $init_params = [])
     {
         foreach ($params_arr as $key => $val) {
-            self::$_yar_ret_list[] = ApiHelper::api($class_name, $method_name, $val, $init_params);
+            self::$_yar_ret_list[] = [];
         }
         return self::$_yar_ret_list;
     }

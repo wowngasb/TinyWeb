@@ -105,7 +105,6 @@ final class Application implements DispatchInterface, RouteInterface
         }
         $request->setUnRouted()
             ->setCurrentRoute($route)
-            ->setParams($params)
             ->setRouteInfo($routeInfo)
             ->setRouted();
 
@@ -145,7 +144,6 @@ final class Application implements DispatchInterface, RouteInterface
         $request->setUnRouted()
             ->setCurrentRoute($route)
             ->setRouteInfo($routeInfo)
-            ->setParams($params)
             ->setRouted();  // 根据新的参数 再次设置 $request 的路由信息
         // 设置完成 锁定 $request
 
@@ -159,14 +157,22 @@ final class Application implements DispatchInterface, RouteInterface
     }
 
     /**
-     * 重定向请求到新的路径  HTTP 302 自带 exit 效果
-     * @param string $url 要重定向到的URL
-     * @return void
+     * @param string $uri
+     * @param array|null $params
+     * @param string|null $route
      */
-    public static function redirect($url)
-    {
-        header("Location: {$url}");  // Redirect browser
-        exit;  // Make sure that code below does not get executed when we redirect.
+    public static function _forward($uri, array $params = null, $route = null){
+        $app = static::instance();
+        $request = Request::instance();
+        $response = Response::instance();
+        list($route, list($routeInfo, $uri_params)) = $app->route(Request::instance()->cloneAndHookUri($uri), $route);
+        $params = array_merge($uri_params, $params);
+        static::fire('preDispatch', [$app, $request, $response]);  // 分发之前触发	如果在一个请求处理过程中, 发生了forward 或 callfunc, 则这个事件会被触发多次
+
+        $dispatcher = $app->getDispatch($route);
+        $dispatcher::dispatch($routeInfo, $params);  //分发
+
+        static::fire('postDispatch', [$app, $request, $response]);  // 分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
     }
 
     /**
@@ -197,7 +203,6 @@ final class Application implements DispatchInterface, RouteInterface
         $request->setUnRouted()
             ->setCurrentRoute($route)
             ->setRouteInfo($routeInfo)
-            ->setParams($params)
             ->setRouted();  // 根据新的参数 再次设置 $request 的路由信息
         // 设置完成 锁定 $request
 
@@ -208,6 +213,38 @@ final class Application implements DispatchInterface, RouteInterface
 
         static::fire('postDispatch', [$app, $request, $response]);  // 分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
         return $result;
+    }
+
+    /**
+     * @param string $uri
+     * @param array|null $params
+     * @param string|null $route
+     * @return mixed
+     */
+    public static function _callfunc($uri, array $params = null, $route = null){
+        $app = static::instance();
+        $request = Request::instance();
+        $response = Response::instance();
+        list($route, list($routeInfo, $uri_params)) = $app->route(Request::instance()->cloneAndHookUri($uri), $route);
+        $params = array_merge($uri_params, $params);
+        static::fire('preDispatch', [$app, $request, $response]);  // 分发之前触发	如果在一个请求处理过程中, 发生了forward 或 callfunc, 则这个事件会被触发多次
+
+        $dispatcher = $app->getDispatch($route);
+        $result = $dispatcher::execute($routeInfo, $params);  //分发
+
+        static::fire('postDispatch', [$app, $request, $response]);  // 分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
+        return $result;
+    }
+
+    /**
+     * 重定向请求到新的路径  HTTP 302 自带 exit 效果
+     * @param string $url 要重定向到的URL
+     * @return void
+     */
+    public static function redirect($url)
+    {
+        header("Location: {$url}");  // Redirect browser
+        exit;  // Make sure that code below does not get executed when we redirect.
     }
 
     /**
@@ -281,10 +318,15 @@ final class Application implements DispatchInterface, RouteInterface
      * 匹配成功后 获取 [$routeInfo, $params]  永远不会失败 默认返回 [$this->_routename, [$this->getDefaultRouteInfo(), []]];
      * 一般参数应使用 php 原始 $_GET,$_POST 保存 保持一致性
      * @param Request $request 请求对象
+     * @param null $route
      * @return array 匹配成功 [$route, [$routeInfo, $params], ]  失败 ['', [null, null], ]
+     * @throws AppStartUpError
      */
-    public function route(Request $request)
+    public function route(Request $request, $route = null)
     {
+        if( !is_null($route) ){
+            return $this->getRoute($route)->route($request);
+        }
         foreach ($this->_routes as $route => $val) {
             $tmp = $this->getRoute($route)->route($request);
             if (!empty($tmp[0])) {
@@ -388,12 +430,13 @@ final class Application implements DispatchInterface, RouteInterface
         $request = Request::instance();
         $action = self::fixActionName($routeInfo[1]);
         $object = self::fixActionObject($routeInfo, $action);
-        $params = self::fixActionParams($object, $action, $params);
-        $request->setParams($params);
+        $fixed_params = self::fixActionParams($object, $action, $params);
 
         $object->beforeAction();  //控制器 beforeAction 不允许显式输出
         ob_start();
-        call_user_func_array([$object, $action], $params);
+
+        $request->setParams($fixed_params);
+        call_user_func_array([$object, $action], $fixed_params);
         $buffer = ob_get_contents();
         ob_end_clean();
 
@@ -418,10 +461,11 @@ final class Application implements DispatchInterface, RouteInterface
     {
         $action = self::fixActionName($routeInfo[1]);
         $object = self::fixActionObject($routeInfo, $action);
-        $params = self::fixActionParams($object, $action, $params);
+        $fixed_params = self::fixActionParams($object, $action, $params);
 
+        $object->beforeAction();  //控制器 beforeAction 不允许显式输出
         ob_start();
-        call_user_func_array([$object, $action], $params);
+        call_user_func_array([$object, $action], $fixed_params);
         $buffer = ob_get_contents();
         ob_end_clean();
         return $buffer;

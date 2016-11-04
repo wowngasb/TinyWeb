@@ -26,12 +26,22 @@ final class Request
 
     protected $_current_route = '';  // 当前使用的 路由名称 在注册路由时给出的
     protected $_route_info = [];  // 当前 路由信息 [$controller, $action, $module]
-    protected $_params = [];  // 匹配到的参数 用于调用 action
+    protected $_params = null;  // 匹配到的参数 用于调用 action
 
     private  $_session_started = false;
     private  $_session_start = false;
 
     private static $instance = null;
+
+    /**
+     * @param $uri
+     * @return Request
+     */
+    public function cloneAndHookUri($uri){
+        $tmp = clone $this;
+        $tmp->_request_uri = $uri;
+        return $tmp;
+    }
 
     /**
      * @return Request
@@ -147,13 +157,16 @@ final class Request
     }
 
     /**
+     * 设置本次请求入口方法的参数 只有第一次设置有效
      * @param array $params
      * @return $this
      * @throws AppStartUpError
      */
     public function setParams(array $params)
     {
-        $this->_params = $params;
+        if( is_null($this->_params) ){
+            $this->_params = $params;
+        }
         return $this;
     }
 

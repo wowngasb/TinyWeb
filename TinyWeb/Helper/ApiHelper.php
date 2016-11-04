@@ -22,34 +22,6 @@ class ApiHelper
         'fatal' => 1,
     ];
 
-    public static function api($class_name, $method, $args_input, $init_params = [])
-    {
-        $t1 = microtime(true);
-        $request = Request::instance();
-        $reflection = new \ReflectionMethod($class_name, $method);
-        if (self::isIgnoreMethod($method) || $reflection->isProtected() || $reflection->isPrivate()) {
-            throw new ApiParamsError("api:{$class_name}->{$method} not found");
-        }
-        $args = self::fix_args(self::getApiMethodArgs($reflection), $args_input);
-        $class = new \ReflectionClass($class_name);
-        $instance = empty($init_params) ? $class->newInstanceArgs() : $class->newInstanceArgs($init_params);
-
-        $args = $instance->hookAccessAndFilterRequest($args, $args_input);  //所有API类继承于BaseApi，默认行为直接原样返回参数不作处理
-        $request->setParams($args);
-        $data = !empty($args) ? $reflection->invokeArgs($instance, $args) : $reflection->invoke($instance);
-
-        $t2 = microtime(true);
-        if (defined('DEV_MODEL') && DEV_MODEL == 'DEBUG') {
-            $data['help'] = [];  //调试模式下添加辅助信息
-            $data['help']['referer'] = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-            $data['help']['runtime'] = round($t2 - $t1, 3) * 1000 . 'ms';
-            $data['help']['timestamp'] = time();
-        }
-        self::api_log(!empty($_REQUEST['_LOG_TAG']) ? $_REQUEST['_LOG_TAG'] : '', $class_name, $method, $args, $data);
-        unset($data['help']);
-        return $data;
-    }
-
     public static function fixActionParams($obj, $func, $params)
     {
         $reflection = new \ReflectionMethod($obj, $func);

@@ -100,7 +100,6 @@ class ApiDispatch extends BaseModel implements DispatchInterface
         $action = self::fixActionName($routeInfo[1]);
         $object = self::fixActionObject($routeInfo, $action);
         $fixed_params = self::fixActionParams($object, $action, $params);
-        $request->setParams($fixed_params);
 
         try {
             self::checkCsrfToken();

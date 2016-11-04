@@ -28,7 +28,7 @@ class YarApiHub extends BaseApiModel {
             return ['Flag'=>101, 'FlagString'=>'YAR参数错误'];
         }
         $args['intime'] = microtime(true);
-        $rst = ApiHelper::api($args['class_name'], $args['method_name'], $args['params']);
+        $rst = [];
         $args['outtime'] = microtime(true);
         $log_msg = "args:" . json_encode($args) . ", rst:" . json_encode($rst);
         self::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
