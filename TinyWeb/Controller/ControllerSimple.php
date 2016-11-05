@@ -10,14 +10,15 @@ namespace TinyWeb\Controller;
 
 
 use TinyWeb\ControllerAbstract;
+use TinyWeb\Response;
 use TinyWeb\View\ViewSimple;
 
 class ControllerSimple extends ControllerAbstract
 {
-    public function beforeAction()
+    final public function __construct()
     {
+        parent::__construct();
         $this->setView(new ViewSimple());
-        $this->response->addHeader('Content-Type: text/html;charset=utf-8', true);
     }
 
 }

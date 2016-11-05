@@ -33,9 +33,9 @@ class Bootstrap extends BaseModel
 
     /**
      * 调试使用 开发模式下有效
-     *  #param array $data
-     *  #param string $tags
-     *  #param int $ignoreTraceCalls
+     * @param array $data
+     * @param string|null $tags
+     * @param int $ignoreTraceCalls
      */
     public static function _D($data, $tags = null, $ignoreTraceCalls = 0)
     {
@@ -46,15 +46,21 @@ class Bootstrap extends BaseModel
     /** 在app run 之前, 设置app 命名空间 并 注册路由
      *  #param Application $app
      *  #return Application
+     * @param string $appname
+     * @param Application $app
+     * @return Application
      */
-    public static function bootstrap(Application $app)
+    public static function bootstrap($appname, Application $app)
     {
-        $app->setAppName('app')
+        $app->setAppName($appname)
             ->addRoute('api', new RouteApi('api'), ApiDispatch::instance())
             ->addRoute('simple', new RouteSimple('m', 'c', 'a'));  // 添加默认简单路由
+        return $app;
+    }
 
+    public static function debugCallBack(){
         if (DEV_MODEL != 'DEBUG') {  // 非调试模式下  直接返回
-            return $app;
+            return;
         }
 
         //开启 辅助调试模式 注册对应事件
@@ -100,7 +106,6 @@ class Bootstrap extends BaseModel
             $data = ['params' => $params, 'tpl_path' => $tpl_path];
             self::_debugConsole($data, get_class($obj) . ' #preWidget', 1);
         });  // 注册 组件渲染 打印组件变量  用于调试
-        return $app;
     }
 
 }

@@ -23,22 +23,21 @@ fis.match('**', {
 fis.match('/index.php', {
     release: '/index.php'
 });
-fis.match('/htaccess', {
-    release: '/.htaccess'
-});
-fis.match('/robots.txt', {
-    release: '/robots.txt'
-});
-
-//资源配置表	
-fis.match('/map.json',{
-    release: '/tpl/map.json'
-});
-
 fis.match("/static/**",{
     release: '/$0'
 });
-
+fis.match('/static/favicon.ico', {
+    release: '/favicon.ico'
+});
+fis.match('/static/htaccess', {
+    release: '/.htaccess'
+});
+fis.match('/static/robots.txt', {
+    release: '/robots.txt'
+});
+fis.match('/static/map.json',{  //资源配置表	
+    release: '/tpl/map.json'
+});
 fis.match("/static/apiMod/**",{
     isMod : true
 });

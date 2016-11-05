@@ -15,7 +15,7 @@ final class Application implements DispatchInterface, RouteInterface
     use EventTrait;
 
     private $_config = [];  // 全局配置
-    private $_app_name = '';  // app 目录，用于 拼接命名空间 和 定位模板文件
+    private $_app_name = 'app';  // app 目录，用于 拼接命名空间 和 定位模板文件
     private $_route_name = 'default';  // 默认路由名字，总是会路由到 index
     private $_micro_timestamp = null;
     private $_run = false;  // 布尔值, 指明当前的Application是否已经运行
@@ -23,6 +23,9 @@ final class Application implements DispatchInterface, RouteInterface
     private $_dispatches = [];  // 分发列表
 
     private static $instance = null;  // Application通过特殊的方式实现了单利模式, 此属性保存当前实例
+    private static $_ioc_object_map = [];
+    private static $_ioc_cache_enable = true;
+    private static $_ioc_cache_time = 300;
 
     /**
      * Application constructor.
@@ -32,6 +35,54 @@ final class Application implements DispatchInterface, RouteInterface
     {
         $this->_micro_timestamp = microtime(true);
         $this->_config = $config;
+        self::$instance = $this;
+    }
+
+    /**
+     * @param string $tag
+     * @param callable $construct
+     * @return mixed
+     */
+    public static function ioc($tag, callable $construct)
+    {
+        if (isset(self::$_ioc_object_map[$tag])) {
+            return self::$_ioc_object_map[$tag];
+        }
+        if (!self::$_ioc_cache_enable) {
+            return $construct($tag);
+        }
+
+        if (!is_dir(CACHE_PATH . 'ioc')) {
+            mkdir(CACHE_PATH . 'ioc', 0777, true);
+        }
+        $tag_file = str_replace('\\', '_', $tag);
+        $ioc_file = CACHE_PATH . 'ioc' . DIRECTORY_SEPARATOR . $tag_file . '.ioc.php';
+        $obj = is_file($ioc_file) ? include($ioc_file) : null;
+        if (!empty($obj)) {
+            return $obj;
+        }
+
+        $obj = $construct($tag);
+        $create_time = time();
+        $obj_serialize = serialize($obj);
+        $_ioc_cache_time = self::$_ioc_cache_time;
+        $data = <<<EOT
+<?php
+return time()-{$create_time}>{$_ioc_cache_time} ? null : unserialize('{$obj_serialize}');
+EOT;
+        file_put_contents($ioc_file, $data);
+        return $obj;
+    }
+
+    public function callback(callable $callback)
+    {
+        $callback();
+        return $this;
+    }
+
+    public function __wakeup()
+    {
+        $this->_micro_timestamp = microtime(true);
         self::$instance = $this;
     }
 
@@ -161,7 +212,8 @@ final class Application implements DispatchInterface, RouteInterface
      * @param array|null $params
      * @param string|null $route
      */
-    public static function _forward($uri, array $params = null, $route = null){
+    public static function _forward($uri, array $params = null, $route = null)
+    {
         $app = static::instance();
         $request = Request::instance();
         $response = Response::instance();
@@ -182,7 +234,8 @@ final class Application implements DispatchInterface, RouteInterface
      * @return mixed
      * @throws AppStartUpError
      */
-    public static function callfunc(array $routeInfo = null, array $params = null, $route = null){
+    public static function callfunc(array $routeInfo = null, array $params = null, $route = null)
+    {
         $app = static::instance();
         $request = Request::instance();
         $response = Response::instance();
@@ -221,7 +274,8 @@ final class Application implements DispatchInterface, RouteInterface
      * @param string|null $route
      * @return mixed
      */
-    public static function _callfunc($uri, array $params = null, $route = null){
+    public static function _callfunc($uri, array $params = null, $route = null)
+    {
         $app = static::instance();
         $request = Request::instance();
         $response = Response::instance();
@@ -261,7 +315,7 @@ final class Application implements DispatchInterface, RouteInterface
         if ($this->_run) {
             throw new AppStartUpError('cannot add route after run');
         }
-        if( $route==$this->_route_name ){
+        if ($route == $this->_route_name) {
             throw new AppStartUpError("route:{$route} is default route");
         }
         if (isset($this->_routes[$route])) {
@@ -283,7 +337,7 @@ final class Application implements DispatchInterface, RouteInterface
     public function getRoute($route)
     {
         $route = strtolower($route);
-        if( $route==$this->_route_name ){
+        if ($route == $this->_route_name) {
             return $this;
         }
         if (!isset($this->_routes[$route])) {
@@ -324,7 +378,7 @@ final class Application implements DispatchInterface, RouteInterface
      */
     public function route(Request $request, $route = null)
     {
-        if( !is_null($route) ){
+        if (!is_null($route)) {
             return $this->getRoute($route)->route($request);
         }
         foreach ($this->_routes as $route => $val) {
@@ -342,7 +396,7 @@ final class Application implements DispatchInterface, RouteInterface
      * @param array $params
      * @return string
      */
-    public function ford(array $routerArr, array $params=[])
+    public function ford(array $routerArr, array $params = [])
     {
         $request = Request::instance();
         return $request::urlTo($routerArr, $params);
@@ -395,23 +449,25 @@ final class Application implements DispatchInterface, RouteInterface
         $controller = (isset($routeInfo[0]) && !empty($routeInfo[0])) ? $routeInfo[0] : '';
         $module = isset($routeInfo[2]) ? $routeInfo[2] : '';
         list($controller, $module) = [strtolower($controller), strtolower($module),];
-        if (empty($controller) ) {
+        if (empty($controller)) {
             throw new AppStartUpError("empty controller with routeInfo:" . json_encode($routeInfo));
         }
 
         $namespace = "\\" . Application::join("\\", [Application::instance()->getAppName(), $module, 'controllers', $controller]);
 
-        if (!class_exists($namespace)) {
-            throw new AppStartUpError("class:{$namespace} not exists with routeInfo:" . json_encode($routeInfo));
-        }
-        $object = new $namespace();
-        if (!($object instanceof ControllerAbstract)) {
-            throw new AppStartUpError("class:{$namespace} isn't instanceof ControllerAbstract with routeInfo:" . json_encode($routeInfo));
-        }
-        if (!is_callable([$object, $action])) {
-            throw new AppStartUpError("action:{$namespace}->{$action} not allowed with routeInfo:" . json_encode($routeInfo));
-        }
-        return $object;
+        return Application::ioc($namespace, function($namespace) use ($routeInfo, $action){
+            if (!class_exists($namespace)) {
+                throw new AppStartUpError("class:{$namespace} not exists with routeInfo:" . json_encode($routeInfo));
+            }
+            $object = new $namespace();
+            if (!($object instanceof ControllerAbstract)) {
+                throw new AppStartUpError("class:{$namespace} isn't instanceof ControllerAbstract with routeInfo:" . json_encode($routeInfo));
+            }
+            if (!is_callable([$object, $action])) {
+                throw new AppStartUpError("action:{$namespace}->{$action} not allowed with routeInfo:" . json_encode($routeInfo));
+            }
+            return $object;
+        });
     }
 
     /**

@@ -1,6 +1,7 @@
 <html>
 <head>
-<title><?= $title ?>-123</title>
+    <meta charset="UTF-8">
+<title><?= $title ?>-1234</title>
 <?=\TinyWeb\Plugin\Fis::framework('static/js/mod.js'); ?>
 <?=\TinyWeb\Plugin\Fis::placeholder('css');?>
 <?=\TinyWeb\Plugin\Fis::import('static/js/jquery-1.8.1.min.js'); ?>

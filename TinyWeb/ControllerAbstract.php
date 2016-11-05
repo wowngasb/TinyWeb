@@ -7,6 +7,7 @@
  */
 
 namespace TinyWeb;
+
 use TinyWeb\Plugin\EventTrait;
 
 /**
@@ -17,32 +18,38 @@ abstract class ControllerAbstract implements ExecutableEmptyInterface
 {
     use EventTrait;
 
-    protected $request = null;
-    protected $response = null;
     protected $_view = null;
 
     protected $routeInfo = [];  // 在路由完成后, 请求被分配到的路由信息 [$_controller, $_action, $_module]
     protected $appname = '';
 
-    final public function __construct()
+    public function __construct()
     {
         $request = Request::instance();
-        $response = Response::instance();
-
-        if (!$request->isRouted()) {
+        if (!$request->isRouted()) {  //强制结束路由过程
             $request->setRouted();
         }
-        $this->request = $request;
-        $this->response = $response;
-
         $this->routeInfo = $request->getRouteInfo();
+
         $this->appname = Application::instance()->getAppName();
+    }
+
+    public function __wakeup()
+    {
+        $request = Request::instance();
+        if (!$request->isRouted()) {  //强制结束路由过程
+            $request->setRouted();
+        }
+        $this->routeInfo = $request->getRouteInfo();
     }
 
     /**
      * Controller 构造完成之后 具体action 之前调佣 通常用于初始化 需显示调用父类 beforeAction
      */
-    abstract public function beforeAction();
+    public function beforeAction()
+    {
+        Response::instance()->addHeader('Content-Type: text/html;charset=utf-8', true);
+    }
 
     /**
      * 为 Controller 绑定模板引擎
@@ -112,8 +119,8 @@ abstract class ControllerAbstract implements ExecutableEmptyInterface
 
     /**
      *  注册回调函数  回调参数为 callback($this, $tpl_path, $params)
-     *  1、preDisplay	在模板渲染之前触发
-     *  2、preWidget	在组件渲染之前触发
+     *  1、preDisplay    在模板渲染之前触发
+     *  2、preWidget    在组件渲染之前触发
      * @param string $event
      * @return bool
      */

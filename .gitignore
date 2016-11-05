@@ -1,4 +1,6 @@
 /.idea
+/cache/
+/public/
 /vendor/
 node_modules/
 apiMod/

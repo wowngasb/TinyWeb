@@ -10,14 +10,16 @@ namespace TinyWeb\Controller;
 
 
 use TinyWeb\ControllerAbstract;
+use TinyWeb\Response;
 use TinyWeb\View\ViewBlade;
 
 class ControllerBlade extends ControllerAbstract
 {
-    public function beforeAction()
+    final public function __construct()
     {
+        parent::__construct();
         $this->setView(new ViewBlade());
-        $this->response->addHeader('Content-Type: text/html;charset=utf-8', true);
     }
+
 
 }

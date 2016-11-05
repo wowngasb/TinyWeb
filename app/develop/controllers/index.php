@@ -5,6 +5,7 @@ namespace app\develop\controllers;
 use app\common\Base\BaseController;
 use TinyWeb\Application;
 use TinyWeb\Request;
+use TinyWeb\Response;
 
 class index extends BaseController
 {
@@ -37,7 +38,7 @@ class index extends BaseController
 </form>
 <span>{$err_msg}</span>
 EOT;
-            $this->response->apendBody($html_str);
+            Response::instance()->apendBody($html_str);
         }
     }
 

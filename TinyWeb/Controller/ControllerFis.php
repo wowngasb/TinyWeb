@@ -11,15 +11,17 @@ namespace TinyWeb\Controller;
 
 use TinyWeb\Application;
 use TinyWeb\ControllerAbstract;
+use TinyWeb\Response;
 use TinyWeb\View\ViewFis;
 
 class ControllerFis extends ControllerAbstract
 {
-    public function beforeAction()
+    final public function __construct()
     {
+        parent::__construct();
         $this->setView(new ViewFis());
-        $this->response->addHeader('Content-Type: text/html;charset=utf-8', true);
     }
+
     /**
      * @param string $tpl_path
      */
