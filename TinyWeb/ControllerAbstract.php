@@ -34,15 +34,6 @@ abstract class ControllerAbstract implements ExecutableEmptyInterface
         $this->appname = Application::instance()->getAppName();
     }
 
-    public function __wakeup()
-    {
-        $request = Request::instance();
-        if (!$request->isRouted()) {  //强制结束路由过程
-            $request->setRouted();
-        }
-        $this->routeInfo = $request->getRouteInfo();
-    }
-
     /**
      * Controller 构造完成之后 具体action 之前调佣 通常用于初始化 需显示调用父类 beforeAction
      */

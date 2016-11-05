@@ -23,7 +23,6 @@ final class Application implements DispatchInterface, RouteInterface
     private $_dispatches = [];  // 分发列表
 
     private static $instance = null;  // Application通过特殊的方式实现了单利模式, 此属性保存当前实例
-    private static $_ioc_object_map = [];
     private static $_ioc_cache_enable = true;
     private static $_ioc_cache_time = 300;
 
@@ -39,15 +38,13 @@ final class Application implements DispatchInterface, RouteInterface
     }
 
     /**
+     * 速度并不快 不推荐使用
      * @param string $tag
      * @param callable $construct
      * @return mixed
      */
     public static function ioc($tag, callable $construct)
     {
-        if (isset(self::$_ioc_object_map[$tag])) {
-            return self::$_ioc_object_map[$tag];
-        }
         if (!self::$_ioc_cache_enable) {
             return $construct($tag);
         }
@@ -55,8 +52,8 @@ final class Application implements DispatchInterface, RouteInterface
         if (!is_dir(CACHE_PATH . 'ioc')) {
             mkdir(CACHE_PATH . 'ioc', 0777, true);
         }
-        $tag_file = str_replace('\\', '_', $tag);
-        $ioc_file = CACHE_PATH . 'ioc' . DIRECTORY_SEPARATOR . $tag_file . '.ioc.php';
+        $tag_file = str_replace('\\', '_', $tag) . '.ioc.php';
+        $ioc_file = CACHE_PATH . 'ioc' . DIRECTORY_SEPARATOR . $tag_file;
         $obj = is_file($ioc_file) ? include($ioc_file) : null;
         if (!empty($obj)) {
             return $obj;
@@ -64,10 +61,21 @@ final class Application implements DispatchInterface, RouteInterface
 
         $obj = $construct($tag);
         $create_time = time();
+        $this_method = __METHOD__;
+        $create_time_str = date('Y-m-d H:i:s', $create_time);
         $obj_serialize = serialize($obj);
+        $obj_var_dump = DEV_MODEL == 'DEBUG' ? print_r($obj, true) : get_class($obj);
         $_ioc_cache_time = self::$_ioc_cache_time;
         $data = <<<EOT
 <?php
+/**
+ * Created by {$this_method}.
+ * Tag: {$tag}
+ * File: {$tag_file}
+ * Date: {$create_time_str}
+ * Cache: {$_ioc_cache_time}
+ * Object: {$obj_var_dump}*/
+
 return time()-{$create_time}>{$_ioc_cache_time} ? null : unserialize('{$obj_serialize}');
 EOT;
         file_put_contents($ioc_file, $data);
@@ -189,7 +197,6 @@ EOT;
         }
         if (is_null($params)) {
             $params = $request->getParams();
-
         }
 
         $request->setUnRouted()
@@ -455,19 +462,17 @@ EOT;
 
         $namespace = "\\" . Application::join("\\", [Application::instance()->getAppName(), $module, 'controllers', $controller]);
 
-        return Application::ioc($namespace, function($namespace) use ($routeInfo, $action){
-            if (!class_exists($namespace)) {
-                throw new AppStartUpError("class:{$namespace} not exists with routeInfo:" . json_encode($routeInfo));
-            }
-            $object = new $namespace();
-            if (!($object instanceof ControllerAbstract)) {
-                throw new AppStartUpError("class:{$namespace} isn't instanceof ControllerAbstract with routeInfo:" . json_encode($routeInfo));
-            }
-            if (!is_callable([$object, $action])) {
-                throw new AppStartUpError("action:{$namespace}->{$action} not allowed with routeInfo:" . json_encode($routeInfo));
-            }
-            return $object;
-        });
+        if (!class_exists($namespace)) {
+            throw new AppStartUpError("class:{$namespace} not exists with routeInfo:" . json_encode($routeInfo));
+        }
+        $object = new $namespace();
+        if (!($object instanceof ControllerAbstract)) {
+            throw new AppStartUpError("class:{$namespace} isn't instanceof ControllerAbstract with routeInfo:" . json_encode($routeInfo));
+        }
+        if (!is_callable([$object, $action])) {
+            throw new AppStartUpError("action:{$namespace}->{$action} not allowed with routeInfo:" . json_encode($routeInfo));
+        }
+        return $object;
     }
 
     /**

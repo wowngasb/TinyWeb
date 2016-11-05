@@ -25,6 +25,7 @@ trait OrmTrait
     private $_current_db = null;
     private $_current_user = null;
     private $_model_map = [];
+
     private static $_table_map = [];
 
     /**
