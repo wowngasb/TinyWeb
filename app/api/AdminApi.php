@@ -30,10 +30,16 @@ class AdminApi extends BaseApiModel
         ]);
     }
 
-    public function testDb2()
+    public function testDbList()
     {
-        return Orm::table('blog_posts')->lists('slug');
+        return (new Orm())->hookCurrent('blog_posts')->lists('slug');
     }
+
+    public function testDbPluck()
+    {
+        return (new Orm())->hookCurrent('blog_posts')->pluck('slug');
+    }
+
 
     public function testDbOther($db, $table)
     {
@@ -42,13 +48,22 @@ class AdminApi extends BaseApiModel
 
     public function testDb3()
     {
-        return  Orm::table('blog_posts')->first(['slug', 'title', 'view_count',]);
+        return  (new Orm())->hookCurrent('blog_posts')->first(['slug', 'title', 'view_count',]);
     }
 
     public function testDbJson()
     {
         $user = new CurrentUser();
-        return  (new Orm())->hookCurrentDb('tiny')->hookCurrentTable('blog_posts')->hookCurrentUser($user)->get(['slug', 'title', 'view_count', 'category', 'tags', 'user'], [
+        return  (new Orm())->hookCurrentDb('tiny')->hookCurrentTable('blog_posts')->hookCurrentUser($user)->first(['slug', 'title', 'view_count'], [
+            ['state', 1],
+            ['view_count', '>', 100],
+        ]);
+    }
+
+    public function testDbJsonAttach()
+    {
+        $user = new CurrentUser();
+        return  (new Orm())->hookCurrentDb('tiny')->hookCurrentTable('blog_posts')->hookCurrentUser($user)->first(['slug', 'title', 'view_count', 'category', 'tags', 'user'], [
             ['state', 1],
             ['view_count', '>', 100],
         ]);

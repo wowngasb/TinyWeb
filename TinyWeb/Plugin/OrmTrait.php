@@ -34,7 +34,6 @@ trait OrmTrait
      */
     protected static function initOrm()
     {
-        return;
     }
 
     public static function  autoHelp()
@@ -261,7 +260,6 @@ trait OrmTrait
     public function hookCurrent($table_name, CurrentUserInterface $user=null, $db_name = null)
     {
         self::initOrm();
-        Bootstrap::_D(self::$_table_map, 'table_map');
         $db_name = is_null($db_name) ? Application::instance()->getEnv('ENV_MYSQL_DB') : $db_name;
         $table_name = strtolower($table_name);
         $db_name = strtolower($db_name);
@@ -342,7 +340,6 @@ trait OrmTrait
     public static function table($table_name, $db_name = null)
     {
         static::initOrm();
-        Bootstrap::_D(self::$_table_map, 'table_map');
         $db_name = is_null($db_name) ? Application::instance()->getEnv('ENV_MYSQL_DB') : $db_name;
         $table_name = strtolower($table_name);
         $db_name = strtolower($db_name);
@@ -498,8 +495,9 @@ trait OrmTrait
             'where' =>
                 [$this->getConfig('primary_key'), $id],
         ];
-        $rst = $this->first(['*'], $queries);  // afterGetItem 已在 first 中处理
+        $rst = $this->first(['*'], $queries);
 
+        $rst = !empty($rst) ? $this->getModel()->afterGetItem($rst) : $rst;
         return $rst;
     }
 
@@ -688,7 +686,6 @@ trait OrmTrait
         $table->select($columns);
         $rst = $table->first();
 
-        $rst = !empty($rst) ? $this->getModel()->afterGetItem($rst) : $rst;
         return $rst;
     }
 

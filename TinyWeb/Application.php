@@ -257,7 +257,6 @@ EOT;
         }
         if (is_null($params)) {
             $params = $request->getParams();
-
         }
 
         $request->setUnRouted()
