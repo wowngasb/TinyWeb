@@ -39,11 +39,15 @@
     </style>
 </head>
 <body>
-<pre class="log_pre" id="log_code"></pre>
+<pre class="log_pre" id="log_code"><?=$color_type=='default'? $file_str : ''?></pre>
 <script type="text/javascript">
 var START_TIME = new Date().getTime();
 var SCROLL_TO = '<?=$scroll_to?>';
-var FILE_STR = <?=json_encode( htmlspecialchars($file_str) )?>;
+var FILE_STR = <?=$color_type=='default'? json_encode('') : json_encode( htmlspecialchars($file_str) ) ?>;
+
+function trim(str){ //删除左右两端的空格
+    return str.replace(/(^\s*)|(\s*$)/g, "");
+}
 
 $(function() {
     console.info('before split:', Math.round( (new Date().getTime() - START_TIME) ) , 'ms');
@@ -51,20 +55,27 @@ $(function() {
     console.info('after split:', Math.round( (new Date().getTime() - START_TIME) ) , 'ms');
     var idx = 0;
     var tmp_str = '';
+    var tag_map = {
+        'DEBUG' : 'log_green',
+        'INFO': 'log_blue',
+        'WARN': 'log_yellow',
+        'ERROR': 'log_red',
+        'FATAL': 'log_black'
+    };
+    var has_tag = false;
     for (var i = 0; i < str_array.length; i++) {
         idx = i + 1;
         tmp_str = str_array[i];
-        if (tmp_str.indexOf('[DEBUG]') >= 0) {
-            str_array[i] = '<b class="log_idx">' + idx + '</b>&nbsp;' + tmp_str.replace('[DEBUG]', '[<b class="log_green">DEBUG</b>]');
-        } else if (tmp_str.indexOf('[INFO]') >= 0) {
-            str_array[i] = '<b class="log_idx">' + idx + '</b>&nbsp;' + tmp_str.replace('[INFO]', '[<b class="log_blue">INFO</b>]');
-        } else if (tmp_str.indexOf('[WARN]') >= 0) {
-            str_array[i] = '<b class="log_idx">' + idx + '</b>&nbsp;' + tmp_str.replace('[WARN]', '[<b class="log_yellow">WARN</b>]');
-        } else if (tmp_str.indexOf('[ERROR]') >= 0) {
-            str_array[i] = '<b class="log_idx">' + idx + '</b>&nbsp;' + tmp_str.replace('[ERROR]', '[<b class="log_red">ERROR</b>]');
-        } else if (tmp_str.indexOf('[FATAL]') >= 0) {
-            str_array[i] = '<b class="log_idx">' + idx + '</b>&nbsp;' + tmp_str.replace('[FATAL]', '[<b class="log_black">FATAL</b>]');
-        } else {
+        has_tag = false;
+        for(var tag in tag_map){
+            if( tmp_str.indexOf('[' + tag + ']') >= 0 ){
+                var span_html = '<span class="log-'+tag.toLowerCase()+'">';
+                str_array[i] = (i>0 ? '</span>' + span_html : span_html)+'<b class="log_idx">' + idx + '</b>&nbsp;' + tmp_str.replace('[' + tag + ']', '[<b class="'+tag_map[tag]+'">'+tag+'</b>]');
+                has_tag = true;
+                break;
+            }
+        }
+        if( !has_tag && trim(tmp_str) ) {
             str_array[i] = tmp_str;
         }
     }

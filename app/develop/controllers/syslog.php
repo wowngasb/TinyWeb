@@ -36,12 +36,20 @@ class sysLog extends BaseController
 
     public function showLogFile()
     {
-        $scroll_to = Request::_get('scroll_to', 'end');
+        $this->layout = 'empty_buihtml';
+
         $path = Request::_get('file', '');
+        $this->assign('tool_title', $path);
+
         $file_str = LogHelper::readLogByPath($path);
         $this->assign('file_str', $file_str);
+
+        $color_type = Request::_get('color_type', 'tagcolor');
+        $color_type = strlen($file_str) > 1024 * 1024 ? 'default' : $color_type;
+        $this->assign('color_type', $color_type);
+
+        $scroll_to = Request::_get('scroll_to', 'end');
         $this->assign('scroll_to', $scroll_to);
-        $this->assign('tool_title', $path);
         $this->display();
     }
 

@@ -136,7 +136,7 @@ BUI.use('bui/form', function (Form) {
             dataType: "json",
             success: function (data) {
                 var use_time = Math.round((new Date().getTime() - start_time));
-                if (data.errno == 0 || !data.error) {
+                if ( data.errno == 0 || !data.error ) {
                     api_log(cls, method, 'INFO', use_time, json_data, data);
                 } else {
                     api_log(cls, method, 'ERROR', use_time, json_data, data);

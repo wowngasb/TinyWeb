@@ -88,7 +88,7 @@
                     width: 150
                 },
                 elCls: 'red',
-                content: "<div class='opt'><p><input type='text' name='filter_input'></p><p><a id='btn_filter'>过滤</a><a id='btn_reload'>刷新</a></p><p><a id='btn_home'>最前</a><a id='btn_end'>最后</a></p><p><a id='btn_download'>下载</a><a id='btn_clear'>清空</a></p></div>"
+                content: "<div class='opt'><p><input type='text' name='filter_input'></p><p><a id='btn_filter'>过滤</a><a id='btn_reload'>刷新</a></p><p><a id='btn_home'>最前</a><a id='btn_end'>最后</a></p><p><a id='btn_download'>下载</a><a id='btn_clear'>清空</a></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> DEBUG </label></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> INFO </label></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> WARN </label></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> ERROR </label></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> FATAL </label></p></div>"
             }, {
                 layout: {
                     region: 'west',
@@ -176,6 +176,13 @@
             var file_url = tmp.getAttrVals().href;
             file_url = file_url.replace('showlogfile', 'downloadlogfile');
             window.open(file_url);
+        });
+        $('.checkbox').on('change', function() {
+            var tag = trim( $(this).text() ).toLowerCase();
+            var is_show = $(this).find('input[type=checkbox]').is(':checked');
+            $('iframe').each(function(idx, obj){
+                is_show ? $(obj.contentDocument).find('.log-' + tag).show() : $(obj.contentDocument).find('.log-' + tag).hide();
+            });
         });
         $('#btn_clear').on('click', function () {
             var tmp = LOG_TAB.getActivedItem();
