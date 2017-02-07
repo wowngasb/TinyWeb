@@ -178,23 +178,7 @@ class Use(object):
                               if self._error else None)
 
 
-COMPARABLE, CALLABLE, VALIDATOR, TYPE, DICT, ITERABLE = range(6)
 
-
-def _priority(s):
-    """Return priority for a given object."""
-    if type(s) in (list, tuple, set, frozenset):
-        return ITERABLE
-    if type(s) is dict:
-        return DICT
-    if issubclass(type(s), type):
-        return TYPE
-    if hasattr(s, 'validate'):
-        return VALIDATOR
-    if callable(s):
-        return CALLABLE
-    else:
-        return COMPARABLE
 
 
 class Schema(object):
