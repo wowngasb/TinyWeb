@@ -24,6 +24,9 @@ function _callable_str($callable_)
  */
 function class_map()
 {
+    function _generate_error(){
+
+    }
 
     /**
      * Error during Schema validation.
@@ -105,7 +108,7 @@ function class_map()
         /**
          * _And constructor.
          * @param mixed $args
-         * @param null $error
+         * @param mixed $error
          * @param \Closure|null $schema
          */
         public function __construct($args, $error = null, \Closure $schema = null)
@@ -130,10 +133,10 @@ function class_map()
          */
         public function validate($data)
         {
-            $func = $this->_schema;
+            $_schema_func = $this->_schema;
             foreach ($this->_args as $arg) {
                 /** @var Schema $_schema_obj */
-                $_schema_obj = $func($arg, $this->_error);
+                $_schema_obj = $_schema_func($arg, $this->_error);
                 $data = $_schema_obj->validate($data);
             }
             return $data;
@@ -156,26 +159,20 @@ function class_map()
         public function validate($data)
         {
             $x = new SchemaError([], []);
-            $func = $this->_schema;
+            $_schema_func = $this->_schema;
             foreach ($this->_args as $arg) {
                 try {
                     /** @var Schema $_schema_obj */
-                    $_schema_obj = $func($arg, $this->_error);
+                    $_schema_obj = $_schema_func($arg, $this->_error);
                     return $_schema_obj->validate($data);
                 } catch (SchemaError $_x) {
                     $x = $_x;
                 }
 
             }
-            $autos = [strval($this) . ' did not validate ' . json_encode($data)];
-            foreach ($x->autos as $auto) {
-                $autos[] = $auto;
-            }
-            $errors = [!empty($this->_error) ? $this->_error->format($data) : null];
-            foreach ($x->errors as $error) {
-                $errors[] = $error;
-            }
-            throw new SchemaError($autos, $errors);
+            array_unshift($x->autos, strval($this) . ' did not validate ' . json_encode($data));
+            array_unshift($x->errors, !empty($this->_error) ? $this->_error->format($data) : null);
+            throw new SchemaError($x->autos, $x->errors);
         }
     }
 
@@ -254,8 +251,9 @@ function class_map()
                 return $func($data);
             } catch(SchemaError $sx){
                 $autos = [null];
-                $sx->autos;
-                throw new SchemaError();
+                array_unshift($sx->autos, null);
+                array_unshift($sx->errors, !empty($this->_error) ? $this->_error->format($data) : null);
+                throw new SchemaError($sx->autos, $sx->errors);
             } catch(Exception $ex){
 
             }
@@ -263,8 +261,7 @@ function class_map()
         return self._callable(data)
     except SchemaError as x:
         raise SchemaError([None] + x.autos,
-                [self._error.format(data)
-                           if self._error else None] + x.errors)
+                [] + x.errors)
     except BaseException as x:
         f = _callable_str(self._callable)
         raise SchemaError('%s(%r) raised %r' % (f, data, x),
