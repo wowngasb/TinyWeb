@@ -6,6 +6,4 @@ define("ROOT_PATH", dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR );
 
 require(ROOT_PATH . 'vendor/autoload.php');
 
-Bootstrap::bootstrap('app', new Application(require(ROOT_PATH . "config/config.php")) )->callback(function(){
-    Bootstrap::debugCallBack();
-})->run();
+Bootstrap::bootstrap('app', new Application(require(ROOT_PATH . "config/config.php")) )->run();

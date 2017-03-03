@@ -55,10 +55,12 @@ class Bootstrap extends BaseModel
         $app->setAppName($appname)
             ->addRoute('api', new RouteApi('api'), ApiDispatch::instance())
             ->addRoute('simple', new RouteSimple('m', 'c', 'a'));  // 添加默认简单路由
+
+        self::debugStrap();
         return $app;
     }
 
-    public static function debugCallBack(){
+    public static function debugStrap(){
         if (DEV_MODEL != 'DEBUG') {  // 非调试模式下  直接返回
             return;
         }

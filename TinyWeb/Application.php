@@ -22,9 +22,7 @@ final class Application implements DispatchInterface, RouteInterface
     private $_routes = [];  // 路由列表
     private $_dispatches = [];  // 分发列表
 
-    private static $instance = null;  // Application通过特殊的方式实现了单利模式, 此属性保存当前实例
-    private static $_ioc_cache_enable = true;
-    private static $_ioc_cache_time = 300;
+    private static $_instance = null;  // Application实现单利模式, 此属性保存当前实例
 
     /**
      * Application constructor.
@@ -34,64 +32,7 @@ final class Application implements DispatchInterface, RouteInterface
     {
         $this->_micro_timestamp = microtime(true);
         $this->_config = $config;
-        self::$instance = $this;
-    }
-
-    /**
-     * 速度并不快 不推荐使用
-     * @param string $tag
-     * @param callable $construct
-     * @return mixed
-     */
-    public static function ioc($tag, callable $construct)
-    {
-        if (!self::$_ioc_cache_enable) {
-            return $construct($tag);
-        }
-
-        if (!is_dir(CACHE_PATH . 'ioc')) {
-            mkdir(CACHE_PATH . 'ioc', 0777, true);
-        }
-        $tag_file = str_replace('\\', '_', $tag) . '.ioc.php';
-        $ioc_file = CACHE_PATH . 'ioc' . DIRECTORY_SEPARATOR . $tag_file;
-        $obj = is_file($ioc_file) ? include($ioc_file) : null;
-        if (!empty($obj)) {
-            return $obj;
-        }
-
-        $obj = $construct($tag);
-        $create_time = time();
-        $this_method = __METHOD__;
-        $create_time_str = date('Y-m-d H:i:s', $create_time);
-        $obj_serialize = serialize($obj);
-        $obj_var_dump = DEV_MODEL == 'DEBUG' ? print_r($obj, true) : get_class($obj);
-        $_ioc_cache_time = self::$_ioc_cache_time;
-        $data = <<<EOT
-<?php
-/**
- * Created by {$this_method}.
- * Tag: {$tag}
- * File: {$tag_file}
- * Date: {$create_time_str}
- * Cache: {$_ioc_cache_time}
- * Object: {$obj_var_dump}*/
-
-return time()-{$create_time}>{$_ioc_cache_time} ? null : unserialize('{$obj_serialize}');
-EOT;
-        file_put_contents($ioc_file, $data);
-        return $obj;
-    }
-
-    public function callback(callable $callback)
-    {
-        $callback();
-        return $this;
-    }
-
-    public function __wakeup()
-    {
-        $this->_micro_timestamp = microtime(true);
-        self::$instance = $this;
+        self::$_instance = $this;
     }
 
     public function usedMilliSecond()
@@ -128,7 +69,7 @@ EOT;
     public function setAppName($appname)
     {
         if ($this->_run) {
-            throw new AppStartUpError('cannot setAppName in running');
+            throw new AppStartUpError('cannot setAppName after run');
         }
 
         $this->_app_name = $appname;
@@ -150,18 +91,16 @@ EOT;
      */
     public function run()
     {
-        if (empty($this->_routes)) {
-            throw new AppStartUpError('empty routes');
+        if ( $this->_run ) {
+            throw new AppStartUpError('Application is running');
         }
         $this->_run = true;
         $request = Request::instance();
         $response = Response::instance();
         static::fire('routerStartup', [$this, $request, $response]);  // 在路由之前触发	这个是7个事件中, 最早的一个. 但是一些全局自定的工作, 还是应该放在Bootstrap中去完成
 
-        list($route, list($routeInfo, $params)) = $this->route($request);  // 必定会 匹配到一条路由 RoutesSimple
-        if (empty($routeInfo)) {
-            throw new RouteError('cannot match with request:' . json_encode($request) . ', routes:' . json_encode(array_keys($this->_routes)));
-        }
+        list($route, list($routeInfo, $params)) = $this->route($request);  // 必定会 匹配到一条路由  默认路由 default=>Application 始终会定向到 index/index->index()
+
         $request->setUnRouted()
             ->setCurrentRoute($route)
             ->setRouteInfo($routeInfo)
@@ -176,6 +115,7 @@ EOT;
     }
 
     /**
+     * 根据路由信息 dispatch 执行指定 Action 获得缓冲区输出 丢弃函数返回结果  会影响 $request 实例
      * @param array|null $routeInfo
      * @param array|null $params
      * @param string|null $route
@@ -215,6 +155,7 @@ EOT;
     }
 
     /**
+     * 根据指定的 $uri  dispatch 执行指定 Action 获得缓冲区输出 丢弃函数返回结果  不会影响 $request 实例
      * @param string $uri
      * @param array|null $params
      * @param string|null $route
@@ -232,68 +173,6 @@ EOT;
         $dispatcher::dispatch($routeInfo, $params);  //分发
 
         static::fire('postDispatch', [$app, $request, $response]);  // 分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
-    }
-
-    /**
-     * @param array|null $routeInfo
-     * @param array|null $params
-     * @param string|null $route
-     * @return mixed
-     * @throws AppStartUpError
-     */
-    public static function callfunc(array $routeInfo = null, array $params = null, $route = null)
-    {
-        $app = static::instance();
-        $request = Request::instance();
-        $response = Response::instance();
-
-        // 对使用默认值 null 的参数 用当前值补全
-        if (is_null($route)) {
-            $route = $request->getCurrentRoute();
-        }
-        $app->getRoute($route);  // 检查对应 route 是否注册过
-        if (is_null($routeInfo)) {
-            $routeInfo = $request->getRouteInfo();
-        }
-        if (is_null($params)) {
-            $params = $request->getParams();
-        }
-
-        $request->setUnRouted()
-            ->setCurrentRoute($route)
-            ->setRouteInfo($routeInfo)
-            ->setRouted();  // 根据新的参数 再次设置 $request 的路由信息
-        // 设置完成 锁定 $request
-
-        static::fire('preDispatch', [$app, $request, $response]);  // 分发之前触发	如果在一个请求处理过程中, 发生了forward 或 callfunc, 则这个事件会被触发多次
-
-        $dispatcher = $app->getDispatch($route);
-        $result = $dispatcher::execute($routeInfo, $params);  //分发
-
-        static::fire('postDispatch', [$app, $request, $response]);  // 分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
-        return $result;
-    }
-
-    /**
-     * @param string $uri
-     * @param array|null $params
-     * @param string|null $route
-     * @return mixed
-     */
-    public static function _callfunc($uri, array $params = null, $route = null)
-    {
-        $app = static::instance();
-        $request = Request::instance();
-        $response = Response::instance();
-        list($route, list($routeInfo, $uri_params)) = $app->route(Request::instance()->cloneAndHookUri($uri), $route);
-        $params = array_merge($uri_params, $params);
-        static::fire('preDispatch', [$app, $request, $response]);  // 分发之前触发	如果在一个请求处理过程中, 发生了forward 或 callfunc, 则这个事件会被触发多次
-
-        $dispatcher = $app->getDispatch($route);
-        $result = $dispatcher::execute($routeInfo, $params);  //分发
-
-        static::fire('postDispatch', [$app, $request, $response]);  // 分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
-        return $result;
     }
 
     /**
@@ -327,8 +206,8 @@ EOT;
         if (isset($this->_routes[$route])) {
             throw new AppStartUpError("route:{$route} has been added");
         }
-        $this->_routes[$route] = $routeObj;
-        if (!empty($dispatch)) {
+        $this->_routes[$route] = $routeObj;  //把路由加入路由表
+        if (!empty($dispatch)) {   //指定分发器时把分发器加入分发表  未指定时默认使用Application作为分发器
             $this->_dispatches[$route] = $dispatch;
         }
         return $this;
@@ -393,7 +272,7 @@ EOT;
                 return [$route, $tmp,];
             }
         }
-        return [$this->_route_name, [$this->getDefaultRouteInfo(), []]];
+        return [$this->_route_name, [$this->getDefaultRouteInfo(), []]];  //无匹配路由时 始终返回自己的默认路由
     }
 
     /**
@@ -488,6 +367,7 @@ EOT;
     public static function dispatch(array $routeInfo, array $params)
     {
         $request = Request::instance();
+
         $action = self::fixActionName($routeInfo[1]);
         $object = self::fixActionObject($routeInfo, $action);
         $fixed_params = self::fixActionParams($object, $action, $params);
@@ -507,37 +387,12 @@ EOT;
     }
 
     /**
-     * 调用分发 获得方法的返回数据  请在方法开头加上 固定流程 调用自身接口
-     *        $request = Request::getInstance();
-     *        $actionFunc = self::fixActionName($routeInfo[1]);
-     *        $controller = self::fixActionObject($routeInfo, $actionFunc);
-     *        $params = self::fixActionParams($controller, $actionFunc, $params);
-     *        $request->setParams($params);
-     * @param array $routeInfo
-     * @param array $params
-     * @return string
-     */
-    public static function execute(array $routeInfo, array $params)
-    {
-        $action = self::fixActionName($routeInfo[1]);
-        $object = self::fixActionObject($routeInfo, $action);
-        $fixed_params = self::fixActionParams($object, $action, $params);
-
-        $object->beforeAction();  //控制器 beforeAction 不允许显式输出
-        ob_start();
-        call_user_func_array([$object, $action], $fixed_params);
-        $buffer = ob_get_contents();
-        ob_end_clean();
-        return $buffer;
-    }
-
-    /**
      * 获取当前的Application实例
      * @return Application
      */
     public static function instance()
     {
-        return self::$instance;
+        return self::$_instance;
     }
 
     ###############################################################
@@ -590,14 +445,11 @@ EOT;
         if (empty($string)) {
             return '';
         }
-        if (!defined('CRYPT_KEY') || empty(CRYPT_KEY)) {
-            throw new AppStartUpError("cannot found const CRYPT_KEY");
-        }
-        return self::authString($string, 'ENCODE', CRYPT_KEY, $expiry);
+        return self::authString($string, 'ENCODE', self::getEnv('CRYPT_KEY', ''), $expiry);
     }
 
     /**
-     * 解密函数 使用 常量 CRYPT_KEY 作为 key  成功返回原字符串  失败或过期 返回 空字符串
+     * 解密函数 使用 配置 CRYPT_KEY 作为 key  成功返回原字符串  失败或过期 返回 空字符串
      * @param string $string 需解密的 字符串 safe_base64_encode 格式编码
      * @return string 解密结果
      * @throws AppStartUpError
@@ -607,10 +459,7 @@ EOT;
         if (empty($string)) {
             return '';
         }
-        if (!defined('CRYPT_KEY') || empty(CRYPT_KEY)) {
-            throw new AppStartUpError("cannot found const CRYPT_KEY");
-        }
-        return self::authString($string, 'DECODE', CRYPT_KEY);
+        return self::authString($string, 'DECODE', self::getEnv('CRYPT_KEY', ''));
     }
 
     /**

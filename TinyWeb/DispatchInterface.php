@@ -43,7 +43,7 @@ interface DispatchInterface
     public static function fixActionObject(array $routeInfo, $action);
 
     /**
-     * 调用分发 渲染输出执行结果  请在方法开头加上 固定流程 调用自身接口
+     * 调用分发 渲染输出执行结果  请在方法开头加上 固定流程 调用自身接口  无任何返回值
      *        $request = Request::getInstance();
      *        $actionFunc = self::fixActionName($routeInfo[1]);
      *        $controller = self::fixActionObject($routeInfo, $actionFunc);
@@ -54,18 +54,5 @@ interface DispatchInterface
      * @return void
      */
     public static function dispatch(array $routeInfo, array $params);
-
-    /**
-     * 调用分发 获得方法的返回数据  请在方法开头加上 固定流程 调用自身接口
-     *        $request = Request::getInstance();
-     *        $actionFunc = self::fixActionName($routeInfo[1]);
-     *        $controller = self::fixActionObject($routeInfo, $actionFunc);
-     *        $params = self::fixActionParams($controller, $actionFunc, $params);
-     *        $request->setParams($params);
-     * @param array $routeInfo
-     * @param array $params
-     * @return mixed
-     */
-    public static function execute(array $routeInfo, array $params);
 
 }

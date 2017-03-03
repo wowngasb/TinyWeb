@@ -1,112 +1,66 @@
 # coding: utf-8
-from sqlalchemy import BigInteger, Column, DateTime, Index, Integer, SmallInteger, String, Text, text
+from sqlalchemy import BigInteger, Column, DateTime, Index, Integer, SmallInteger, String, Text, text, TIMESTAMP
 from sqlalchemy.ext.declarative import declarative_base
 
 from app import db, app
 
 Base = db.Model
 
+class VlssApp(Base):
+    __tablename__ = 'vlss_app'
 
-class BlogCategory(Base):
-    __tablename__ = 'blog_categories'
-
-    id = Column(BigInteger, primary_key=True)
-    user_id = Column(BigInteger, nullable=False, index=True)
-    cate_title = Column(String(32, u'utf8_unicode_ci'), nullable=False)
-    description = Column(String(255, u'utf8_unicode_ci'), nullable=False, server_default=text("''"))
-    rank = Column(SmallInteger, nullable=False, index=True, server_default=text("'0'"))
-    state = Column(SmallInteger, nullable=False, server_default=text("'0'"))
-    created_at = Column(DateTime, nullable=False, index=True, server_default=text("CURRENT_TIMESTAMP"))
-    updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
-    delete_at = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
-
-
-class BlogComment(Base):
-    __tablename__ = 'blog_comments'
-
-    id = Column(BigInteger, primary_key=True)
-    user_id = Column(BigInteger, nullable=False, index=True)
-    post_id = Column(BigInteger, nullable=False, index=True)
-    comment_id = Column(BigInteger, nullable=False, index=True)
-    content_text = Column(Text(collation=u'utf8_unicode_ci'), nullable=False)
-    content_html = Column(Text(collation=u'utf8_unicode_ci'), nullable=False)
-    state = Column(SmallInteger, nullable=False, server_default=text("'0'"))
-    created_at = Column(DateTime, nullable=False, index=True, server_default=text("CURRENT_TIMESTAMP"))
-    updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
-    deleted_at = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
+    vlss_id = Column(Integer, primary_key=True)   #虚拟演播厅自增id
+    login_name = Column(String(16), nullable=False, unique=True)   #用户管理后台登录名
+    password = Column(String(16), nullable=False)   #用户管理后台登录名
+    access_id = Column(String(64), nullable=False)   #奥点云access_id
+    access_key = Column(String(64), nullable=False)   #奥点云access_key
+    aodian_uin = Column(Integer, nullable=False, index=True)   #奥点云 uin
+    dms_sub_key = Column(String(64), nullable=False)   #DMS sub_key
+    dms_pub_key = Column(String(64), nullable=False)   #DMS pub_key
+    dms_s_key = Column(String(64), nullable=False)   #DMS s_key
+    lcps_host = Column(String(128), nullable=False, index=True)   #导播台域名  不带http://前缀 和 结尾/
+    state = Column(SmallInteger, nullable=False, server_default=text("'0'"))   #1正常，2冻结，9删除
+    last_login_id = Column(String(32), nullable=False, server_default=text("''"))   #用户上次登录ip
+    login_count = Column(Integer, nullable=False, server_default=text("'0'"))   #用户管理后台登录次数 登陆一次+1
+    create_time = Column(DateTime, nullable=False)   #记录创建时间
+    uptime = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))   #更新时间
 
 
-class BlogNotification(Base):
-    __tablename__ = 'blog_notifications'
+class VlssSceneGroup(Base):
+    __tablename__ = 'vlss_scene_group'
 
-    id = Column(BigInteger, primary_key=True)
-    user_id = Column(BigInteger, nullable=False, index=True)
-    post_id = Column(BigInteger, nullable=False, index=True)
-    state = Column(SmallInteger, nullable=False, server_default=text("'0'"))
-    read_at = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
-    created_at = Column(DateTime, nullable=False, index=True, server_default=text("CURRENT_TIMESTAMP"))
-    updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
-    deleted_at = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
+    group_id = Column(Integer, primary_key=True)
+    vlss_id = Column(Integer, nullable=False, index=True)   #虚拟演播厅id
+    group_name = Column(String(32), nullable=False)   #场景组名称
+    state = Column(SmallInteger, nullable=False, server_default=text("'0'"))   #1正常，9删除
+    create_time = Column(DateTime, nullable=False)   #记录创建时间
+    uptime = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))   #更新时间
 
 
-class BlogPostTag(Base):
-    __tablename__ = 'blog_post_tag'
+class VlssSceneItem(Base):
+    __tablename__ = 'vlss_scene_item'
 
-    id = Column(BigInteger, primary_key=True)
-    post_id = Column(BigInteger, nullable=False, index=True)
-    tag_id = Column(BigInteger, nullable=False, index=True)
-    state = Column(SmallInteger, nullable=False, server_default=text("'0'"))
-    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
-    deleted_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
-
-
-class BlogPost(Base):
-    __tablename__ = 'blog_posts'
-
-    id = Column(BigInteger, primary_key=True)
-    user_id = Column(BigInteger, nullable=False, index=True)
-    category_id = Column(BigInteger, nullable=False, index=True)
-    title = Column(String(255, u'utf8_unicode_ci'), nullable=False)
-    description = Column(String(255, u'utf8_unicode_ci'), nullable=False, server_default=text("''"))
-    slug = Column(String(255, u'utf8_unicode_ci'), nullable=False, unique=True)
-    content_text = Column(Text(collation=u'utf8_unicode_ci'), nullable=False)
-    content_html = Column(Text(collation=u'utf8_unicode_ci'), nullable=False)
-    view_count = Column(Integer, nullable=False, server_default=text("'0'"))
-    state = Column(SmallInteger, nullable=False, server_default=text("'0'"))
-    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
-    published_at = Column(DateTime, nullable=False, index=True, server_default=text("'0000-00-00 00:00:00'"))
-    deleted_at = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
+    scene_id = Column(Integer, primary_key=True)
+    vlss_id = Column(Integer, nullable=False, index=True)   #虚拟演播厅id
+    group_id = Column(Integer, nullable=False, index=True, server_default=text("'0'"))   #所属场景组id
+    scene_name = Column(String(32), nullable=False)   #场景名称
+    scene_config = Column(Text, nullable=False)   #场景配置 格式为 json 字符串
+    scene_type = Column(String(16), nullable=False, server_default=text("'0'"))   #场景类型1弹幕;2预告;3封面;4投票;5片尾;6记分牌;7弹幕2;8LOGO;9字幕;10通用场景;足球场景
+    scene_sort = Column(Integer, nullable=False, server_default=text("'10'"))   #场景叠加排序
+    state = Column(SmallInteger, nullable=False, server_default=text("'0'"))   #1正常,2隐藏,9删除
+    create_time = Column(DateTime, nullable=False)   #记录创建时间
+    uptime = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))   #更新时间
 
 
-class BlogTag(Base):
-    __tablename__ = 'blog_tags'
+class VlssSceneTemplate(Base):
+    __tablename__ = 'vlss_scene_template'
 
-    id = Column(BigInteger, primary_key=True)
-    tag_name = Column(String(32, u'utf8_unicode_ci'), nullable=False, unique=True)
-    description = Column(String(255, u'utf8_unicode_ci'), nullable=False)
-    state = Column(SmallInteger, nullable=False, server_default=text("'0'"))
-    created_at = Column(DateTime, nullable=False, index=True, server_default=text("CURRENT_TIMESTAMP"))
-    updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
-    delete_at = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
-
-
-class TblUser(Base):
-    __tablename__ = 'tbl_users'
-
-    id = Column(BigInteger, primary_key=True)
-    nick = Column(String(64, u'utf8_unicode_ci'), nullable=False, unique=True)
-    email = Column(String(64, u'utf8_unicode_ci'), nullable=False, unique=True)
-    password = Column(String(64, u'utf8_unicode_ci'), nullable=False)
-    register_from = Column(String(64, u'utf8_unicode_ci'), nullable=False, server_default=text("'web'"))
-    github_id = Column(BigInteger, nullable=False, server_default=text("'0'"))
-    github_name = Column(String(64, u'utf8_unicode_ci'), nullable=False, server_default=text("''"))
-    website = Column(String(64, u'utf8_unicode_ci'), nullable=False, server_default=text("''"))
-    real_name = Column(String(64, u'utf8_unicode_ci'), nullable=False, server_default=text("''"))
-    description = Column(String(255, u'utf8_unicode_ci'), nullable=False, server_default=text("''"))
-    avatar_image = Column(String(255, u'utf8_unicode_ci'), nullable=False, server_default=text("''"))
-    state = Column(SmallInteger, nullable=False, server_default=text("'0'"))
-    created_at = Column(DateTime, nullable=False, index=True, server_default=text("CURRENT_TIMESTAMP"))
-    updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
-    delete_at = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
+    template_id = Column(Integer, primary_key=True)
+    vlss_id = Column(Integer, nullable=False, index=True)   #虚拟演播厅id
+    template_name = Column(String(16), nullable=False)   #模板名称
+    switch_config = Column(Text, nullable=False)   #模版配置 格式为 json 字符串
+    front_pic = Column(String(255), nullable=False)
+    back_pic = Column(String(255), nullable=False)
+    state = Column(SmallInteger, nullable=False, server_default=text("'0'"))   #1正常,9删除
+    create_time = Column(DateTime, nullable=False)   #记录创建时间
+    uptime = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))   #更新时间

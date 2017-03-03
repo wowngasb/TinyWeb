@@ -121,27 +121,7 @@ class ApiDispatch extends BaseModel implements DispatchInterface
         $response = Response::instance();
         $response->addHeader('Content-Type: application/json;charset=utf-8', false)->apendBody($json_str);
     }
-
-    /**
-     * 调用分发 获得方法的返回数据  请在方法开头加上 固定流程 调用自身接口
-     *        $request = Request::getInstance();
-     *        $actionFunc = self::fixActionName($routeInfo[1]);
-     *        $controller = self::fixActionObject($routeInfo, $actionFunc);
-     *        $params = self::fixActionParams($controller, $actionFunc, $params);
-     *        $request->setParams($params);
-     * @param array $routeInfo
-     * @param array $params
-     * @return array
-     */
-    public static function execute(array $routeInfo, array $params)
-    {
-        $action = self::fixActionName($routeInfo[1]);
-        $object = self::fixActionObject($routeInfo, $action);
-        $fixed_params = self::fixActionParams($object, $action, $params);
-        $result = call_user_func_array([$object, $action], $fixed_params);
-        return $result;
-    }
-
+    
     private static function getTraceAsResult(Exception $ex)
     {
         $code = $ex->getCode();  // errno为0 或 无error字段 表示没有错误  errno设置为0 会忽略error字段
