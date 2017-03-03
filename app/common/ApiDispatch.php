@@ -121,7 +121,7 @@ class ApiDispatch extends BaseModel implements DispatchInterface
         $response = Response::instance();
         $response->addHeader('Content-Type: application/json;charset=utf-8', false)->apendBody($json_str);
     }
-    
+
     private static function getTraceAsResult(Exception $ex)
     {
         $code = $ex->getCode();  // errno为0 或 无error字段 表示没有错误  errno设置为0 会忽略error字段

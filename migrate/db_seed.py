@@ -15,6 +15,7 @@ vlss_list = [
     dms_pub_key=item[6],
     dms_s_key=item[7],
     lcps_host=item[8],
+    create_time=date()
     state=1)) for item in vlss_list if not models.VlssApp.query.filter_by(login_name=item[0]).first()]
 
 db.session.commit()
