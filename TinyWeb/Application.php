@@ -17,7 +17,7 @@ final class Application implements DispatchInterface, RouteInterface
     private $_config = [];  // 全局配置
     private $_app_name = 'app';  // app 目录，用于 拼接命名空间 和 定位模板文件
     private $_route_name = 'default';  // 默认路由名字，总是会路由到 index
-    private $_micro_timestamp = null;
+
     private $_run = false;  // 布尔值, 指明当前的Application是否已经运行
     private $_routes = [];  // 路由列表
     private $_dispatches = [];  // 分发列表
@@ -30,14 +30,14 @@ final class Application implements DispatchInterface, RouteInterface
      */
     public function __construct(array $config = [])
     {
-        $this->_micro_timestamp = microtime(true);
         $this->_config = $config;
         self::$_instance = $this;
     }
 
     public function usedMilliSecond()
     {
-        return round(microtime(true) - $this->_micro_timestamp, 3) * 1000;
+        $request = Request::instance();
+        return round(microtime(true) - $request->get_request_timestamp(), 3) * 1000;
     }
 
     /**
@@ -145,7 +145,7 @@ final class Application implements DispatchInterface, RouteInterface
             ->setRouted();  // 根据新的参数 再次设置 $request 的路由信息
         // 设置完成 锁定 $request
 
-        $response->clearResponse();  // 清空已设置的 信息
+        $response->resetResponse();  // 清空已设置的 信息
         static::fire('preDispatch', [$app, $request, $response]);  // 分发之前触发	如果在一个请求处理过程中, 发生了forward 或 callfunc, 则这个事件会被触发多次
 
         $dispatcher = $app->getDispatch($route);
@@ -367,7 +367,6 @@ final class Application implements DispatchInterface, RouteInterface
     public static function dispatch(array $routeInfo, array $params)
     {
         $request = Request::instance();
-
         $action = self::fixActionName($routeInfo[1]);
         $object = self::fixActionObject($routeInfo, $action);
         $fixed_params = self::fixActionParams($object, $action, $params);
@@ -382,7 +381,7 @@ final class Application implements DispatchInterface, RouteInterface
 
         if (!empty($buffer)) {
             $response = Response::instance();
-            $response->apendBody($buffer);
+            $response->appendBody($buffer);
         }
     }
 

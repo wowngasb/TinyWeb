@@ -119,7 +119,7 @@ class ApiDispatch extends BaseModel implements DispatchInterface
 
         $json_str = isset($params['callback']) && !empty($params['callback']) ? "{$params['callback']}(" . json_encode($result) . ');' : json_encode($result);
         $response = Response::instance();
-        $response->addHeader('Content-Type: application/json;charset=utf-8', false)->apendBody($json_str);
+        $response->addHeader('Content-Type: application/json;charset=utf-8', false)->appendBody($json_str);
     }
 
     private static function getTraceAsResult(Exception $ex)

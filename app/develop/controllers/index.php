@@ -38,7 +38,7 @@ class index extends BaseController
 </form>
 <span>{$err_msg}</span>
 EOT;
-            Response::instance()->apendBody($html_str);
+            Response::instance()->appendBody($html_str);
         }
     }
 

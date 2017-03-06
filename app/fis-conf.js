@@ -70,7 +70,7 @@ fis.match('*', {
   deploy: fis.plugin('local-deliver', {
     to: './../public'
   })
-})
+});
 
 /*
 fis.media('product').match('*', {

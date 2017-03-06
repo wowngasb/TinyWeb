@@ -31,7 +31,9 @@ final class Request
     private  $_session_started = false;
     private  $_session_start = false;
 
-    private static $instance = null;
+    private $_request_timestamp = null;
+
+    private static $_instance = null;
 
     /**
      * @param $uri
@@ -48,11 +50,11 @@ final class Request
      */
     public static function instance()
     {
-        if (!(self::$instance instanceof self)) {
-            self::$instance = new static();
+        if (!(self::$_instance instanceof self)) {
+            self::$_instance = new static();
         }
-        self::$instance->checkSessionStart();
-        return self::$instance;
+        self::$_instance->checkSessionStart();
+        return self::$_instance;
     }
 
     /**
@@ -94,12 +96,17 @@ final class Request
 
     private function __construct()
     {
+        $this->_request_timestamp = microtime(true);
         $this->_request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
         $this->_method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : '';
         $this->_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
         $this->_http_referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
         $this->_this_url = SYSTEM_HOST . substr($this->_request_uri, 1);
         $this->_csrf_token = self::_request('CSRF', '');
+    }
+
+    public function get_request_timestamp(){
+        return $this->_request_timestamp;
     }
 
     public function getCsrfToken()
@@ -257,7 +264,6 @@ final class Request
         $route = self::instance() ->getCurrentRoute();
         return Application::instance()->getRoute($route)->ford($routerArr, $params);
     }
-
 
     /**
      * @param string $name

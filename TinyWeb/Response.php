@@ -10,22 +10,22 @@ use TinyWeb\Exception\AppStartUpError;
 final class Response
 {
 
-    protected $_header = [];  // 响应给请求的Header
-    protected $_started = false;  // 响应Header 是否已经发送
+    protected $_header_list = [];  // 响应给请求的Header
+    protected $_is_header_send = false;  // 响应Header 是否已经发送
     protected $_code = 200;  // 响应给请求端的HTTP状态码
     protected $_body = [];  // 响应给请求的body
 
-    private static $instance = null;
+    private static $_instance = null;
 
     /**
      * @return Response
      */
     public static function instance()
     {
-        if (!(self::$instance instanceof self)) {
-            self::$instance = new static();
+        if (!(self::$_instance instanceof self)) {
+            self::$_instance = new static();
         }
-        return self::$instance;
+        return self::$_instance;
     }
 
     private function __construct()
@@ -41,27 +41,27 @@ final class Response
      */
     public function addHeader($string, $replace = true)
     {
-        if ($this->_started) {
+        if ($this->_is_header_send) {
             throw new AppStartUpError('header has been send');
         }
-        $this->_header[] = [$string, $replace];
+        $this->_header_list[] = [$string, $replace];
         return $this;
     }
 
-    public function clearResponse()
+    public function resetResponse()
     {
-        if ($this->_started) {
+        if ($this->_is_header_send) {
             throw new AppStartUpError('header has been send');
         }
         $this->_body = [];
-        $this->_header = [];
+        $this->_header_list = [];
         $this->_code = 200;
         return $this;
     }
 
     public function setResponseCode($code)
     {
-        if ($this->_started) {
+        if ($this->_is_header_send) {
             throw new AppStartUpError('header has been send');
         }
         $this->_code = intval($code);
@@ -75,29 +75,29 @@ final class Response
      */
     public function sendHeader()
     {
-        if ($this->_started) {
+        if ($this->_is_header_send) {
             throw new AppStartUpError('header has been send');
         }
-        foreach ($this->_header as $idx => $val) {
+        foreach ($this->_header_list as $idx => $val) {
             header($val[0], $val[1]);
         }
         http_response_code($this->_code);
-        $this->_started = true;
+        $this->_is_header_send = true;
         return $this;
     }
 
     /**
      * 向请求回应 添加消息体
-     * @param string $body 要发送的字符串
+     * @param string $msg 要发送的字符串
      * @param string $name 此次发送消息体的 名称 可用于debug
      * @return $this
      */
-    public function apendBody($body, $name = '')
+    public function appendBody($msg, $name = '')
     {
         if (!isset($this->_body[$name])) {
             $this->_body[$name] = [];
         }
-        $this->_body[$name][] = $body;
+        $this->_body[$name][] = $msg;
         return $this;
     }
 
@@ -106,7 +106,7 @@ final class Response
      */
     public function sendBody()
     {
-        if (!$this->_started) {
+        if (!$this->_is_header_send) {
             $this->sendHeader();
         }
         foreach($this->_body as $name => $body){
@@ -117,6 +117,11 @@ final class Response
         return $this;
     }
 
+
+    /**
+     * @param string|null $name
+     * @return array
+     */
     public function getBody($name = null)
     {
         if( is_null($name) ){
