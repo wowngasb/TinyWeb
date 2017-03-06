@@ -19,13 +19,6 @@ abstract class BaseApiModel extends BaseModel implements ExecutableEmptyInterfac
     public function hookAccessAndFilterRequest(array $request, array $origin_request) {
         false && func_get_args();
 
-        //过滤参数 把确认为整形的参数强制转换为整数
-        if( isset($request['id']) ){
-            $request['id'] = intval($request['id']);
-        }
-        if( isset($request['state']) ){
-            $request['state'] = intval($request['state']);
-        }
         return $request;  //直接返回请求参数
     }
     

@@ -60,23 +60,6 @@ class DbHelper extends Manager
         return $this->manager->connection($key);
     }
 
-    /**
-     * @param string $table_name
-     * @param string $db_name
-     * @param array $table_config
-     * @param array $db_config
-     * @return BuilderHelper
-     */
-    public static function _table($table_name, $db_name = null, array $table_config = [], array $db_config = [])
-    {
-        $connection = self::initDb()->getConnection(!empty($db_config) ? $db_config : $db_name);
-        $processor = $connection->getPostProcessor();
-        $grammar = $connection->getQueryGrammar();
-
-        BuilderHelper::registerTable($db_name, $table_name, $table_config);
-        $query = new BuilderHelper($db_name, $connection, $grammar, $processor);
-        return $query->from($table_name);
-    }
 }
 
 

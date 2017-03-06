@@ -538,12 +538,19 @@ final class Application implements DispatchInterface, RouteInterface
             } else {
                 $res = $str1 ^ $str2;
                 $ret = 0;
-                for ($i = strlen($res) - 1; $i >= 0; $i--) $ret |= ord($res[$i]);
+                for ($i = strlen($res) - 1; $i >= 0; $i--) {
+                    $ret |= ord($res[$i]);
+                }
                 return !$ret;
             }
         } else {
             return hash_equals($str1, $str2);
         }
+    }
+
+    public static function striCmp($str1, $str2)
+    {
+        return self::strCmp(strtolower($str1), strtolower($str2));
     }
 
     /**

@@ -24,49 +24,10 @@ class AdminApi extends BaseApiModel
         }
     }
 
-    public function testDb()
-    {
-        return (new Orm())->hookCurrent('blog_posts')->get(0, 20, [], ['*'], [
-        ]);
-    }
-
-    public function testDbList()
-    {
-        return (new Orm())->hookCurrent('blog_posts')->lists('slug');
-    }
-
-    public function testDbPluck()
-    {
-        return (new Orm())->hookCurrent('blog_posts')->pluck('slug');
-    }
-
 
     public function testDbOther($db, $table)
     {
         return DbHelper::table($table, $db)->first();
-    }
-
-    public function testDb3()
-    {
-        return  (new Orm())->hookCurrent('blog_posts')->first(['slug', 'title', 'view_count',]);
-    }
-
-    public function testDbJson()
-    {
-        $user = new CurrentUser();
-        return  (new Orm())->hookCurrentDb('tiny')->hookCurrentTable('blog_posts')->hookCurrentUser($user)->first(['slug', 'title', 'view_count'], [
-            ['state', 1],
-            ['view_count', '>', 100],
-        ]);
-    }
-
-    public function testDbJsonAttach()
-    {
-        $user = new CurrentUser();
-        return  (new Orm())->hookCurrentDb('tiny')->hookCurrentTable('blog_posts')->hookCurrentUser($user)->first(['slug', 'title', 'view_count', 'category', 'tags', 'user'], [
-            ['state', 1],
-            ['view_count', '>', 100],
-        ]);
     }
 
     /**
