@@ -13,7 +13,7 @@ use GraphQL\Utils;
 
 class App extends BaseOrmModel
 {
-    protected static $__tablename__ = 'vlss_app';
+    protected static $_tablename = 'vlss_app';
 
     public $vlss_id;   #虚拟演播厅自增id
     public $login_name;   #用户管理后台登录名

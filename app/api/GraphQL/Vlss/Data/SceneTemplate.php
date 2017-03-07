@@ -15,7 +15,7 @@ use GraphQL\Utils;
 class SceneTemplate extends BaseOrmModel
 {
 
-    protected static $__tablename__ = 'vlss_scene_template';
+    protected static $_tablename = 'vlss_scene_template';
 
     public $template_id;
     public $vlss_id;   #虚拟演播厅id

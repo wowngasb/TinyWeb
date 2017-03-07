@@ -112,21 +112,8 @@ class ApiDispatch extends BaseModel implements DispatchInterface
     }
 
 
-    private static function _dispatch(array $routeInfo, array $_params)
+    private static function _dispatch(array $routeInfo, array $params)
     {
-        if (isset($_SERVER['CONTENT_TYPE']) && stripos($_SERVER['CONTENT_TYPE'], 'application/json') !== false && $_SERVER['REQUEST_METHOD'] == "POST") {
-            $json_str = isset($GLOBALS["HTTP_RAW_POST_DATA"]) ? $GLOBALS["HTTP_RAW_POST_DATA"] : (file_get_contents('php://input') ?: '');
-            $json = !empty($json_str) ? json_decode($json_str, true) : [];
-            $params = array_merge($_params, $json);  //补充上$_REQUEST 中的信息
-        } else {
-            $params = $_params;
-        }
-
-        if (Application::strCmp($routeInfo[0], 'GraphQL')) {
-            GraphQLDispatch::dispatch($routeInfo, $params);
-        } else {
-            self::_dispatch($routeInfo, $params);
-        }
         $request = Request::instance();
         $action = self::fixActionName($routeInfo[1]);
         $object = self::fixActionObject($routeInfo, $action);

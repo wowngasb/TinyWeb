@@ -54,7 +54,7 @@ class DbHelper extends Manager
             $key = "{$db_config['host']}:{$db_config['port']}@{$db_config['username']}#{$db_config['database']}";
         } else {
             $db_config = $config;
-            $key = $db_config['database'];
+            $key = md5(print_r($config, true));
         }
         parent::addConnection($db_config, $key);
         return $this->manager->connection($key);

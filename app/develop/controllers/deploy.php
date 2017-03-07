@@ -43,37 +43,6 @@ class deploy extends BaseController
         include_once($file);
     }
 
-    //初始化 超级管理员
-    public function initSuperAdmin()
-    {
-        $admin_id = 0;  // TODO 判断当前是否存在管理员
-        if ($admin_id >= 0) {
-            exit('pass');
-        }
-        $username = Request::_post('username', '');
-        $password = Request::_post('password', '');
-        if (empty($password) || empty($username)) {
-            $html_str = <<<EOT
-<form action="" method="POST">
-    登陆账号：<input type="text" value="" placeholder="登录名" name="username">
-    登录密码：<input type="password" placeholder="密码" name="password">
-    <button type="submit">创建超级管理员</button>
-</form>
-EOT;
-            exit($html_str);
-        }
-        $admin_id = 0;  // TODO 创建管理员帐号
-        if ($admin_id > 0) {
-            exit("init {$username} ok");
-        }
-    }
-
-    public function syncEnvConfig()
-    {
-        echo 'Sync Config Surceased';  // TODO 获取基本配置
-    }
-
-
     /**
      * 编译根目录api下所有 API 类 生成 js  放到 static/apiMod 下面
      */
@@ -110,12 +79,5 @@ EOT;
         }
         echo ApiHelper::model2js($cls, $method_list, $dev_debug);
     }
-
-    //清空memcache缓存
-    //public function actionCleanMemcache() {
-    //    $mem = MMemcache::getInstance();
-    //    $mem->flush();
-    //    exit("Clean");
-    //}
 
 }

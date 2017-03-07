@@ -138,6 +138,15 @@ final class Request
     }
 
     /**
+     * @return array
+     */
+    public function strRouteInfo()
+    {
+        $arr = $this->getRouteInfo();
+        return "{$arr[2]}/{$arr[0]}/{$arr[1]}";
+    }
+
+    /**
      * @param array $routeInfo
      * @return $this
      * @throws AppStartUpError
@@ -345,5 +354,8 @@ final class Request
         return isset($_SESSION[$name]) ? $_SESSION[$name] : $default;
     }
 
-
+    public static function set_session($name, $data)
+    {
+        return $_SESSION[$name] = $data;
+    }
 }

@@ -66,7 +66,7 @@ class Bootstrap extends BaseModel
         }
 
         //开启 辅助调试模式 注册对应事件
-        Connector::getInstance()->setPassword(DEVELOP_KEY, true);
+        Connector::getInstance()->setPassword(Application::instance()->getEnv('DEVELOP_KEY'), true);
 
         Application::on('routerStartup', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();
@@ -74,27 +74,27 @@ class Bootstrap extends BaseModel
         });
         Application::on('routerShutdown', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();
-            $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->getRouteInfo(), 'params' => $request->getParams(), 'body' => $response->getBody()];
+            $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->strRouteInfo(), 'params' => $request->getParams(), 'body' => $response->getBody()];
             self::_debugConsole($data, get_class($obj) . ' #routerShutdown', 1);
         });
         Application::on('dispatchLoopStartup', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();
-            $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->getRouteInfo(), 'params' => $request->getParams(), 'body' => $response->getBody()];
+            $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->strRouteInfo(), 'params' => $request->getParams(), 'body' => $response->getBody()];
             self::_debugConsole($data, get_class($obj) . ' #dispatchLoopStartup', 1);
         });
         Application::on('dispatchLoopShutdown', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();
-            $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->getRouteInfo(), 'params' => $request->getParams(), 'body' => $response->getBody()];
+            $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->strRouteInfo(), 'body' => $response->getBody()];
             self::_debugConsole($data, get_class($obj) . ' #dispatchLoopShutdown', 1);
         });
         Application::on('preDispatch', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();
-            $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->getRouteInfo(), 'params' => $request->getParams(), 'body' => $response->getBody()];
+            $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->strRouteInfo(), 'params' => $request->getParams(), 'body' => $response->getBody()];
             self::_debugConsole($data, get_class($obj) . ' #preDispatch', 1);
         });
         Application::on('postDispatch', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();
-            $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->getRouteInfo(), 'params' => $request->getParams(), 'body' => $response->getBody()];
+            $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->strRouteInfo(), 'body' => $response->getBody()];
             self::_debugConsole($data, get_class($obj) . ' #postDispatch', 1);
         });
 

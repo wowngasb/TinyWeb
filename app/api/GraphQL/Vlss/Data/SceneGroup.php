@@ -14,7 +14,7 @@ use GraphQL\Utils;
 
 class SceneGroup extends BaseOrmModel
 {
-    protected static $__tablename__ = 'vlss_scene_group';
+    protected static $_tablename = 'vlss_scene_group';
 
     public $group_id;
     public $vlss_id;   #虚拟演播厅id

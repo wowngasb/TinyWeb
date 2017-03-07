@@ -26,7 +26,7 @@ class index extends BaseController
     public function auth()
     {
         $develop_key = Request::_post('develop_key', '');
-        $_SESSION['develop_key'] = $develop_key;
+        Request::set_session('develop_key', $develop_key);
         if (self::authDevelopKey()) {  //认证 通过
             Application::redirect(Request::urlTo(['Syslog', 'index', 'develop']));
         } else {
@@ -44,7 +44,8 @@ EOT;
 
     public static function authDevelopKey()
     {
-        return Application::strCmp(DEVELOP_KEY, Request::_session('develop_key', ''));
+        $tmp_key = md5(rand(0, 999999));
+        return Application::strCmp(Application::instance()->getEnv('DEVELOP_KEY', $tmp_key), Request::_session('develop_key', ''));
     }
 
 }
