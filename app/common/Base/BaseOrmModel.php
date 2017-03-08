@@ -55,15 +55,15 @@ abstract class BaseOrmModel extends BaseModel
 
     public function __construct(array $data = [])
     {
-        if (empty($this->_tablename) || empty($this->_primary_key)) {
+        if (empty(static::$_tablename) || empty(static::$_primary_key)) {
             throw new AppStartUpError('Dao:' . class_basename($this) . ' init with empty tablename or primary_key');
         }
         if (!empty($data)) {
             Utils::assign($this, $data);
         }
         $name = get_class($this);
-        if ( is_null($this->db) ) {
-            if ( isset(self::$m_instance[$name]) ) {
+        if (is_null($this->db)) {
+            if (isset(self::$m_instance[$name])) {
                 $this->db = self::$m_instance[$name]->db;
             } else {
                 $this->db = DbHelper::initDb()->getConnection(Application::instance()->getEnv('ENV_MYSQL_DB'));
@@ -115,20 +115,12 @@ abstract class BaseOrmModel extends BaseModel
     }
 
     /**
-     * @return \Illuminate\Database\Query\Builder
-     */
-    protected static function _table(){
-        $db = static::instance()->db;
-        return $db->table(static::$_tablename);
-    }
-
-    /**
      * @param array $where 检索条件数组 具体格式参见文档
      * @return \Illuminate\Database\Query\Builder
      */
-    protected static function _tableItem(array $where = [])
+    protected static function tableItem(array $where = [])
     {
-        $table = static::_table();
+        $table = static::instance()->db->table(static::$_tablename);
         $query_list = [];
         foreach ($where as $key => $item) {
             if (is_integer($key) && is_array($item)) {
@@ -165,7 +157,7 @@ abstract class BaseOrmModel extends BaseModel
      */
     public static function countItem(array $where = [], array $columns = ['*'])
     {
-        $table = static::_tableItem($where);
+        $table = static::tableItem($where);
         $count = $table->count($columns);
         self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return $count;
@@ -182,7 +174,7 @@ abstract class BaseOrmModel extends BaseModel
      */
     public static function selectItem($start = 0, $limit = 0, array $sort_option = [], array $where = [], array $columns = ['*'])
     {
-        $table = static::_tableItem($where);
+        $table = static::tableItem($where);
         $start = $start <= 0 ? 0 : $start;
         $limit = $limit > static::$_max_select_item_counts ? static::$_max_select_item_counts : $limit;
         if ($start > 0) {
@@ -214,7 +206,7 @@ abstract class BaseOrmModel extends BaseModel
      */
     public static function dictItem(array $where = [], array $columns = ['*'])
     {
-        $table = static::_tableItem($where);
+        $table = static::tableItem($where);
         $table->take(static::$_max_select_item_counts);
         $data = $table->get($columns);
         self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
@@ -248,7 +240,7 @@ abstract class BaseOrmModel extends BaseModel
      */
     public static function firstItem(array $where, array $columns = ['*'])
     {
-        $table = static::_tableItem($where);
+        $table = static::tableItem($where);
         $item = $table->first($columns);
         self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return static::_fixItem($item);
@@ -272,7 +264,7 @@ abstract class BaseOrmModel extends BaseModel
                 $data[$key] = json_encode($value);
             }
         }
-        $table = static::_table();
+        $table = static::tableItem();
         $id = $table->insertGetId($data, static::$_primary_key);
         self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return $id;
@@ -287,7 +279,7 @@ abstract class BaseOrmModel extends BaseModel
     public static function setItem($id, array $data)
     {
         unset($data['create_time'], $data['uptime'], $data[static::$_primary_key]);
-        $table = static::_table()->where(static::$_primary_key, $id);
+        $table = static::tableItem()->where(static::$_primary_key, $id);
         $update = $table->update($data);
         self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return $update;
@@ -300,7 +292,7 @@ abstract class BaseOrmModel extends BaseModel
      */
     public static function delItem($id)
     {
-        $table = static::_table()->where(static::$_primary_key, $id);
+        $table = static::tableItem()->where(static::$_primary_key, $id);
         $delete = $table->delete();
         self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return $delete;

@@ -9,38 +9,41 @@
 namespace app\api\GraphQL\Vlss;
 
 
+use app\api\GraphQL\Vlss\Type\AppType;
+use app\api\GraphQL\Vlss\Type\SceneGroupType;
+
 class Types
 {
 
     // Object types:
-    private static $user;
-    private static $story;
-    private static $comment;
+    private static $app;
+    private static $sceneGroup;
+    private static $sceneItem;
     private static $image;
     private static $query;
 
     /**
-     * @return UserType
+     * @return AppType
      */
     public static function user()
     {
-        return self::$user ?: (self::$user = new UserType());
+        return self::$app ?: (self::$app = new AppType());
     }
 
     /**
-     * @return StoryType
+     * @return SceneGroupType
      */
-    public static function story()
+    public static function sceneGroup()
     {
-        return self::$story ?: (self::$story = new StoryType());
+        return self::$sceneGroup ?: (self::$sceneGroup = new SceneGroupType());
     }
 
     /**
-     * @return CommentType
+     * @return SceneItemType
      */
-    public static function comment()
+    public static function sceneItem()
     {
-        return self::$comment ?: (self::$comment = new CommentType());
+        return self::$sceneItem ?: (self::$sceneItem = new SceneItemType());
     }
 
     /**

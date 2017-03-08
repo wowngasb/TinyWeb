@@ -1,12 +1,11 @@
 <?php
-namespace GraphQL\Examples\Blog\Type;
+namespace app\api\GraphQL\Vlss\Type;
 
 use app\api\GraphQL\Vlss\Data\App;
 use app\api\GraphQL\Vlss\Data\SceneGroup;
 use app\api\GraphQL\Vlss\Data\SceneTemplate;
-use app\api\GraphQL\Vlss\Types;
+
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\ResolveInfo;
 
 class AppType extends ObjectType
 {

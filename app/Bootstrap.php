@@ -73,43 +73,43 @@ class Bootstrap extends BaseModel
 
         Application::on('routerStartup', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();
-            self::_debugConsole(['request' => $request,], get_class($obj) . ' #routerStartup', 1);
+            self::debugConsole(['request' => $request,], get_class($obj) . ' #routerStartup', 1);
         });
         Application::on('routerShutdown', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();
             $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->strRouteInfo(), 'params' => $request->getParams(), 'body' => $response->getBody()];
-            self::_debugConsole($data, get_class($obj) . ' #routerShutdown', 1);
+            self::debugConsole($data, get_class($obj) . ' #routerShutdown', 1);
         });
         Application::on('dispatchLoopStartup', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();
             $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->strRouteInfo(), 'params' => $request->getParams(), 'body' => $response->getBody()];
-            self::_debugConsole($data, get_class($obj) . ' #dispatchLoopStartup', 1);
+            self::debugConsole($data, get_class($obj) . ' #dispatchLoopStartup', 1);
         });
         Application::on('dispatchLoopShutdown', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();
             $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->strRouteInfo(), 'body' => $response->getBody()];
-            self::_debugConsole($data, get_class($obj) . ' #dispatchLoopShutdown', 1);
+            self::debugConsole($data, get_class($obj) . ' #dispatchLoopShutdown', 1);
         });
         Application::on('preDispatch', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();
             $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->strRouteInfo(), 'params' => $request->getParams(), 'body' => $response->getBody()];
-            self::_debugConsole($data, get_class($obj) . ' #preDispatch', 1);
+            self::debugConsole($data, get_class($obj) . ' #preDispatch', 1);
         });
         Application::on('postDispatch', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();
             $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->strRouteInfo(), 'body' => $response->getBody()];
-            self::_debugConsole($data, get_class($obj) . ' #postDispatch', 1);
+            self::debugConsole($data, get_class($obj) . ' #postDispatch', 1);
         });
 
         ControllerAbstract::on('preDisplay', function (ControllerAbstract $obj, $tpl_path, array $params) {
             false && func_get_args();
             $data = ['params' => $params, 'tpl_path' => $tpl_path];
-            self::_debugConsole($data, get_class($obj) . ' #preDisplay', 1);
+            self::debugConsole($data, get_class($obj) . ' #preDisplay', 1);
         });  // 注册 模版渲染 打印模版变量  用于调试
         ControllerAbstract::on('preWidget', function (ControllerAbstract $obj, $tpl_path, array $params) {
             false && func_get_args();
             $data = ['params' => $params, 'tpl_path' => $tpl_path];
-            self::_debugConsole($data, get_class($obj) . ' #preWidget', 1);
+            self::debugConsole($data, get_class($obj) . ' #preWidget', 1);
         });  // 注册 组件渲染 打印组件变量  用于调试
     }
 

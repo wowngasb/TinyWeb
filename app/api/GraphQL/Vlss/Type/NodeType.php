@@ -1,5 +1,5 @@
 <?php
-namespace GraphQL\Examples\Blog\Type;
+namespace app\api\GraphQL\Vlss\Type;
 
 use GraphQL\Examples\Blog\Data\Story;
 use GraphQL\Examples\Blog\Data\User;
