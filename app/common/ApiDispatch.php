@@ -124,7 +124,7 @@ class ApiDispatch extends BaseModel implements DispatchInterface
             $fixed_params = $object->hookAccessAndFilterRequest($fixed_params, $params);  //所有API类继承于BaseApi，默认行为直接原样返回参数不作处理
             $request->setParams($fixed_params);
             $result = call_user_func_array([$object, $action], $fixed_params);
-            (DEV_MODEL == 'DEBUG') && Bootstrap::_D([
+            Bootstrap::_D([
                 'class' => get_class($object),
                 'method' => $action,
                 'params' => $fixed_params,

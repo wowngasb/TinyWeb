@@ -14,9 +14,6 @@ use GraphQL\Utils;
 
 class SceneTemplate extends BaseOrmModel
 {
-
-    protected static $_tablename = 'vlss_scene_template';
-
     public $template_id;
     public $vlss_id;   #虚拟演播厅id
     public $template_name;   #模板名称
@@ -27,8 +24,12 @@ class SceneTemplate extends BaseOrmModel
     public $create_time;   #记录创建时间
     public $uptime;   #更新时间
 
-    public function __construct(array $data)
+    protected static $_tablename = 'vlss_scene_template';
+    protected static $_primary_key = 'template_id';
+
+    protected static function _fixItem($val)
     {
-        Utils::assign($this, $data);
+        $val['switch_config'] = !empty($val['switch_config']) ? json_decode($val['switch_config'], true) : [];
+        return $val;
     }
 }

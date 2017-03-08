@@ -1,21 +1,23 @@
 <?php
-namespace app\api\GraphQL\Vlss;
-use GraphQL\Type\Definition\Type;
-use GraphQL\Type\Definition\ListOfType;
-use GraphQL\Type\Definition\NonNull;
-
 /**
- * Class Types
- *
- * Acts as a registry and factory for your types.
- *
- * As simplistic as possible for the sake of clarity of this example.
- * Your own may be more dynamic (or even code-generated).
- *
- * @package GraphQL\Examples\Blog
+ * Created by PhpStorm.
+ * User: Administrator
+ * Date: 2017/3/8 0008
+ * Time: 13:29
  */
+
+namespace app\api\GraphQL\Vlss;
+
+
 class Types
 {
+
+    // Object types:
+    private static $user;
+    private static $story;
+    private static $comment;
+    private static $image;
+    private static $query;
 
     /**
      * @return UserType
@@ -24,6 +26,112 @@ class Types
     {
         return self::$user ?: (self::$user = new UserType());
     }
+
+    /**
+     * @return StoryType
+     */
+    public static function story()
+    {
+        return self::$story ?: (self::$story = new StoryType());
+    }
+
+    /**
+     * @return CommentType
+     */
+    public static function comment()
+    {
+        return self::$comment ?: (self::$comment = new CommentType());
+    }
+
+    /**
+     * @return ImageType
+     */
+    public static function image()
+    {
+        return self::$image ?: (self::$image = new ImageType());
+    }
+
+    /**
+     * @return QueryType
+     */
+    public static function query()
+    {
+        return self::$query ?: (self::$query = new QueryType());
+    }
+
+
+    // Interface types
+    private static $node;
+
+    /**
+     * @return NodeType
+     */
+    public static function node()
+    {
+        return self::$node ?: (self::$node = new NodeType());
+    }
+
+
+    // Unions types:
+    private static $mention;
+
+    /**
+     * @return SearchResultType
+     */
+    public static function mention()
+    {
+        return self::$mention ?: (self::$mention = new SearchResultType());
+    }
+
+
+    // Enum types
+    private static $imageSizeEnum;
+    private static $contentFormatEnum;
+
+    /**
+     * @return ImageSizeEnumType
+     */
+    public static function imageSizeEnum()
+    {
+        return self::$imageSizeEnum ?: (self::$imageSizeEnum = new ImageSizeEnumType());
+    }
+
+    /**
+     * @return ContentFormatEnum
+     */
+    public static function contentFormatEnum()
+    {
+        return self::$contentFormatEnum ?: (self::$contentFormatEnum = new ContentFormatEnum());
+    }
+
+    // Custom Scalar types:
+    private static $urlType;
+    private static $emailType;
+
+    public static function email()
+    {
+        return self::$emailType ?: (self::$emailType = EmailType::create());
+    }
+
+    /**
+     * @return UrlType
+     */
+    public static function url()
+    {
+        return self::$urlType ?: (self::$urlType = new UrlType());
+    }
+
+    /**
+     * @param $name
+     * @param null $objectKey
+     * @return array
+     */
+    public static function htmlField($name, $objectKey = null)
+    {
+        return HtmlField::build($name, $objectKey);
+    }
+
+
 
     // Let's add internal types as well for consistent experience
 
@@ -82,3 +190,4 @@ class Types
         return new NonNull($type);
     }
 }
+

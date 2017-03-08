@@ -8,7 +8,6 @@ use TinyWeb\Helper\RedisHelper;
 abstract class BaseApiModel extends BaseModel implements ExecutableEmptyInterface {
 
 
-
     public function __construct() {
         # code...
     }

@@ -8,23 +8,24 @@
 
 namespace app\common;
 
-use app\common\Base\BaseSchemaModel;
+use app\common\Base\BaseSchemaAppContext;
+use ErrorException;
 use GraphQL\GraphQL;
 
 use app\Bootstrap;
 use app\common\Base\BaseModel;
 use Exception;
+use GraphQL\Type\Definition\Config;
 use TinyWeb\Application;
 use TinyWeb\DispatchInterface;
 use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\ExecutableEmptyInterface;
 use TinyWeb\Helper\ApiHelper;
+use TinyWeb\Request;
 use TinyWeb\Response;
 
-class GraphQLDispatch  extends BaseModel implements DispatchInterface
+class GraphQLDispatch extends BaseModel implements DispatchInterface
 {
-
-
     private static $instance = null;
 
     /**
@@ -65,20 +66,22 @@ class GraphQLDispatch  extends BaseModel implements DispatchInterface
      * 创建需要调用的对象 并检查对象和方法的合法性
      * @param array $routeInfo
      * @param string $action
-     * @return BaseSchemaModel 可返回实现此接口的 其他对象 方便做类型限制
+     * @return BaseSchemaAppContext 可返回实现此接口的 其他对象 方便做类型限制
      * @throws AppStartUpError
      */
     public static function fixActionObject(array $routeInfo, $action)
     {
-        $namespace = "\\" . Application::join("\\", [Application::instance()->getAppName(), 'api', "{$routeInfo[0]}"]);
-        $object = new $namespace();
-        if (!($object instanceof BaseSchemaModel)) {
-            throw new AppStartUpError("class:{$namespace} isn't instanceof BaseApiModel with routeInfo:" . json_encode($routeInfo));
+        $user_namespace = "\\" . Application::join("\\", [Application::instance()->getAppName(), 'api', 'GraphQL', "{$routeInfo[1]}", 'CurrentUser']);
+        $context_namespace = "\\" . Application::join("\\", [Application::instance()->getAppName(), 'api', 'GraphQL', "{$routeInfo[1]}", 'AppContext']);
+        $user = new $user_namespace();
+        $context = new $context_namespace(Request::instance(), $user);
+        if (!($context instanceof BaseSchemaAppContext)) {
+            throw new AppStartUpError("class:{$context_namespace} isn't instanceof BaseApiModel with routeInfo:" . json_encode($routeInfo));
         }
-        if (!is_callable([$object, $action]) || ApiHelper::isIgnoreMethod($action)) {
-            throw new AppStartUpError("action:{$namespace}->{$action} not allowed with routeInfo:" . json_encode($routeInfo));
+        if (!is_callable([$context, $action]) || ApiHelper::isIgnoreMethod($action)) {
+            throw new AppStartUpError("action:{$context_namespace}->{$action} not allowed with routeInfo:" . json_encode($routeInfo));
         }
-        return $object;
+        return $context;
     }
 
     /**
@@ -96,24 +99,43 @@ class GraphQLDispatch  extends BaseModel implements DispatchInterface
      */
     public static function dispatch(array $routeInfo, array $params)
     {
+        $debug = Request::_request('debug', '');
+        if (!empty($debug)) {
+            // Enable additional validation of type configs
+            // (disabled by default because it is costly)
+            Config::enableValidation();
+            // Catch custom errors (to report them in query results if debugging is enabled)
+            $phpErrors = [];
+            set_error_handler(function ($severity, $message, $file, $line) use (&$phpErrors) {
+                $phpErrors[] = new ErrorException($message, 0, $severity, $file, $line);
+            });
+        }
+        $requestString = isset($params['query']) ? $params['query'] : '{hello}';
+        $operationName = isset($params['operation']) ? $params['operation'] : null;
+
         $action = self::fixActionName($routeInfo[1]);
-        $object = self::fixActionObject($routeInfo, $action);
-        $variableValues = self::fixActionParams($object, $action, $params);
+        $context = self::fixActionObject($routeInfo, $action);
+        $variableValues = self::fixActionParams($context, $action, $params);
 
-        $requestString = isset($data['query']) ? $data['query'] : null;
-        $operationName = isset($data['operation']) ? $data['operation'] : null;
-        $schema = $object->buildSchema();
-
+        $httpStatus = 200;
         try {
+            // GraphQL schema to be passed to query executor:
             $result = GraphQL::execute(
                 $schema,
                 $requestString,
                 null,
-                $object, // A custom context that can be used to pass current User object etc to all resolvers.
-                (array)$variableValues,
+                $context,
+                $variableValues,
                 $operationName
             );
-            (DEV_MODEL == 'DEBUG') && Bootstrap::_D([
+            // Add reported PHP errors to result (if any)
+            if (!empty($_GET['debug']) && !empty($phpErrors)) {
+                $result['extensions']['phpErrors'] = array_map(
+                    ['GraphQL\Error\FormattedError', 'createFromPHPError'],
+                    $phpErrors
+                );
+            }
+            Bootstrap::_D([
                 'requestString' => $requestString,
                 'operationName' => $operationName,
                 'variableValues' => $variableValues,
@@ -122,11 +144,14 @@ class GraphQLDispatch  extends BaseModel implements DispatchInterface
         } catch (Exception $ex) {
             Bootstrap::_D((array)$ex, 'api Exception');
             $result = self::getTraceAsResult($ex);
+            $httpStatus = 500;
         }
 
         $json_str = isset($params['callback']) && !empty($params['callback']) ? "{$params['callback']}(" . json_encode($result) . ');' : json_encode($result);
         $response = Response::instance();
-        $response->addHeader('Content-Type: application/json;charset=utf-8', false)->appendBody($json_str);
+        $response->setResponseCode($httpStatus)
+            ->addHeader('Content-Type: application/json;charset=utf-8', true)
+            ->appendBody($json_str);
     }
 
     private static function getTraceAsResult(Exception $ex)

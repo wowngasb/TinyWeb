@@ -10,6 +10,7 @@ namespace app\common\Base;
 
 
 use app\Bootstrap;
+use GraphQL\Utils;
 use TinyWeb\Application;
 use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\Helper\DbHelper;
@@ -31,31 +32,44 @@ use TinyWeb\Helper\DbHelper;
 abstract class BaseOrmModel extends BaseModel
 {
 
-    protected $_tablename = '';
-    protected $_primary_key = '';
-    protected $_max_select_item_counts = 10000;  //最多获取1w条记录 防止数据库拉取条目过多
-
-    private static $instance = null;
+    protected static $_tablename = '';
+    protected static $_primary_key = '';
+    protected static $_max_select_item_counts = 10000;  //最多获取1w条记录 防止数据库拉取条目过多
 
     /* @var \Illuminate\Database\Connection */
-    private $db;
+    private $db = null;
 
+    private static $m_instance = [];
+
+    /**
+     * @return BaseOrmModel
+     */
     public static function instance()
     {
-        if (!self::$instance instanceof self) {
-            self::$instance = new static();
+        $name = get_called_class();
+        if (!isset(self::$m_instance[$name])) {
+            self::$m_instance[$name] = new static();
         }
-        return self::$instance;
+        return self::$m_instance[$name];
     }
 
-    private function __construct()
+    public function __construct(array $data = [])
     {
         if (empty($this->_tablename) || empty($this->_primary_key)) {
             throw new AppStartUpError('Dao:' . class_basename($this) . ' init with empty tablename or primary_key');
         }
-        if (!$this->db) {
-            $this->db = DbHelper::initDb()->getConnection(Application::instance()->getEnv('ENV_MYSQL_DB'));
+        if (!empty($data)) {
+            Utils::assign($this, $data);
         }
+        $name = get_class($this);
+        if ( is_null($this->db) ) {
+            if ( isset(self::$m_instance[$name]) ) {
+                $this->db = self::$m_instance[$name]->db;
+            } else {
+                $this->db = DbHelper::initDb()->getConnection(Application::instance()->getEnv('ENV_MYSQL_DB'));
+            }
+        }
+        self::$m_instance[$name] = $this;
     }
 
     protected static function debugSql($sql, $param, $tag = 'sql')
@@ -101,12 +115,20 @@ abstract class BaseOrmModel extends BaseModel
     }
 
     /**
+     * @return \Illuminate\Database\Query\Builder
+     */
+    protected static function _table(){
+        $db = static::instance()->db;
+        return $db->table(static::$_tablename);
+    }
+
+    /**
      * @param array $where 检索条件数组 具体格式参见文档
      * @return \Illuminate\Database\Query\Builder
      */
-    protected function _tableItem(array $where = [])
+    protected static function _tableItem(array $where = [])
     {
-        $table = $this->db->table($this->_tablename);
+        $table = static::_table();
         $query_list = [];
         foreach ($where as $key => $item) {
             if (is_integer($key) && is_array($item)) {
@@ -141,9 +163,9 @@ abstract class BaseOrmModel extends BaseModel
      * @param array $columns 需要获取的列 格式为[`column_1`, ]  默认为所有
      * @return int  数据条目数
      */
-    public function countItem(array $where = [], array $columns = ['*'])
+    public static function countItem(array $where = [], array $columns = ['*'])
     {
-        $table = $this->_tableItem($where);
+        $table = static::_tableItem($where);
         $count = $table->count($columns);
         self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return $count;
@@ -158,18 +180,18 @@ abstract class BaseOrmModel extends BaseModel
      * @param array $columns 需要获取的列 格式为[`column_1`, ]  默认为所有
      * @return array 数据 list 格式为 [`item`, ]
      */
-    public function selectItem($start = 0, $limit = 0, array $sort_option = [], array $where = [], array $columns = ['*'])
+    public static function selectItem($start = 0, $limit = 0, array $sort_option = [], array $where = [], array $columns = ['*'])
     {
-        $table = $this->_tableItem($where);
+        $table = static::_tableItem($where);
         $start = $start <= 0 ? 0 : $start;
-        $limit = $limit > $this->_max_select_item_counts ? $this->_max_select_item_counts : $limit;
+        $limit = $limit > static::$_max_select_item_counts ? static::$_max_select_item_counts : $limit;
         if ($start > 0) {
             $table->skip($start);
         }
         if ($limit > 0) {
             $table->take($limit);
         } else {
-            $table->take($this->_max_select_item_counts);
+            $table->take(static::$_max_select_item_counts);
         }
         if (!empty($sort_option['field']) && !empty($sort_option['direction'])) {
             $table->orderBy($sort_option['field'], $sort_option['direction']);
@@ -190,16 +212,16 @@ abstract class BaseOrmModel extends BaseModel
      * @param array $columns 需要获取的列 格式为[`column_1`, ]  默认为所有
      * @return array 数据 dict 格式为 [`item.primary_key` => `item`, ]
      */
-    public function dictItem(array $where = [], array $columns = ['*'])
+    public static function dictItem(array $where = [], array $columns = ['*'])
     {
-        $table = $this->_tableItem($where);
-        $table->take($this->_max_select_item_counts);
+        $table = static::_tableItem($where);
+        $table->take(static::$_max_select_item_counts);
         $data = $table->get($columns);
         self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
 
         $rst = [];
         foreach ($data as $key => $val) {
-            $id = $val[$this->_primary_key];
+            $id = $val[static::$_primary_key];
             $rst[$id] = static::_fixItem($val);
         }
         return $rst;
@@ -212,10 +234,10 @@ abstract class BaseOrmModel extends BaseModel
      * @param array $columns 需要获取的列 格式为[`column_1`, ]  默认为所有
      * @return array
      */
-    public function getItem($value, $filed = null, array $columns = ['*'])
+    public static function getItem($value, $filed = null, array $columns = ['*'])
     {
-        $filed = $filed ?: $this->_primary_key;
-        return $this->firstItem([strtolower($filed) => $value], $columns);
+        $filed = $filed ?: static::$_primary_key;
+        return static::firstItem([strtolower($filed) => $value], $columns);
     }
 
     /**
@@ -224,9 +246,9 @@ abstract class BaseOrmModel extends BaseModel
      * @param array $columns 需要获取的列 格式为[`column_1`, ]  默认为所有
      * @return array
      */
-    public function firstItem(array $where, array $columns = ['*'])
+    public static function firstItem(array $where, array $columns = ['*'])
     {
-        $table = $this->_tableItem($where);
+        $table = static::_tableItem($where);
         $item = $table->first($columns);
         self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return static::_fixItem($item);
@@ -237,9 +259,9 @@ abstract class BaseOrmModel extends BaseModel
      * @param array $data 数据[`filed` => `value`, ]
      * @return int
      */
-    public function newItem(array $data)
+    public static function newItem(array $data)
     {
-        unset($data[$this->_primary_key]);
+        unset($data[static::$_primary_key]);
         $time_str = date('Y-m-d H:i:s');
         $default = [
             'create_time' => $time_str,
@@ -250,8 +272,8 @@ abstract class BaseOrmModel extends BaseModel
                 $data[$key] = json_encode($value);
             }
         }
-        $table = $this->db->table($this->_tablename);
-        $id = $table->insertGetId($data, $this->_primary_key);
+        $table = static::_table();
+        $id = $table->insertGetId($data, static::$_primary_key);
         self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return $id;
     }
@@ -262,10 +284,10 @@ abstract class BaseOrmModel extends BaseModel
      * @param array $data 更新的数据 格式为 [`filed` => `value`, ]
      * @return int 操作影响的行数
      */
-    public function setItem($id, array $data)
+    public static function setItem($id, array $data)
     {
-        unset($data['create_time'], $data['uptime'], $data[$this->_primary_key]);
-        $table = $this->db->table($this->_tablename)->where($this->_primary_key, $id);
+        unset($data['create_time'], $data['uptime'], $data[static::$_primary_key]);
+        $table = static::_table()->where(static::$_primary_key, $id);
         $update = $table->update($data);
         self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return $update;
@@ -276,9 +298,9 @@ abstract class BaseOrmModel extends BaseModel
      * @param int $id 主键值
      * @return int 操作影响的行数
      */
-    public function delItem($id)
+    public static function delItem($id)
     {
-        $table = $this->db->table($this->_tablename)->where($this->_primary_key, $id);
+        $table = static::_table()->where(static::$_primary_key, $id);
         $delete = $table->delete();
         self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return $delete;
@@ -290,14 +312,14 @@ abstract class BaseOrmModel extends BaseModel
      * @param array $data 需要插入的数据  格式为 [`filed` => `value`, ]
      * @return int 返回数据 主键 自增id
      */
-    public function upsertItem(array $where, array $data)
+    public static function upsertItem(array $where, array $data)
     {
-        $tmp = $this->firstItem($where);
+        $tmp = static::firstItem($where);
         if (empty($tmp)) {
-            return $this->newItem($data);
+            return static::newItem($data);
         } else {
-            $id = $tmp[$this->_primary_key];
-            $this->setItem($id, $data);
+            $id = $tmp[static::$_primary_key];
+            static::setItem($id, $data);
             return $id;
         }
     }

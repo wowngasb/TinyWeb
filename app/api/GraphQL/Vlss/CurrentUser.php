@@ -6,8 +6,7 @@
  * Time: 10:01
  */
 
-namespace app\common\Models;
-
+namespace app\api\GraphQL\Vlss;
 
 use TinyWeb\CurrentUserInterface;
 

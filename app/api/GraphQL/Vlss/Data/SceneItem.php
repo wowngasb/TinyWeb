@@ -14,9 +14,7 @@ use GraphQL\Utils;
 
 class SceneItem extends BaseOrmModel
 {
-    protected static $_tablename = 'vlss_scene_item';
-
-    public $scene_id;
+     public $scene_id;
     public $vlss_id;   #虚拟演播厅id
     public $group_id;   #所属场景组id
     public $scene_name;   #场景名称
@@ -27,8 +25,13 @@ class SceneItem extends BaseOrmModel
     public $create_time;   #记录创建时间
     public $uptime;   #更新时间
 
-    public function __construct(array $data)
+    protected static $_tablename = 'vlss_scene_item';
+    protected static $_primary_key = 'scene_id';
+
+    protected static function _fixItem($val)
     {
-        Utils::assign($this, $data);
+        $val['scene_config'] = !empty($val['scene_config']) ? json_decode($val['scene_config'], true) : [];
+        return $val;
     }
+
 }

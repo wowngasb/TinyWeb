@@ -23,12 +23,12 @@ use TinyWeb\Route\RouteSimple;
 class Bootstrap extends BaseModel
 {
 
-    private static function _debugConsole($data, $tags = null, $ignoreTraceCalls = 0)
+    public static function debugConsole($data, $tags = null, $ignoreTraceCalls = 0)
     {
         if (!empty($tags)) {
             $tags = strval($tags) . ':' . Application::instance()->usedMilliSecond() . 'ms';
         }
-        (DEV_MODEL == 'DEBUG') && Connector::getInstance()->getDebugDispatcher()->dispatchDebug($data, $tags, $ignoreTraceCalls);
+        Connector::getInstance()->getDebugDispatcher()->dispatchDebug($data, $tags, $ignoreTraceCalls);
     }
 
     /**
@@ -39,7 +39,9 @@ class Bootstrap extends BaseModel
      */
     public static function _D($data, $tags = null, $ignoreTraceCalls = 0)
     {
-        self::_debugConsole($data, $tags, $ignoreTraceCalls);
+        if (DEV_MODEL == 'DEBUG') {
+            self::debugConsole($data, $tags, $ignoreTraceCalls);
+        }
     }
 
 
@@ -60,7 +62,8 @@ class Bootstrap extends BaseModel
         return $app;
     }
 
-    public static function debugStrap(){
+    public static function debugStrap()
+    {
         if (DEV_MODEL != 'DEBUG') {  // 非调试模式下  直接返回
             return;
         }
