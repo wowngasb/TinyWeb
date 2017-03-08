@@ -315,4 +315,13 @@ abstract class BaseOrmModel extends BaseModel
             return $id;
         }
     }
+
+    /**
+     * 获取分页获取数据最大条目数
+     * @return int
+     */
+    public static function getMaxSelectItemCounts()
+    {
+        return static::$_max_select_item_counts;
+    }
 }

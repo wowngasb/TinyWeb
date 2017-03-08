@@ -1,9 +1,8 @@
 <?php
 namespace app\api\GraphQL\Vlss\Type;
 
-use GraphQL\Examples\Blog\AppContext;
-use GraphQL\Examples\Blog\Data\DataSource;
-use GraphQL\Examples\Blog\Types;
+use app\api\GraphQL\Vlss\Data\App;
+use app\api\GraphQL\Vlss\Types;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
@@ -15,35 +14,38 @@ class QueryType extends ObjectType
         $config = [
             'name' => 'Query',
             'fields' => [
-                'user' => [
-                    'type' => Types::user(),
-                    'description' => 'Returns user by id (in range of 1-5)',
+                'app' => [
+                    'type' => Types::app(),
+                    'description' => '根据演播厅id获取虚拟演播厅实例信息，需要该实例所有者权限',
                     'args' => [
-                        'id' => Types::nonNull(Types::id())
+                        'vlss_id' => Types::nonNull(Types::int())
                     ]
                 ],
-                'viewer' => [
-                    'type' => Types::user(),
-                    'description' => 'Represents currently logged-in user (for the sake of example - simply returns user with id == 1)'
-                ],
-                'stories' => [
-                    'type' => Types::listOf(Types::story()),
-                    'description' => 'Returns subset of stories posted for this blog',
+                'apps' => [
+                    'type' => Types::listOf(Types::app()),
+                    'description' => '分页检索所有虚拟演播厅实例信息，需要管理员权限',
                     'args' => [
-                        'after' => [
-                            'type' => Types::id(),
-                            'description' => 'Fetch stories listed after the story with this ID'
+                        'page' => [
+                            'type' => Types::int(),
+                            'description' => '页数从1开始，默认为1',
+                            'defaultValue' => 1,
                         ],
                         'limit' => [
                             'type' => Types::int(),
-                            'description' => 'Number of stories to be returned',
-                            'defaultValue' => 10
-                        ]
+                            'description' => '每页数量，不可超过:' . App::getMaxSelectItemCounts() . ',默认为10',
+                            'defaultValue' => 10,
+                        ],
+                        'state' => [
+                            'type' => Types::appStateEnum(),
+                            'description' => '实例状态，检索条件，可选',
+                            'defaultValue' => null,
+                        ],
+                        'login_name' => [
+                            'type' => Types::string(),
+                            'description' => '用户登录名，检索条件，可选',
+                            'defaultValue' => null,
+                        ],
                     ]
-                ],
-                'lastStoryPosted' => [
-                    'type' => Types::story(),
-                    'description' => 'Returns last story posted for this blog'
                 ],
                 'deprecatedField' => [
                     'type' => Types::string(),
@@ -64,26 +66,6 @@ class QueryType extends ObjectType
         parent::__construct($config);
     }
 
-    public function user($rootValue, $args)
-    {
-        return DataSource::findUser($args['id']);
-    }
-
-    public function viewer($rootValue, $args, AppContext $context)
-    {
-        return $context->viewer;
-    }
-
-    public function stories($rootValue, $args)
-    {
-        $args += ['after' => null];
-        return DataSource::findStories($args['limit'], $args['after']);
-    }
-
-    public function lastStoryPosted()
-    {
-        return DataSource::findLatestStory();
-    }
 
     public function hello()
     {

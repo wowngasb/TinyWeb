@@ -16,6 +16,7 @@ class App extends BaseOrmModel
     public $vlss_id;   #虚拟演播厅自增id
     public $login_name;   #用户管理后台登录名
     public $password;   #用户管理后台登录名
+    public $email;   #用户邮箱
     public $access_id;   #奥点云access_id
     public $access_key;   #奥点云access_key
     public $aodian_uin;   #奥点云 uin
@@ -33,6 +34,7 @@ class App extends BaseOrmModel
 
     protected static $_tablename = 'vlss_app';
     protected static $_primary_key = 'vlss_id';
+    protected static $_max_select_item_counts = 50;
 
     protected static function _fixItem($val)
     {

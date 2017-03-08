@@ -10,7 +10,19 @@ namespace app\api\GraphQL\Vlss;
 
 
 use app\api\GraphQL\Vlss\Type\AppType;
+use app\api\GraphQL\Vlss\Type\Enum\AppStateEnum;
+use app\api\GraphQL\Vlss\Type\Enum\SceneGroupStateEnum;
+use app\api\GraphQL\Vlss\Type\Enum\SceneTemplateStateEnum;
+use app\api\GraphQL\Vlss\Type\QueryType;
+use app\api\GraphQL\Vlss\Type\Scalar\EmailType;
+use app\api\GraphQL\Vlss\Type\Scalar\UrlType;
 use app\api\GraphQL\Vlss\Type\SceneGroupType;
+use app\api\GraphQL\Vlss\Type\SceneItemType;
+use app\api\GraphQL\Vlss\Type\SceneTemplateType;
+use GraphQL\Examples\Blog\Type\Enum\SceneItemStateEnum;
+use GraphQL\Type\Definition\ListOfType;
+use GraphQL\Type\Definition\NonNull;
+use GraphQL\Type\Definition\Type;
 
 class Types
 {
@@ -19,13 +31,13 @@ class Types
     private static $app;
     private static $sceneGroup;
     private static $sceneItem;
-    private static $image;
+    private static $sceneTemplate;
     private static $query;
 
     /**
      * @return AppType
      */
-    public static function user()
+    public static function app()
     {
         return self::$app ?: (self::$app = new AppType());
     }
@@ -47,11 +59,11 @@ class Types
     }
 
     /**
-     * @return ImageType
+     * @return SceneTemplateType
      */
-    public static function image()
+    public static function sceneTemplate()
     {
-        return self::$image ?: (self::$image = new ImageType());
+        return self::$sceneTemplate ?: (self::$sceneTemplate = new SceneTemplateType());
     }
 
     /**
@@ -63,48 +75,42 @@ class Types
     }
 
 
-    // Interface types
-    private static $node;
-
-    /**
-     * @return NodeType
-     */
-    public static function node()
-    {
-        return self::$node ?: (self::$node = new NodeType());
-    }
-
-
-    // Unions types:
-    private static $mention;
-
-    /**
-     * @return SearchResultType
-     */
-    public static function mention()
-    {
-        return self::$mention ?: (self::$mention = new SearchResultType());
-    }
-
-
     // Enum types
-    private static $imageSizeEnum;
-    private static $contentFormatEnum;
+    private static $appStateEnum;
+    private static $sceneGroupStateEnum;
+    private static $sceneItemStateEnum;
+    private static $sceneTemplateStateEnum;
 
     /**
-     * @return ImageSizeEnumType
+     * @return AppStateEnum
      */
-    public static function imageSizeEnum()
+    public static function appStateEnum()
     {
-        return self::$imageSizeEnum ?: (self::$imageSizeEnum = new ImageSizeEnumType());
+        return self::$appStateEnum ?: (self::$appStateEnum = new AppStateEnum());
     }
 
     /**
-     * @return ContentFormatEnum
+     * @return SceneGroupStateEnum
      */
-    public static function contentFormatEnum()
+    public static function sceneGroupStateEnum()
     {
-        return self::$contentFormatEnum ?: (self::$contentFormatEnum = new ContentFormatEnum());
+        return self::$sceneGroupStateEnum ?: (self::$sceneGroupStateEnum = new SceneGroupStateEnum());
+    }
+
+    /**
+     * @return SceneItemStateEnum
+     */
+    public static function sceneItemStateEnum()
+    {
+        return self::$sceneItemStateEnum ?: (self::$sceneItemStateEnum = new SceneItemStateEnum());
+    }
+
+    /**
+     * @return SceneTemplateStateEnum
+     */
+    public static function sceneTemplateStateEnum()
+    {
+        return self::$sceneTemplateStateEnum ?: (self::$sceneTemplateStateEnum = new SceneTemplateStateEnum());
     }
 
     // Custom Scalar types:
@@ -123,18 +129,6 @@ class Types
     {
         return self::$urlType ?: (self::$urlType = new UrlType());
     }
-
-    /**
-     * @param $name
-     * @param null $objectKey
-     * @return array
-     */
-    public static function htmlField($name, $objectKey = null)
-    {
-        return HtmlField::build($name, $objectKey);
-    }
-
-
 
     // Let's add internal types as well for consistent experience
 
