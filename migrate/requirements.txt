@@ -5,3 +5,4 @@ Flask-SQLAlchemy==2.1
 MySQL-python==1.2.4b4
 flask-graphql==1.4.1
 graphene>=1.0
+sqlacodegen==1.1.6
