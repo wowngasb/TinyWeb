@@ -6,7 +6,7 @@
  * Time: 14:52
  */
 
-namespace app\common\Base;
+namespace TinyWeb\Base;
 
 use TinyWeb\Helper\RedisHelper;
 use TinyWeb\Plugin\LogTrait;
@@ -21,8 +21,6 @@ abstract class BaseModel {
 
     use LogTrait, RpcTrait;
     protected static $detail_log = false;
-
-
 
     /**
      * 使用redis缓存函数调用的结果 优先使用缓存中的数据

@@ -89,6 +89,11 @@ final class Request
         return $this;
     }
 
+    public function getSessionId()
+    {
+        return $this->_session_started ? session_id() : '';
+    }
+
     private function __construct()
     {
         $this->_request_timestamp = microtime(true);
@@ -118,11 +123,6 @@ final class Request
     public function getHttpReferer()
     {
         return $this->_http_referer;
-    }
-
-    public function getSessionId()
-    {
-        return session_id();
     }
 
     /**
@@ -275,9 +275,9 @@ final class Request
      * @param string $default
      * @return string
      */
-    public static function _get($name, $default = '')
+    public static function _get($name = null, $default = '')
     {
-        return isset($_GET[$name]) ? $_GET[$name] : $default;
+        return is_null($name) ? $_GET : (isset($_GET[$name]) ? $_GET[$name] : $default);
     }
 
     public static function set_get($name, $data)
@@ -290,9 +290,9 @@ final class Request
      * @param string $default
      * @return string
      */
-    public static function _post($name, $default = '')
+    public static function _post($name = null, $default = '')
     {
-        return isset($_POST[$name]) ? $_POST[$name] : $default;
+        return is_null($name) ? $_POST : (isset($_POST[$name]) ? $_POST[$name] : $default);
     }
 
     public static function set_post($name, $data)
@@ -305,9 +305,9 @@ final class Request
      * @param string $default
      * @return string
      */
-    public static function _env($name, $default = '')
+    public static function _env($name = null, $default = '')
     {
-        return isset($_ENV[$name]) ? $_ENV[$name] : $default;
+        return is_null($name) ? $_ENV : (isset($_ENV[$name]) ? $_ENV[$name] : $default);
     }
 
     public static function set_env($name, $data)
@@ -320,9 +320,9 @@ final class Request
      * @param string $default
      * @return string
      */
-    public static function _server($name, $default = '')
+    public static function _server($name = null, $default = '')
     {
-        return isset($_SERVER[$name]) ? $_SERVER[$name] : $default;
+        return is_null($name) ? $_SERVER : (isset($_SERVER[$name]) ? $_SERVER[$name] : $default);
     }
 
     public static function set_server($name, $data)
@@ -335,9 +335,9 @@ final class Request
      * @param string $default
      * @return string
      */
-    public static function _cookie($name, $default = '')
+    public static function _cookie($name = null, $default = '')
     {
-        return isset($_COOKIE[$name]) ? $_COOKIE[$name] : $default;
+        return is_null($name) ? $_COOKIE : (isset($_COOKIE[$name]) ? $_COOKIE[$name] : $default);
     }
 
     public static function set_cookie($name, $data)
@@ -350,9 +350,9 @@ final class Request
      * @param string $default
      * @return string
      */
-    public static function _files($name, $default = '')
+    public static function _files($name = null, $default = '')
     {
-        return isset($_FILES[$name]) ? $_FILES[$name] : $default;
+        return is_null($name) ? $_FILES : (isset($_FILES[$name]) ? $_FILES[$name] : $default);
     }
 
     public static function set_files($name, $data)
@@ -365,9 +365,9 @@ final class Request
      * @param string $default
      * @return string
      */
-    public static function _request($name, $default = '')
+    public static function _request($name = null, $default = '')
     {
-        return isset($_REQUEST[$name]) ? $_REQUEST[$name] : $default;
+        return is_null($name) ? $_REQUEST : (isset($_REQUEST[$name]) ? $_REQUEST[$name] : $default);
     }
 
     public static function set_request($name, $data)
@@ -380,9 +380,9 @@ final class Request
      * @param string $default
      * @return string
      */
-    public static function _session($name, $default = '')
+    public static function _session($name = null, $default = '')
     {
-        return isset($_SESSION[$name]) ? $_SESSION[$name] : $default;
+        return is_null($name) ? $_SESSION : (isset($_SESSION[$name]) ? $_SESSION[$name] : $default);
     }
 
     public static function set_session($name, $data)

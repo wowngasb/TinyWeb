@@ -8,9 +8,9 @@
 
 namespace app\index\controllers;
 
-use app\common\Base\BaseController;
+use app\common\Controller;
 
-class index extends BaseController
+class index extends Controller
 {
 
     public function beforeAction()

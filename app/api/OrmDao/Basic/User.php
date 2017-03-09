@@ -9,15 +9,18 @@
 namespace app\api\OrmDao\Basic;
 
 
-use app\common\Base\BaseOrmModel;
 
-class User  extends BaseOrmModel
+use TinyWeb\Base\BaseOrm;
+
+class User  extends BaseOrm
 {
     protected static $_tablename = 'basic_user';
 
     protected static function _fixItem($val)
     {
-        unset($val['password']);
+        if(!empty($val)){
+            unset($val['password']);
+        }
         return $val;
     }
 }

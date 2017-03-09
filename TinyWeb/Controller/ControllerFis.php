@@ -10,11 +10,10 @@ namespace TinyWeb\Controller;
 
 
 use TinyWeb\Application;
-use TinyWeb\ControllerAbstract;
-use TinyWeb\Response;
+use TinyWeb\Base\BaseController;
 use TinyWeb\View\ViewFis;
 
-class ControllerFis extends ControllerAbstract
+class BaseControllerFis extends BaseController
 {
     final public function __construct()
     {

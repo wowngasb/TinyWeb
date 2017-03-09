@@ -9,7 +9,7 @@
 namespace app\develop\controllers;
 
 
-use app\common\Base\BaseController;
+use app\common\Controller;
 use TinyWeb\Application;
 use TinyWeb\Helper\ApiHelper;
 use TinyWeb\Request;
@@ -19,7 +19,7 @@ use TinyWeb\Request;
  * Class Deploy
  * @package app\controllers
  */
-class deploy extends BaseController
+class deploy extends Controller
 {
     public function beforeAction()
     {

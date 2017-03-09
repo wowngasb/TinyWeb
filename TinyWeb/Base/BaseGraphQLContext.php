@@ -6,15 +6,13 @@
  * Time: 14:04
  */
 
-namespace app\common\Base;
-
+namespace TinyWeb\Base;
 
 use GraphQL\Schema;
-use TinyWeb\CurrentUserInterface;
 use TinyWeb\ExecutableEmptyInterface;
 use TinyWeb\Request;
 
-abstract class BaseSchemaAppContext extends BaseModel implements ExecutableEmptyInterface
+abstract class BaseGraphQLContext extends BaseModel implements ExecutableEmptyInterface
 {
 
     public $request;
@@ -22,9 +20,9 @@ abstract class BaseSchemaAppContext extends BaseModel implements ExecutableEmpty
 
     /**
      * @param Request $request
-     * @param CurrentUserInterface $user
+     * @param BaseCurrentUser $user
      */
-    public function __construct(Request $request, CurrentUserInterface $user){
+    public function __construct(Request $request, BaseCurrentUser $user){
         $this->request = $request;
         $this->user = $user;
     }

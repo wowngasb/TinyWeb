@@ -8,12 +8,11 @@
 
 namespace app\api\GraphQL\Vlss;
 
-use app\common\Base\BaseSchemaAppContext;
 use GraphQL\Schema;
-use TinyWeb\CurrentUserInterface;
+use TinyWeb\Base\BaseGraphQLContext;
 use TinyWeb\Request;
 
-class AppContext extends BaseSchemaAppContext
+class Context extends BaseGraphQLContext
 {
 
     /**

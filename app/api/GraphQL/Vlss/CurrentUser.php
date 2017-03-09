@@ -8,9 +8,9 @@
 
 namespace app\api\GraphQL\Vlss;
 
-use TinyWeb\CurrentUserInterface;
+use TinyWeb\Base\BaseCurrentUser;
 
-class CurrentUser implements CurrentUserInterface
+class CurrentUser extends  BaseCurrentUser
 {
 
 }

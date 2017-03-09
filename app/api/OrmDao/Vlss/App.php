@@ -9,9 +9,10 @@
 namespace app\api\OrmDao\Vlss;
 
 
-use app\common\Base\BaseOrmModel;
 
-class App extends BaseOrmModel
+use TinyWeb\Base\BaseOrm;
+
+class App  extends BaseOrm
 {
     protected static $_tablename = 'vlss_app';
 

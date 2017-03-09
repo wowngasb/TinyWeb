@@ -9,11 +9,10 @@
 namespace TinyWeb\Controller;
 
 
-use TinyWeb\ControllerAbstract;
-use TinyWeb\Response;
+use TinyWeb\Base\BaseController;
 use TinyWeb\View\ViewSimple;
 
-class ControllerSimple extends ControllerAbstract
+class BaseControllerSimple extends BaseController
 {
     final public function __construct()
     {

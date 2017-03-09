@@ -2,12 +2,12 @@
 
 namespace app\develop\controllers;
 
-use app\common\Base\BaseController;
+use app\common\Controller;
 use TinyWeb\Application;
 use TinyWeb\Request;
 use TinyWeb\Response;
 
-class index extends BaseController
+class index extends Controller
 {
 
     public function beforeAction()

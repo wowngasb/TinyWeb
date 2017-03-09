@@ -8,10 +8,10 @@
 
 namespace app\api\GraphQL\Vlss\Data;
 
-use app\common\Base\BaseOrmModel;
 use GraphQL\Utils;
+use TinyWeb\Base\BaseOrm;
 
-class App extends BaseOrmModel
+class App extends BaseOrm
 {
     public $id;   #虚拟演播厅自增id
     public $vlss_name;  #演播厅名字

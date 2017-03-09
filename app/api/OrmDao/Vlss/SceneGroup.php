@@ -9,9 +9,9 @@
 namespace app\api\OrmDao\Vlss;
 
 
-use app\common\Base\BaseOrmModel;
+use TinyWeb\Base\BaseOrm;
 
-class SceneGroup extends  BaseOrmModel
+class SceneGroup extends BaseOrm
 {
     protected static $_tablename = 'vlss_scene_group';
 }

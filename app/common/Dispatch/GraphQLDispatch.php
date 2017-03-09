@@ -6,31 +6,31 @@
  * Time: 15:30
  */
 
-namespace app\common;
+namespace app\common\Dispatch;
 
-use app\common\Base\BaseSchemaAppContext;
 use ErrorException;
 use GraphQL\GraphQL;
 
 use app\Bootstrap;
-use app\common\Base\BaseModel;
+use TinyWeb\Base\BaseModel;
 use Exception;
 use GraphQL\Type\Definition\Config;
 use TinyWeb\Application;
-use TinyWeb\DispatchInterface;
+use TinyWeb\BaseDispatch;
 use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\ExecutableEmptyInterface;
 use TinyWeb\Helper\ApiHelper;
+use TinyWeb\Base\BaseGraphQLContext;
 use TinyWeb\Request;
 use TinyWeb\Response;
 
-class GraphQLDispatch extends BaseModel implements DispatchInterface
+class GraphQLDispatch extends BaseModel implements BaseDispatch
 {
     private static $instance = null;
 
     /**
      * 单实例实现
-     * @return DispatchInterface
+     * @return BaseDispatch
      */
     public static function instance()
     {
@@ -66,7 +66,7 @@ class GraphQLDispatch extends BaseModel implements DispatchInterface
      * 创建需要调用的对象 并检查对象和方法的合法性
      * @param array $routeInfo
      * @param string $action
-     * @return BaseSchemaAppContext 可返回实现此接口的 其他对象 方便做类型限制
+     * @return BaseGraphQLContext 可返回实现此接口的 其他对象 方便做类型限制
      * @throws AppStartUpError
      */
     public static function fixActionObject(array $routeInfo, $action)
@@ -75,7 +75,7 @@ class GraphQLDispatch extends BaseModel implements DispatchInterface
         $context_namespace = "\\" . Application::join("\\", [Application::instance()->getAppName(), 'api', 'GraphQL', "{$routeInfo[1]}", 'AppContext']);
         $user = new $user_namespace();
         $context = new $context_namespace(Request::instance(), $user);
-        if (!($context instanceof BaseSchemaAppContext)) {
+        if (!($context instanceof BaseGraphQLContext)) {
             throw new AppStartUpError("class:{$context_namespace} isn't instanceof BaseApiModel with routeInfo:" . json_encode($routeInfo));
         }
         if (!is_callable([$context, $action]) || ApiHelper::isIgnoreMethod($action)) {
@@ -121,7 +121,7 @@ class GraphQLDispatch extends BaseModel implements DispatchInterface
         try {
             // GraphQL schema to be passed to query executor:
             $result = GraphQL::execute(
-                $schema,
+                $context->schema(),
                 $requestString,
                 null,
                 $context,

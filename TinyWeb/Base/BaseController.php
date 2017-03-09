@@ -6,15 +6,20 @@
  * Time: 14:59
  */
 
-namespace TinyWeb;
+namespace TinyWeb\Base;
 
+use TinyWeb\Application;
+use TinyWeb\ExecutableEmptyInterface;
 use TinyWeb\Plugin\EventTrait;
+use TinyWeb\Request;
+use TinyWeb\Response;
+use TinyWeb\ViewInterface;
 
 /**
  * Class Controller
  * @package TinyWeb
  */
-abstract class ControllerAbstract implements ExecutableEmptyInterface
+abstract class BaseController extends BaseModel implements ExecutableEmptyInterface
 {
     use EventTrait;
 

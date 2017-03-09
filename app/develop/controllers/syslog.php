@@ -2,13 +2,13 @@
 
 namespace app\develop\controllers;
 
-use app\common\Base\BaseController;
+use app\common\Controller;
 use TinyWeb\Application;
 use TinyWeb\Request;
 use TinyWeb\Helper\LogHelper;
 use TinyWeb\Helper\ApiHelper;
 
-class sysLog extends BaseController
+class sysLog extends Controller
 {
 
     public function beforeAction()

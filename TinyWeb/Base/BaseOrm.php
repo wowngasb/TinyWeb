@@ -6,13 +6,11 @@
  * Time: 16:14
  */
 
-namespace app\common\Base;
+namespace TinyWeb\Base;
 
-
-use app\Bootstrap;
 use GraphQL\Utils;
 use TinyWeb\Application;
-use TinyWeb\Exception\AppStartUpError;
+use TinyWeb\Exception\OrmStartUpError;
 use TinyWeb\Helper\DbHelper;
 
 /**
@@ -29,7 +27,7 @@ use TinyWeb\Helper\DbHelper;
  * 例如 [   ['whereNull', 'updated_at'],  ]   对应  ->whereNull('updated_at')
  * @package app\common\Base
  */
-abstract class BaseOrmModel extends BaseModel
+abstract class BaseOrm extends BaseModel
 {
 
     protected static $_tablename = '';
@@ -42,7 +40,7 @@ abstract class BaseOrmModel extends BaseModel
     private static $m_instance = [];
 
     /**
-     * @return BaseOrmModel
+     * @return BaseOrm
      */
     public static function instance()
     {
@@ -56,7 +54,7 @@ abstract class BaseOrmModel extends BaseModel
     public function __construct(array $data = [])
     {
         if (empty(static::$_tablename) || empty(static::$_primary_key)) {
-            throw new AppStartUpError('Dao:' . class_basename($this) . ' init with empty tablename or primary_key');
+            throw new OrmStartUpError('Dao:' . class_basename($this) . ' init with empty tablename or primary_key');
         }
         if (!empty($data)) {
             Utils::assign($this, $data);
@@ -75,7 +73,7 @@ abstract class BaseOrmModel extends BaseModel
     protected static function debugSql($sql, $param, $tag = 'sql')
     {
         $tag = str_replace(__CLASS__, 'SQL', $tag);
-        Bootstrap::_D(['sql' => self::showQuery($sql, $param)], $tag);
+        BaseBootstrap::_D(['sql' => self::showQuery($sql, $param)], $tag);
     }
 
     protected static function showQuery($query, $params)

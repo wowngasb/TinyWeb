@@ -1,11 +1,11 @@
 <?php
 
-namespace app\common\Base;
+namespace TinyWeb\Base;
 
 use TinyWeb\ExecutableEmptyInterface;
 use TinyWeb\Helper\RedisHelper;
 
-abstract class BaseApiModel extends BaseModel implements ExecutableEmptyInterface {
+abstract class BaseApi extends BaseModel implements ExecutableEmptyInterface {
 
 
     public function __construct() {
@@ -27,9 +27,9 @@ abstract class BaseApiModel extends BaseModel implements ExecutableEmptyInterfac
     }
 
     /*
- * 不同的API会有不同的调用次数限制, 请检查返回 header 中的如下字段
- * header 字段	描述
- */
+     * 不同的API会有不同的调用次数限制, 请检查返回 header 中的如下字段
+     * header 字段	描述
+     */
     public static function _apiLimitByTimeRange($api_key, $range_sec = 300, $max_num = 100, $tag = 'all')
     {
         $testRst = self::_apiLimitByTimeRangeTest($api_key, $range_sec, $max_num, $tag);
@@ -38,14 +38,14 @@ abstract class BaseApiModel extends BaseModel implements ExecutableEmptyInterfac
             exit();
         }
         foreach ($testRst as $key => $val) {
-            header("X-RateLimit-{$key}: {$val}");
+            header("X-Rate-{$key}: {$val}");
         }
         /*
-        header("X-RateLimit-LimitTag: {$tag}");  //限制规则分类 all 代表总数限制
-        header("X-RateLimit-LimitNum: {$max_num}");  //限制调用次数，超过后服务器会返回 403 错误
-        header("X-RateLimit-Remaining: {$remaining}");  //当时间段中还剩下的调用次数
-        header("X-RateLimit-TimeRange: {$range_sec}");  //限制时间范围长度 单位 秒
-        header("X-RateLimit-TimeReset: {$reset_date}");  //限制重置时间 unix time
+        header("X-Rate-LimitTag: {$tag}");  //限制规则分类 all 代表总数限制
+        header("X-Rate-LimitNum: {$max_num}");  //限制调用次数，超过后服务器会返回 403 错误
+        header("X-Rate-Remaining: {$remaining}");  //当时间段中还剩下的调用次数
+        header("X-Rate-TimeRange: {$range_sec}");  //限制时间范围长度 单位 秒
+        header("X-Rate-TimeReset: {$reset_date}");  //限制重置时间 unix time
         */
     }
 

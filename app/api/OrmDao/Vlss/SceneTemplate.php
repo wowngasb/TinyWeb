@@ -9,15 +9,17 @@
 namespace app\api\OrmDao\Vlss;
 
 
-use app\common\Base\BaseOrmModel;
+use TinyWeb\Base\BaseOrm;
 
-class SceneTemplate extends BaseOrmModel
+class SceneTemplate extends BaseOrm
 {
     protected static $_tablename = 'vlss_scene_template';
 
     protected static function _fixItem($val)
     {
-        $val['switch_config'] = !empty($val['switch_config']) ? json_decode($val['switch_config'], true) : [];
+        if(!empty($val)) {
+            $val['switch_config'] = !empty($val['switch_config']) ? json_decode($val['switch_config'], true) : [];
+        }
         return $val;
     }
 }

@@ -6,15 +6,15 @@
  * Time: 18:11
  */
 
-namespace app\common;
+namespace app\common\Dispatch;
 
 
 use app\Bootstrap;
-use app\common\Base\BaseApiModel;
-use app\common\Base\BaseModel;
+use TinyWeb\Base\BaseApi;
+use TinyWeb\Base\BaseModel;
 use Exception;
 use TinyWeb\Application;
-use TinyWeb\DispatchInterface;
+use TinyWeb\BaseDispatch;
 use TinyWeb\Exception\ApiParamsError;
 use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\ExecutableEmptyInterface;
@@ -22,14 +22,14 @@ use TinyWeb\Helper\ApiHelper;
 use TinyWeb\Request;
 use TinyWeb\Response;
 
-class ApiDispatch extends BaseModel implements DispatchInterface
+class ApiDispatch extends BaseModel implements BaseDispatch
 {
 
     private static $instance = null;
 
     /**
      * 单实例实现
-     * @return DispatchInterface
+     * @return BaseDispatch
      */
     public static function instance()
     {
@@ -65,14 +65,14 @@ class ApiDispatch extends BaseModel implements DispatchInterface
      * 创建需要调用的对象 并检查对象和方法的合法性
      * @param array $routeInfo
      * @param string $action
-     * @return BaseApiModel 可返回实现此接口的 其他对象 方便做类型限制
+     * @return BaseApi 可返回实现此接口的 其他对象 方便做类型限制
      * @throws AppStartUpError
      */
     public static function fixActionObject(array $routeInfo, $action)
     {
         $namespace = "\\" . Application::join("\\", [Application::instance()->getAppName(), 'api', $routeInfo[0]]);
         $object = new $namespace();
-        if (!($object instanceof BaseApiModel)) {
+        if (!($object instanceof BaseApi)) {
             throw new AppStartUpError("class:{$namespace} isn't instanceof BaseApiModel with routeInfo:" . json_encode($routeInfo));
         }
         if (!is_callable([$object, $action]) || ApiHelper::isIgnoreMethod($action)) {

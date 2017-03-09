@@ -8,68 +8,77 @@
 
 namespace app\api;
 
-use app\api\OrmDao\BasicUserDao;
-use app\api\OrmDao\VlssAppDao;
-use app\api\OrmDao\VlssSceneGroupDao;
-use app\api\OrmDao\VlssSceneItemDao;
-use app\api\OrmDao\VlssSceneTemplateDao;
-use app\common\Base\BaseApiModel;
+use app\api\OrmDao\Vlss\App;
+use app\api\OrmDao\Vlss\SceneGroup;
+use app\api\OrmDao\Vlss\SceneItem;
+use app\api\OrmDao\Vlss\SceneTemplate;
+use TinyWeb\Base\BaseApi;
 
-class VlssMgr extends BaseApiModel
+class VlssMgr extends BaseApi
 {
+    const TIME_CACHE = 300;
 
     public function __construct()
     {
         parent::__construct();
     }
 
-    public function test($vlss_id){
+    public function test($vlss_id)
+    {
         $app = $this->_getApp($vlss_id, 0);
         return ['vlssApp' => $app];
     }
 
-    public function _getApp($vlss_id, $timeCache = 300)
+    public function _getApp($id, $timeCache = self::TIME_CACHE)
     {
-        $app = self::_cacheDataByRedis(__METHOD__, "vlss_id[{$vlss_id}]", function () use ($vlss_id) {
-            return VlssAppDao::getItem($vlss_id);
+        return self::_cacheDataByRedis(__METHOD__, "App[{$id}]", function () use ($id) {
+            return App::getItem($id);
         }, function ($data) {
             return !empty($data);
         }, $timeCache);
-
-        return $app;
     }
 
-    public function _getSceneGroup($group_id, $timeCache = 300)
-    {
-        $group = self::_cacheDataByRedis(__METHOD__, "group_id[{$group_id}]", function () use ($group_id) {
-            return VlssSceneGroupDao::getItem($group_id);
-        }, function ($data) {
-            return !empty($data);
-        }, $timeCache);
+    public function _setApp($id, $lcps_host, $vlss_name, $active_group_id, $active_template_id, $state){
 
-        return $group;
     }
 
-    public function _getSceneItem($scene_id, $timeCache = 300)
+    public function _getSceneGroup($id, $timeCache = self::TIME_CACHE)
     {
-        $scene = self::_cacheDataByRedis(__METHOD__, "scene_id[{$scene_id}]", function () use ($scene_id) {
-            return VlssSceneItemDao::getItem($scene_id);
+        return self::_cacheDataByRedis(__METHOD__, "SceneGroup[{$id}]", function () use ($id) {
+            return SceneGroup::getItem($id);
         }, function ($data) {
             return !empty($data);
         }, $timeCache);
-
-        return $scene;
     }
 
-    public function _getSceneTemplate($template_id, $timeCache = 300)
+    public function _setSceneGroup($id, $group_name, $state){
+
+    }
+
+    public function _getSceneItem($id, $timeCache = self::TIME_CACHE)
     {
-        $template = self::_cacheDataByRedis(__METHOD__, "template_id[{$template_id}]", function () use ($template_id) {
-            return VlssSceneTemplateDao::getItem($template_id);
+        return self::_cacheDataByRedis(__METHOD__, "SceneItem[{$id}]", function () use ($id) {
+            return SceneItem::getItem($id);
         }, function ($data) {
             return !empty($data);
         }, $timeCache);
+    }
 
-        return $template;
+    public function _setSceneItem($id, $scene_name, $scene_config, $scene_sort, $state){
+
+    }
+
+    public function _getSceneTemplate($id, $timeCache = self::TIME_CACHE)
+    {
+        return self::_cacheDataByRedis(__METHOD__, "SceneTemplate[{$id}]", function () use ($id) {
+            return SceneTemplate::getItem($id);
+        }, function ($data) {
+            return !empty($data);
+        }, $timeCache);
+    }
+
+    public function _setSceneTemplate($id, $template_name, $switch_config, $front_pic, $back_pic, $state){
+
     }
 
 }
