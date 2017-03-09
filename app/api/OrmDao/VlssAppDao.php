@@ -9,7 +9,9 @@
 namespace app\api\OrmDao;
 
 
-class VlssAppDao
+use app\common\Base\BaseOrmModel;
+
+class VlssAppDao extends BaseOrmModel
 {
     protected static $_tablename = 'vlss_app';
 

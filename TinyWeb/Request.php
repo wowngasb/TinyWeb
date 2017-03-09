@@ -28,8 +28,8 @@ final class Request
     protected $_route_info = [];  // 当前 路由信息 [$controller, $action, $module]
     protected $_params = null;  // 匹配到的参数 用于调用 action
 
-    private  $_session_started = false;
-    private  $_session_start = false;
+    private $_session_started = false;
+    private $_session_start = false;
 
     private $_request_timestamp = null;
 
@@ -39,9 +39,11 @@ final class Request
      * @param $uri
      * @return Request
      */
-    public function cloneAndHookUri($uri){
+    public function cloneAndHookUri($uri)
+    {
         $tmp = clone $this;
         $tmp->_request_uri = $uri;
+        $tmp->setUnRouted();
         return $tmp;
     }
 
@@ -53,14 +55,13 @@ final class Request
         if (!(self::$_instance instanceof self)) {
             self::$_instance = new static();
         }
-        self::$_instance->checkSessionStart();
         return self::$_instance;
     }
 
     /**
      * @return bool
      */
-    public  function isSessionStarted()
+    public function isSessionStarted()
     {
         return $this->_session_started;
     }
@@ -68,30 +69,24 @@ final class Request
     /**
      * @return bool
      */
-    public  function isSessionStart()
+    public function isSessionStart()
     {
         return $this->_session_start;
     }
 
     /**
+     * 控制是否启用 session
      * @param bool $session_start
      * @return $this
      */
     public function setSessionStart($session_start)
     {
         $this->_session_start = $session_start;
-        $this->checkSessionStart();
-        return $this;
-    }
-
-    /**
-     *
-     */
-    private function checkSessionStart(){
-        if( $this->isSessionStart() && !$this->isSessionStarted() ){
+        if ($this->isSessionStart() && !$this->isSessionStarted()) {
             session_start();
             $this->_session_started = true;
         }
+        return $this;
     }
 
     private function __construct()
@@ -105,7 +100,8 @@ final class Request
         $this->_csrf_token = self::_request('CSRF', '');
     }
 
-    public function get_request_timestamp(){
+    public function get_request_timestamp()
+    {
         return $this->_request_timestamp;
     }
 
@@ -156,7 +152,7 @@ final class Request
         if ($this->_routed) {
             throw new AppStartUpError('request has been routed');
         }
-        if( count($routeInfo)!==3 ){
+        if (count($routeInfo) !== 3) {
             throw new AppStartUpError('routeInfo:' . json_encode($routeInfo) . ' error length');
         }
         $routeInfo = [strtolower($routeInfo[0]), strtolower($routeInfo[1]), strtolower($routeInfo[2]),];
@@ -180,7 +176,7 @@ final class Request
      */
     public function setParams(array $params)
     {
-        if( is_null($this->_params) ){
+        if (is_null($this->_params)) {
             $this->_params = $params;
         }
         return $this;
@@ -268,9 +264,9 @@ final class Request
      * @param array $params
      * @return string
      */
-    public static function urlTo(array $routerArr, array $params=[])
+    public static function urlTo(array $routerArr, array $params = [])
     {
-        $route = self::instance() ->getCurrentRoute();
+        $route = self::instance()->getCurrentRoute();
         return Application::instance()->getRoute($route)->ford($routerArr, $params);
     }
 
@@ -284,6 +280,11 @@ final class Request
         return isset($_GET[$name]) ? $_GET[$name] : $default;
     }
 
+    public static function set_get($name, $data)
+    {
+        return $_GET[$name] = $data;
+    }
+
     /**
      * @param $name
      * @param string $default
@@ -292,6 +293,11 @@ final class Request
     public static function _post($name, $default = '')
     {
         return isset($_POST[$name]) ? $_POST[$name] : $default;
+    }
+
+    public static function set_post($name, $data)
+    {
+        return $_POST[$name] = $data;
     }
 
     /**
@@ -304,6 +310,11 @@ final class Request
         return isset($_ENV[$name]) ? $_ENV[$name] : $default;
     }
 
+    public static function set_env($name, $data)
+    {
+        return $_ENV[$name] = $data;
+    }
+
     /**
      * @param $name
      * @param string $default
@@ -312,6 +323,11 @@ final class Request
     public static function _server($name, $default = '')
     {
         return isset($_SERVER[$name]) ? $_SERVER[$name] : $default;
+    }
+
+    public static function set_server($name, $data)
+    {
+        return $_SERVER[$name] = $data;
     }
 
     /**
@@ -324,6 +340,11 @@ final class Request
         return isset($_COOKIE[$name]) ? $_COOKIE[$name] : $default;
     }
 
+    public static function set_cookie($name, $data)
+    {
+        return $_COOKIE[$name] = $data;
+    }
+
     /**
      * @param $name
      * @param string $default
@@ -334,6 +355,11 @@ final class Request
         return isset($_FILES[$name]) ? $_FILES[$name] : $default;
     }
 
+    public static function set_files($name, $data)
+    {
+        return $_FILES[$name] = $data;
+    }
+
     /**
      * @param $name
      * @param string $default
@@ -342,6 +368,11 @@ final class Request
     public static function _request($name, $default = '')
     {
         return isset($_REQUEST[$name]) ? $_REQUEST[$name] : $default;
+    }
+
+    public static function set_request($name, $data)
+    {
+        return $_REQUEST[$name] = $data;
     }
 
     /**

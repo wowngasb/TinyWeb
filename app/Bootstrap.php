@@ -23,6 +23,23 @@ use TinyWeb\Route\RouteSimple;
 class Bootstrap extends BaseModel
 {
 
+    /** 在app run 之前, 设置app 命名空间 并 注册路由
+     *  #param Application $app
+     *  #return Application
+     * @param string $appname
+     * @param Application $app
+     * @return Application
+     */
+    public static function bootstrap($appname, Application $app)
+    {
+        $app->setAppName($appname)
+            ->addRoute('api', new RouteApi('api'), ApiDispatch::instance())
+            ->addRoute('simple', new RouteSimple('m', 'c', 'a'));  // 添加默认简单路由
+
+        self::debugStrap();
+        return $app;
+    }
+
     public static function debugConsole($data, $tags = null, $ignoreTraceCalls = 0)
     {
         if (!empty($tags)) {
@@ -42,24 +59,6 @@ class Bootstrap extends BaseModel
         if (DEV_MODEL == 'DEBUG') {
             self::debugConsole($data, $tags, $ignoreTraceCalls);
         }
-    }
-
-
-    /** 在app run 之前, 设置app 命名空间 并 注册路由
-     *  #param Application $app
-     *  #return Application
-     * @param string $appname
-     * @param Application $app
-     * @return Application
-     */
-    public static function bootstrap($appname, Application $app)
-    {
-        $app->setAppName($appname)
-            ->addRoute('api', new RouteApi('api'), ApiDispatch::instance())
-            ->addRoute('simple', new RouteSimple('m', 'c', 'a'));  // 添加默认简单路由
-
-        self::debugStrap();
-        return $app;
     }
 
     public static function debugStrap()
