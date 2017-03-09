@@ -8,6 +8,9 @@
 
 namespace app\api;
 
+use app\api\OrmDao\BasicUserDao;
+use app\api\OrmDao\VlssSceneGroupDao;
+use app\api\OrmDao\VlssSceneItemDao;
 use app\common\Base\BaseApiModel;
 
 class VlssMgr extends BaseApiModel
@@ -26,7 +29,7 @@ class VlssMgr extends BaseApiModel
     public function _getApp($vlss_id, $timeCache = 300)
     {
         $app = self::_cacheDataByRedis(__METHOD__, "vlss_id[{$vlss_id}]", function () use ($vlss_id) {
-            return App::getItem($vlss_id);
+            return BasicUserDao::getItem($vlss_id);
         }, function ($data) {
             return !empty($data);
         }, $timeCache);
@@ -37,7 +40,7 @@ class VlssMgr extends BaseApiModel
     public function _getGroup($group_id, $timeCache = 300)
     {
         $group = self::_cacheDataByRedis(__METHOD__, "group_id[{$group_id}]", function () use ($group_id) {
-            return SceneGroup::getItem($group_id);
+            return VlssSceneGroupDao::getItem($group_id);
         }, function ($data) {
             return !empty($data);
         }, $timeCache);
@@ -48,7 +51,7 @@ class VlssMgr extends BaseApiModel
     public function _getScene($scene_id, $timeCache = 300)
     {
         $scene = self::_cacheDataByRedis(__METHOD__, "scene_id[{$scene_id}]", function () use ($scene_id) {
-            return SceneItem::getItem($scene_id);
+            return VlssSceneItemDao::getItem($scene_id);
         }, function ($data) {
             return !empty($data);
         }, $timeCache);

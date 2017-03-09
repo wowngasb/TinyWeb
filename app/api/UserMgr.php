@@ -7,7 +7,7 @@ use TinyWeb\Exception\ApiParamsError;
 use TinyWeb\Exception\Error;
 use TinyWeb\Helper\DbHelper;
 
-class AdminApi extends BaseApiModel
+class UserMgr extends BaseApiModel
 {
 
     protected static $detail_log = true;

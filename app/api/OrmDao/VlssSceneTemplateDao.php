@@ -9,7 +9,9 @@
 namespace app\api\OrmDao;
 
 
-class VlssSceneTemplateDao
+use app\common\Base\BaseOrmModel;
+
+class VlssSceneTemplateDao extends  BaseOrmModel
 {
     protected static $_tablename = 'vlss_scene_template';
 

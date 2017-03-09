@@ -9,7 +9,9 @@
 namespace app\api\OrmDao;
 
 
-class VlssSceneGroupDao
+use app\common\Base\BaseOrmModel;
+
+class VlssSceneGroupDao extends  BaseOrmModel
 {
     protected static $_tablename = 'vlss_scene_group';
 
