@@ -14,7 +14,7 @@ use GraphQL\Utils;
 
 class SceneTemplate extends BaseOrmModel
 {
-    public $template_id;
+    public $id;
     public $vlss_id;   #虚拟演播厅id
     public $template_name;   #模板名称
     public $switch_config;   #模版配置 格式为 json 字符串

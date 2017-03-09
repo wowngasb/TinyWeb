@@ -8,11 +8,8 @@
 
 namespace app\api;
 
-use app\api\GraphQL\Vlss\Data\App;
-use app\api\GraphQL\Vlss\Data\SceneGroup;
-use app\api\GraphQL\Vlss\Data\SceneItem;
-use app\api\GraphQL\Vlss\Data\SceneTemplate;
 use app\common\Base\BaseApiModel;
+
 class VlssMgr extends BaseApiModel
 {
 

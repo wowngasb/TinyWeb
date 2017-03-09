@@ -14,7 +14,7 @@ use GraphQL\Utils;
 
 class SceneGroup extends BaseOrmModel
 {
-    public $group_id;
+    public $id;
     public $vlss_id;   #虚拟演播厅id
     public $group_name;   #场景组名称
     public $state;   #1正常，9删除

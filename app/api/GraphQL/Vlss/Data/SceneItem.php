@@ -14,7 +14,7 @@ use GraphQL\Utils;
 
 class SceneItem extends BaseOrmModel
 {
-     public $scene_id;
+     public $id;
     public $vlss_id;   #虚拟演播厅id
     public $group_id;   #所属场景组id
     public $scene_name;   #场景名称
