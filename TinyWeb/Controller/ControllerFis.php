@@ -13,7 +13,7 @@ use TinyWeb\Application;
 use TinyWeb\Base\BaseController;
 use TinyWeb\View\ViewFis;
 
-class BaseControllerFis extends BaseController
+class ControllerFis extends BaseController
 {
     final public function __construct()
     {

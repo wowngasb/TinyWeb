@@ -9,18 +9,18 @@
 namespace app\common\Dispatch;
 
 
-use TinyWeb\BaseDispatch;
+use TinyWeb\DispatchInterface;
 use TinyWeb\ExecutableEmptyInterface;
 use TinyWeb\Base\BaseModel;
 
-class YarDispatch  extends BaseModel implements BaseDispatch
+class YarDispatch  extends BaseModel implements DispatchInterface
 {
 
     private static $instance = null;
 
     /**
      * 单实例实现
-     * @return BaseDispatch
+     * @return YarDispatch
      */
     public static function instance()
     {

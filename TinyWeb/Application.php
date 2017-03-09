@@ -1,6 +1,7 @@
 <?php
 namespace TinyWeb;
 
+use TinyWeb\Base\BaseController;
 use TinyWeb\Exception\RouteError;
 use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\Helper\ApiHelper;
@@ -324,7 +325,7 @@ final class Application implements DispatchInterface, RouteInterface
     /**
      * @param array $routeInfo
      * @param string $action
-     * @return ControllerAbstract
+     * @return BaseController
      * @throws AppStartUpError
      */
     public static function fixActionObject(array $routeInfo, $action)
@@ -344,7 +345,7 @@ final class Application implements DispatchInterface, RouteInterface
             throw new AppStartUpError("class:{$namespace} not exists with routeInfo:" . json_encode($routeInfo));
         }
         $object = new $namespace();
-        if (!($object instanceof ControllerAbstract)) {
+        if (!($object instanceof BaseController)) {
             throw new AppStartUpError("class:{$namespace} isn't instanceof ControllerAbstract with routeInfo:" . json_encode($routeInfo));
         }
         if (!is_callable([$object, $action])) {

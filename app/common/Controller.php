@@ -9,9 +9,9 @@
 namespace app\common;
 
 
-use TinyWeb\Controller\BaseControllerFis;
+use TinyWeb\Controller\ControllerFis;
 
-abstract class Controller extends BaseControllerFis
+abstract class Controller extends ControllerFis
 {
 
     public function beforeAction()

@@ -14,7 +14,7 @@ use TinyWeb\Base\BaseApi;
 use TinyWeb\Base\BaseModel;
 use Exception;
 use TinyWeb\Application;
-use TinyWeb\BaseDispatch;
+use TinyWeb\DispatchInterface;
 use TinyWeb\Exception\ApiParamsError;
 use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\ExecutableEmptyInterface;
@@ -22,14 +22,14 @@ use TinyWeb\Helper\ApiHelper;
 use TinyWeb\Request;
 use TinyWeb\Response;
 
-class ApiDispatch extends BaseModel implements BaseDispatch
+class ApiDispatch extends BaseModel implements DispatchInterface
 {
 
     private static $instance = null;
 
     /**
      * 单实例实现
-     * @return BaseDispatch
+     * @return ApiDispatch
      */
     public static function instance()
     {

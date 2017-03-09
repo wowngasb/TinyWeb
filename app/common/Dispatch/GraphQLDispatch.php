@@ -16,7 +16,7 @@ use TinyWeb\Base\BaseModel;
 use Exception;
 use GraphQL\Type\Definition\Config;
 use TinyWeb\Application;
-use TinyWeb\BaseDispatch;
+use TinyWeb\DispatchInterface;
 use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\ExecutableEmptyInterface;
 use TinyWeb\Helper\ApiHelper;
@@ -24,13 +24,13 @@ use TinyWeb\Base\BaseGraphQLContext;
 use TinyWeb\Request;
 use TinyWeb\Response;
 
-class GraphQLDispatch extends BaseModel implements BaseDispatch
+class GraphQLDispatch extends BaseModel implements DispatchInterface
 {
     private static $instance = null;
 
     /**
      * 单实例实现
-     * @return BaseDispatch
+     * @return GraphQLDispatch
      */
     public static function instance()
     {
