@@ -33,7 +33,7 @@ abstract class BaseOrmModel extends BaseModel
 {
 
     protected static $_tablename = '';
-    protected static $_primary_key = '';
+    protected static $_primary_key = 'id';
     protected static $_max_select_item_counts = 10000;  //最多获取1w条记录 防止数据库拉取条目过多
 
     /* @var \Illuminate\Database\Connection */

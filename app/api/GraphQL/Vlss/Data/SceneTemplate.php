@@ -25,7 +25,6 @@ class SceneTemplate extends BaseOrmModel
     public $uptime;   #更新时间
 
     protected static $_tablename = 'vlss_scene_template';
-    protected static $_primary_key = 'template_id';
 
     protected static function _fixItem($val)
     {

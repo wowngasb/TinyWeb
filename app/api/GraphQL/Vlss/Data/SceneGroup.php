@@ -22,7 +22,6 @@ class SceneGroup extends BaseOrmModel
     public $uptime;  #更新时间
 
     protected static $_tablename = 'vlss_scene_group';
-    protected static $_primary_key = 'group_id';
 
     protected static function _fixItem($val)
     {

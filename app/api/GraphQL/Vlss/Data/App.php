@@ -33,8 +33,6 @@ class App extends BaseOrmModel
     public $uptime;   #更新时间
 
     protected static $_tablename = 'vlss_app';
-    protected static $_primary_key = 'vlss_id';
-    protected static $_max_select_item_counts = 50;
 
     protected static function _fixItem($val)
     {

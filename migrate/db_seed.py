@@ -2,35 +2,54 @@
 from app import db, models, md5key
 import datetime, json
 
+user_info = {
+    'login_name':'demo',
+    'password':'demo',
+    'email':'demo@demo.aom',
+    'access_id':'111576745758',
+    'access_key':'fVYGq1S0gnrvoxZv77msq577jx7MQq3n',
+    'aodian_uin':13830,
+    'dms_sub_key':'sub_eae37e48dab5f305516d07788eaaea60',
+    'dms_pub_key':'pub_5bfb7a0ced7adb2ce454575747762679',
+    'dms_s_key':'s_ceb80d29276f78653df081e5a9f0ac76'
+}
+
+
+db.session.add(   #写入 用户信息
+    models.BasicUser(
+        login_name=user_info['login_name'],
+        password=md5key(user_info['password']),
+        email=user_info['email'],
+        access_id=user_info['access_id'],
+        access_key=user_info['access_key'],
+        aodian_uin=user_info['aodian_uin'],
+        dms_sub_key=user_info['dms_sub_key'],
+        dms_pub_key=user_info['dms_pub_key'],
+        dms_s_key=user_info['dms_s_key'],
+        create_time=datetime.datetime.now(),
+        state=1
+    )
+) if not models.BasicUser.query.filter_by(login_name = user_info['login_name']).first() else None
+db.session.commit()
+
+user = models.BasicUser.query.filter_by(login_name = user_info['login_name']).first()
+
 vlss_list = [
     {
-        'login_name':'demo',
-        'password':'demo',
-        'access_id':'111576745758',
-        'access_key':'fVYGq1S0gnrvoxZv77msq577jx7MQq3n',
-        'aodian_uin':13830,
-        'dms_sub_key':'sub_eae37e48dab5f305516d07788eaaea60',
-        'dms_pub_key':'pub_5bfb7a0ced7adb2ce454575747762679',
-        'dms_s_key':'s_ceb80d29276f78653df081e5a9f0ac76',
+        'vlss_name':'demo',
         'lcps_host':'123.8887.lcps.aodianyun.com'
     },
 ]
 
 [db.session.add(   #写入 vlss app
         models.VlssApp(
-            login_name=vlss['login_name'],
-            password=md5key(vlss['password']),
-            access_id=vlss['access_id'],
-            access_key=vlss['access_key'],
-            aodian_uin=vlss['aodian_uin'],
-            dms_sub_key=vlss['dms_sub_key'],
-            dms_pub_key=vlss['dms_pub_key'],
-            dms_s_key=vlss['dms_s_key'],
+            user_id=user.id,
+            vlss_name=vlss['vlss_name'],
             lcps_host=vlss['lcps_host'],
             create_time=datetime.datetime.now(),
             state=1
         )
-    ) for vlss in vlss_list if not models.VlssApp.query.filter_by(login_name=vlss['login_name']).first()]
+    ) for vlss in vlss_list if not models.VlssApp.query.filter_by(user_id=user.id, lcps_host=vlss['lcps_host']).first()]
 
 db.session.commit()
 
@@ -68,12 +87,12 @@ template_list = [
 ]
 
 for vlss in vlss_list:
-    tmp = models.VlssApp.query.filter_by(login_name=vlss['login_name']).first()
-    if not tmp or not tmp.vlss_id:
+    tmp = models.VlssApp.query.filter_by(vlss_name=vlss['vlss_name']).first()
+    if not tmp or not tmp.id:
         continue
     [db.session.add(   #为每个 vlss_app 写入 模版信息
             models.VlssSceneTemplate(
-                vlss_id=tmp.vlss_id,
+                vlss_id=tmp.id,
                 template_name=template['template_name'],
                 front_pic=template['front_pic'],
                 back_pic=template['back_pic'],
@@ -177,14 +196,14 @@ group_list = [
 ]
 
 for vlss in vlss_list:
-    tmp = models.VlssApp.query.filter_by(login_name=vlss['login_name']).first()
-    if not tmp or not tmp.vlss_id:
+    tmp = models.VlssApp.query.filter_by(vlss_name=vlss['vlss_name']).first()
+    if not tmp or not tmp.id:
         continue
     for group in group_list:
         if not models.VlssSceneGroup.query.filter_by(group_name=group['group_name']).first():
             db.session.add(   #为每个 vlss_app 写入 场景组信息
                 models.VlssSceneGroup(
-                    vlss_id=tmp.vlss_id,
+                    vlss_id=tmp.id,
                     group_name=group['group_name'],
                     create_time=datetime.datetime.now(),
                     state=1
@@ -193,14 +212,13 @@ for vlss in vlss_list:
             db.session.commit()
 
         _group = models.VlssSceneGroup.query.filter_by(group_name=group['group_name']).first()
-        if not _group or not _group.group_id:
+        if not _group or not _group.id:
             continue
         for scene in group.get('scene_list', []):
-            if not models.VlssSceneItem.query.filter_by(vlss_id=tmp.vlss_id, group_id=_group.group_id, scene_name=scene['scene_name'], scene_type=scene['scene_type']).first():
+            if not models.VlssSceneItem.query.filter_by(group_id=_group.id, scene_name=scene['scene_name'], scene_type=scene['scene_type']).first():
                 db.session.add(
                     models.VlssSceneItem(  #为每个 vlss_app 的 场景组 写入 场景
-                        vlss_id=tmp.vlss_id,
-                        group_id=_group.group_id,
+                        group_id=_group.id,
                         scene_name=scene['scene_name'],
                         scene_type=scene['scene_type'],
                         scene_sort=scene['scene_sort'],
