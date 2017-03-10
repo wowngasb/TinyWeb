@@ -2,10 +2,10 @@
 
 namespace TinyWeb\Base;
 
-use TinyWeb\ExecutableEmptyInterface;
+use TinyWeb\DispatchAbleInterface;
 use TinyWeb\Helper\RedisHelper;
 
-abstract class BaseApi extends BaseModel implements ExecutableEmptyInterface {
+abstract class BaseApi extends BaseModel implements DispatchAbleInterface {
 
 
     public function __construct() {

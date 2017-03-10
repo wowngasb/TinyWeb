@@ -9,7 +9,7 @@
 namespace TinyWeb\Base;
 
 use TinyWeb\Application;
-use TinyWeb\ExecutableEmptyInterface;
+use TinyWeb\DispatchAbleInterface;
 use TinyWeb\Plugin\EventTrait;
 use TinyWeb\Request;
 use TinyWeb\Response;
@@ -19,7 +19,7 @@ use TinyWeb\ViewInterface;
  * Class Controller
  * @package TinyWeb
  */
-abstract class BaseController extends BaseModel implements ExecutableEmptyInterface
+abstract class BaseController extends BaseModel implements DispatchAbleInterface
 {
     use EventTrait;
 

@@ -9,7 +9,7 @@
 namespace TinyWeb\Base;
 
 
-abstract class BaseCurrentUser
+abstract class BaseCurrentUser extends  BaseModel
 {
 
 }

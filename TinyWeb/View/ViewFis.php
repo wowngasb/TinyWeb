@@ -15,6 +15,7 @@ use TinyWeb\Plugin\FisResource;
 
 class ViewFis extends ViewSimple
 {
+
     private static function initFisResource(){
         //设置配置和模板文件夹
         FisResource::setConfig(array(
@@ -51,5 +52,7 @@ class ViewFis extends ViewSimple
         self::initFisResource();
         Fis::display($view_path, $tpl_vars);
     }
+
+
 
 }

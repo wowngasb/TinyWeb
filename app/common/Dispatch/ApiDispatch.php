@@ -11,42 +11,27 @@ namespace app\common\Dispatch;
 
 use app\Bootstrap;
 use TinyWeb\Base\BaseApi;
-use TinyWeb\Base\BaseModel;
 use Exception;
 use TinyWeb\Application;
 use TinyWeb\DispatchInterface;
 use TinyWeb\Exception\ApiParamsError;
 use TinyWeb\Exception\AppStartUpError;
-use TinyWeb\ExecutableEmptyInterface;
+use TinyWeb\DispatchAbleInterface;
 use TinyWeb\Helper\ApiHelper;
 use TinyWeb\Request;
 use TinyWeb\Response;
 
-class ApiDispatch extends BaseModel implements DispatchInterface
+class ApiDispatch  implements DispatchInterface
 {
-
-    private static $instance = null;
-
-    /**
-     * 单实例实现
-     * @return ApiDispatch
-     */
-    public static function instance()
-    {
-        if (!(self::$instance instanceof self)) {
-            self::$instance = new static();
-        }
-        return self::$instance;
-    }
 
     /**
      * 根据对象和方法名 获取 修复后的参数
-     * @param ExecutableEmptyInterface $object
+     * @param DispatchAbleInterface $object
      * @param string $action
      * @param array $params
      * @return array
      */
-    public static function fixActionParams(ExecutableEmptyInterface $object, $action, array $params)
+    public static function fixActionParams(DispatchAbleInterface $object, $action, array $params)
     {
         return ApiHelper::fixActionParams($object, $action, $params);
     }

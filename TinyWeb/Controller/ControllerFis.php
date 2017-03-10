@@ -15,6 +15,16 @@ use TinyWeb\View\ViewFis;
 
 class ControllerFis extends BaseController
 {
+    private $_fis_release_dir = 'public';
+
+    /**
+     * @param string $fis_release_dir Fis3发布的目录  必须放置在 ROOT_PATH 下面
+     */
+    protected function setFisReleaseDir($fis_release_dir)
+    {
+        $this->_fis_release_dir = $fis_release_dir;
+    }
+
     final public function __construct()
     {
         parent::__construct();

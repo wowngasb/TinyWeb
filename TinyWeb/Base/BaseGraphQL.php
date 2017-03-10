@@ -9,10 +9,10 @@
 namespace TinyWeb\Base;
 
 use GraphQL\Schema;
-use TinyWeb\ExecutableEmptyInterface;
+use TinyWeb\DispatchAbleInterface;
 use TinyWeb\Request;
 
-abstract class BaseGraphQLContext extends BaseModel implements ExecutableEmptyInterface
+abstract class BaseGraphQL extends BaseModel implements DispatchAbleInterface
 {
 
     public $request;

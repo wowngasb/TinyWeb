@@ -12,42 +12,28 @@ use ErrorException;
 use GraphQL\GraphQL;
 
 use app\Bootstrap;
-use TinyWeb\Base\BaseModel;
 use Exception;
 use GraphQL\Type\Definition\Config;
 use TinyWeb\Application;
 use TinyWeb\DispatchInterface;
 use TinyWeb\Exception\AppStartUpError;
-use TinyWeb\ExecutableEmptyInterface;
+use TinyWeb\DispatchAbleInterface;
 use TinyWeb\Helper\ApiHelper;
-use TinyWeb\Base\BaseGraphQLContext;
+use TinyWeb\Base\BaseGraphQL;
 use TinyWeb\Request;
 use TinyWeb\Response;
 
-class GraphQLDispatch extends BaseModel implements DispatchInterface
+class GraphQLDispatch implements DispatchInterface
 {
-    private static $instance = null;
-
-    /**
-     * 单实例实现
-     * @return GraphQLDispatch
-     */
-    public static function instance()
-    {
-        if (!(self::$instance instanceof self)) {
-            self::$instance = new static();
-        }
-        return self::$instance;
-    }
 
     /**
      * 根据对象和方法名 获取 修复后的参数
-     * @param ExecutableEmptyInterface $object
+     * @param DispatchAbleInterface $object
      * @param string $action
      * @param array $params
      * @return array
      */
-    public static function fixActionParams(ExecutableEmptyInterface $object, $action, array $params)
+    public static function fixActionParams(DispatchAbleInterface $object, $action, array $params)
     {
         return isset($data['variables']) ? $data['variables'] : null;
     }
@@ -66,7 +52,7 @@ class GraphQLDispatch extends BaseModel implements DispatchInterface
      * 创建需要调用的对象 并检查对象和方法的合法性
      * @param array $routeInfo
      * @param string $action
-     * @return BaseGraphQLContext 可返回实现此接口的 其他对象 方便做类型限制
+     * @return BaseGraphQL 可返回实现此接口的 其他对象 方便做类型限制
      * @throws AppStartUpError
      */
     public static function fixActionObject(array $routeInfo, $action)
@@ -75,7 +61,7 @@ class GraphQLDispatch extends BaseModel implements DispatchInterface
         $context_namespace = "\\" . Application::join("\\", [Application::instance()->getAppName(), 'api', 'GraphQL', "{$routeInfo[1]}", 'AppContext']);
         $user = new $user_namespace();
         $context = new $context_namespace(Request::instance(), $user);
-        if (!($context instanceof BaseGraphQLContext)) {
+        if (!($context instanceof BaseGraphQL)) {
             throw new AppStartUpError("class:{$context_namespace} isn't instanceof BaseApiModel with routeInfo:" . json_encode($routeInfo));
         }
         if (!is_callable([$context, $action]) || ApiHelper::isIgnoreMethod($action)) {

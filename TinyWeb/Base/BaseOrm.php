@@ -40,6 +40,7 @@ abstract class BaseOrm extends BaseModel
     private static $m_instance = [];
 
     /**
+     * 实现的可继承的单实例模式
      * @return BaseOrm
      */
     public static function instance()

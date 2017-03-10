@@ -9,10 +9,10 @@
 namespace app\api\GraphQL\Vlss;
 
 use GraphQL\Schema;
-use TinyWeb\Base\BaseGraphQLContext;
+use TinyWeb\Base\BaseGraphQL;
 use TinyWeb\Request;
 
-class Context extends BaseGraphQLContext
+class Context extends BaseGraphQL
 {
 
     /**

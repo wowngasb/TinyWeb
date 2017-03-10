@@ -30,8 +30,8 @@ class Bootstrap extends BaseBootstrap
     public static function bootstrap($appname, Application $app)
     {
         $app->setAppName($appname)
-            ->addRoute('api', new RouteApi('api'), ApiDispatch::instance())
-            ->addRoute('yar', new RouteApi('yar'), ApiDispatch::instance())
+            ->addRoute('api', new RouteApi('api'), new ApiDispatch())
+            ->addRoute('yar', new RouteApi('yar'), new ApiDispatch())
             ->addRoute('simple', new RouteSimple('m', 'c', 'a'));  // 添加默认简单路由
 
         /* 注册回调 在路由结束后 根据路由情况 决定是否开启 session 保证 session 在 dispatchLoopStartup 之前可用 */

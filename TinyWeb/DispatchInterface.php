@@ -13,19 +13,13 @@ interface DispatchInterface
 {
 
     /**
-     * 单实例实现
-     * @return DispatchInterface
-     */
-    public static function instance();
-
-    /**
      * 根据对象和方法名 获取 修复后的参数
-     * @param ExecutableEmptyInterface $object
+     * @param DispatchAbleInterface $object
      * @param string $action
      * @param array $params
      * @return array
      */
-    public static function fixActionParams(ExecutableEmptyInterface $object, $action, array $params);
+    public static function fixActionParams(DispatchAbleInterface $object, $action, array $params);
 
     /**
      * 修复并返回 真实需要调用对象的方法名称
@@ -38,7 +32,7 @@ interface DispatchInterface
      * 创建需要调用的对象 并检查对象和方法的合法性
      * @param array $routeInfo
      * @param string $action
-     * @return ExecutableEmptyInterface  可返回实现此接口的 其他对象 方便做类型限制
+     * @return DispatchAbleInterface  可返回实现此接口的 其他对象 方便做类型限制
      */
     public static function fixActionObject(array $routeInfo, $action);
 

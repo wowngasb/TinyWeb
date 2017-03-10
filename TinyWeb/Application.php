@@ -303,12 +303,12 @@ final class Application implements DispatchInterface, RouteInterface
 
     /**
      * 根据对象和方法名 获取 修复后的参数
-     * @param ExecutableEmptyInterface $object
+     * @param DispatchAbleInterface $object
      * @param $action
      * @param array $params
      * @return array
      */
-    public static function fixActionParams(ExecutableEmptyInterface $object, $action, array $params)
+    public static function fixActionParams(DispatchAbleInterface $object, $action, array $params)
     {
         return ApiHelper::fixActionParams($object, $action, $params);
     }

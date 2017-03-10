@@ -1,12 +1,63 @@
-# coding: utf-8
-from sqlalchemy import BigInteger, Column, DateTime, Index, Integer, SmallInteger, String, Text, text, TIMESTAMP, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
+# 介绍
 
-from app import db, app
+## Vue.js 是什么
 
-relationship = db.relationship
-Base = db.Model
+Vue.js（读音 /vjuː/, 类似于 view） 是一套构建用户界面的 渐进式框架。与其他重量级框架不同的是，Vue 采用自底向上增量开发的设计。
 
+Vue 的核心库只关注视图层，并且非常容易学习，非常容易与其它库或已有项目整合。
+
+另一方面，Vue 完全有能力驱动采用单文件组件和 Vue 生态系统支持的库开发的复杂单页应用。
+
+Vue.js 的目标是通过尽可能简单的 API 实现响应的数据绑定和组合的视图组件(MVVM)。
+
+## MVVM 是什么
+
+`起源`：MVVM这个概念最是在2005年，由微软的工程师John Grossman在其博客中提出，最初用在微软的WPF上的。直到最近几年，MVVM这种设计才被Javascript所实现，并产生了许多框架。
+
+
+`图示`： [MVC，MVP 和 MVVM 的图示 by 阮一峰](http://www.ruanyifeng.com/blog/2015/02/mvcmvp_mvvm.html)
+
+`核心`：[Vue.js 数据绑定](http://v1-cn.vuejs.org/guide/#Hello-World)
+
+`实现`：[Vue.js 深入响应式原理](http://cn.vuejs.org/v2/guide/reactivity.html)
+
+## MV* 有哪些
+
+![TodoMVC](http://todomvc.com/site-assets/logo.svg)
+
+[TodoMVC](http://todomvc.com/)
+
+## 为什么是Vue
+
+**非常容易与其它库或已有项目整合**
+
+***
+
+# 实现
+
+制作4个页面：模版前景、模版背景、场景组预览、单个场景预览
+
+`Model`: 紫色区域，实现数据存储及增删改查接口
+
+`ViewModel`: 蓝色区域，实现从Model查询数据及修改数据
+
+`View`: 绿色区域，实现页面显示
+
+![todo](./resource/bs-01.png)
+
+## Model 实现
+
+编程语言：php、python
+
+数据库：MySQL
+
+数据表及字段名都是用小写字母加下划线格式
+
+![table](./resource/db-01.png)
+
+模型表述
+
+``` python
 
 class BasicUser(Base):
     __tablename__ = 'basic_user'
@@ -27,58 +78,6 @@ class BasicUser(Base):
     login_count = Column(Integer, nullable=False, server_default=text("'0'"))   #用户管理后台登录次数 登陆一次+1
     create_time = Column(DateTime, nullable=False)   #记录创建时间
     uptime = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))   #更新时间
-
-
-class RbacPermission(Base):
-    __tablename__ = 'rbac_permission'
-
-    id = Column(Integer, primary_key=True)
-    p_type = Column(String(32, u'utf8_bin'), nullable=False)   #权限类型 "MENU"表示菜单的访问权限、"OPERATION"表示功能模块的操作权限、"FILE"表示文件的修改权限、"ELEMENT"表示页面元素的可见性
-    p_key = Column(String(64, u'utf8_bin'), nullable=False)   #该项权限唯一id 用于区分权限
-    title = Column(String(64, u'utf8_bin'), nullable=False, index=True)
-    description = Column(Text(collation=u'utf8_bin'), nullable=False)
-    create_time = Column(DateTime, nullable=False)   #记录创建时间
-    uptime = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))   #更新时间
-
-
-class RbacRole(Base):
-    __tablename__ = 'rbac_role'
-
-    id = Column(Integer, primary_key=True)
-    title = Column(String(128, u'utf8_bin'), nullable=False, index=True)
-    description = Column(Text(collation=u'utf8_bin'), nullable=False)
-    create_time = Column(DateTime, nullable=False)   #记录创建时间
-    uptime = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))   #更新时间
-
-
-class RbacRolePermission(Base):
-    __tablename__ = 'rbac_role_permission'
-
-    id = Column(Integer, primary_key=True)
-    role_id = Column(ForeignKey(u'rbac_role.id', ondelete=u'CASCADE', onupdate=u'CASCADE'), nullable=False, index=True)
-    permission_id = Column(ForeignKey(u'rbac_permission.id', ondelete=u'CASCADE', onupdate=u'CASCADE'), nullable=False, index=True)
-    state = Column(SmallInteger, nullable=False, server_default=text("'0'"))   #0 未定义  1有效  2失效
-    create_time = Column(DateTime, nullable=False)   #记录创建时间
-    uptime = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))   #更新时间
-
-    permission = relationship(u'RbacPermission')
-    role = relationship(u'RbacRole')
-
-
-class RbacUserRole(Base):
-    __tablename__ = 'rbac_user_role'
-    __table_args__ = (
-        Index('id', 'id', 'role_id'),
-    )
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey(u'basic_user.id', ondelete=u'CASCADE', onupdate=u'CASCADE'), nullable=False, index=True)
-    role_id = Column(ForeignKey(u'rbac_role.id', ondelete=u'CASCADE', onupdate=u'CASCADE'), nullable=False, index=True)
-    create_time = Column(DateTime, nullable=False)   #记录创建时间
-    uptime = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))   #更新时间
-
-    role = relationship(u'RbacRole')
-    user = relationship(u'BasicUser')
 
 
 class VlssApp(Base):
@@ -142,3 +141,13 @@ class VlssSceneTemplate(Base):
     uptime = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))   #更新时间
 
     vlss = relationship(u'VlssApp', primaryjoin='VlssSceneTemplate.vlss_id == VlssApp.id')
+
+```
+
+数据库迁移 [使用 SQLAlchemy-migrate 来跟踪数据库的更新](http://www.pythondoc.com/flask-mega-tutorial/database.html#id4)
+
+``` shell
+python db_create.py
+python db_migrate.py
+python db_upgrade.py
+```
