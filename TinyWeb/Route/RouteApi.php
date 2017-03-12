@@ -58,7 +58,7 @@ class RouteApi implements RouteInterface
      * @param array $params 参数数组
      * @return string
      */
-    public function ford(array $routeInfo, array $params = [])
+    public function url(array $routeInfo, array $params = [])
     {
         return '';
     }

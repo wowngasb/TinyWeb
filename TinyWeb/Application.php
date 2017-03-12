@@ -1,6 +1,7 @@
 <?php
 namespace TinyWeb;
 
+use TinyWeb\Base\BaseContext;
 use TinyWeb\Base\BaseController;
 use TinyWeb\Exception\RouteError;
 use TinyWeb\Exception\AppStartUpError;
@@ -19,7 +20,7 @@ final class Application implements DispatchInterface, RouteInterface
     private $_app_name = 'app';  // app 目录，用于 拼接命名空间 和 定位模板文件
     private $_route_name = 'default';  // 默认路由名字，总是会路由到 index
 
-    private $_run = false;  // 布尔值, 指明当前的Application是否已经运行
+    private $_bootstrap_completed = false;  // 布尔值, 指明当前的Application是否已经运行
     private $_routes = [];  // 路由列表
     private $_dispatches = [];  // 分发列表
 
@@ -37,8 +38,12 @@ final class Application implements DispatchInterface, RouteInterface
 
     public function usedMilliSecond()
     {
-        $request = Request::instance();
-        return round(microtime(true) - $request->get_request_timestamp(), 3) * 1000;
+        return round(microtime(true) - REQUEST_MICROTIME, 3) * 1000;
+    }
+
+    public function setBootstrapCompleted()
+    {
+        $this->_bootstrap_completed = true;
     }
 
     /**
@@ -69,8 +74,8 @@ final class Application implements DispatchInterface, RouteInterface
      */
     public function setAppName($appname)
     {
-        if ($this->_run) {
-            throw new AppStartUpError('cannot setAppName after run');
+        if ($this->_bootstrap_completed) {
+            throw new AppStartUpError('cannot setAppName after bootstrap completed');
         }
 
         $this->_app_name = $appname;
@@ -92,12 +97,11 @@ final class Application implements DispatchInterface, RouteInterface
      */
     public function run()
     {
-        if ( $this->_run ) {
-            throw new AppStartUpError('Application is running');
+        if ( !$this->_bootstrap_completed ) {
+            throw new AppStartUpError('cannot run Application before bootstrap completed');
         }
-        $this->_run = true;
-        $request = Request::instance();
-        $response = Response::instance();
+        $request = new Request();
+        $response = new Response();
         static::fire('routerStartup', [$this, $request, $response]);  // 在路由之前触发	这个是7个事件中, 最早的一个. 但是一些全局自定的工作, 还是应该放在Bootstrap中去完成
 
         list($route, list($routeInfo, $params)) = $this->route($request);  // 必定会 匹配到一条路由  默认路由 default=>Application 始终会定向到 index/index->index()
@@ -105,11 +109,12 @@ final class Application implements DispatchInterface, RouteInterface
         $request->setUnRouted()
             ->setCurrentRoute($route)
             ->setRouteInfo($routeInfo)
+            ->setParams($params)
             ->setRouted();
 
         static::fire('routerShutdown', [$this, $request, $response]);  // 路由结束之后触发	此时路由一定正确完成, 否则这个事件不会触发
         static::fire('dispatchLoopStartup', [$this, $request, $response]);  // 分发循环开始之前被触发
-        static::forward($routeInfo, $params, $route);
+        static::forward($request, $response, $routeInfo, $params, $route);
         static::fire('dispatchLoopShutdown', [$this, $request, $response]);  // 分发循环结束之后触发	此时表示所有的业务逻辑都已经运行完成, 但是响应还没有发送
 
         $response->sendBody();
@@ -117,25 +122,21 @@ final class Application implements DispatchInterface, RouteInterface
 
     /**
      * 根据路由信息 dispatch 执行指定 Action 获得缓冲区输出 丢弃函数返回结果  会影响 $request 实例
-     * @param array|null $routeInfo
+     * @param Request $request
+     * @param Response $response
+     * @param array $routeInfo
      * @param array|null $params
      * @param string|null $route
      * @throws AppStartUpError
      */
-    public static function forward(array $routeInfo = null, array $params = null, $route = null)
+    public static function forward(Request $request, Response $response, array $routeInfo, array $params = null, $route = null)
     {
-        $app = static::instance();
-        $request = Request::instance();
-        $response = Response::instance();
-
+        $app = self::instance();
         // 对使用默认值 null 的参数 用当前值补全
         if (is_null($route)) {
             $route = $request->getCurrentRoute();
         }
         $app->getRoute($route);  // 检查对应 route 是否注册过
-        if (is_null($routeInfo)) {
-            $routeInfo = $request->getRouteInfo();
-        }
         if (is_null($params)) {
             $params = $request->getParams();
         }
@@ -147,31 +148,14 @@ final class Application implements DispatchInterface, RouteInterface
         // 设置完成 锁定 $request
 
         $response->resetResponse();  // 清空已设置的 信息
+        $dispatcher = $app->getDispatch($route);
+        $action = $dispatcher->fixMethodName($routeInfo);
+        $context = $dispatcher->fixMethodContext($request, $response, $routeInfo, $action);
+        $params = $dispatcher->fixMethodParams($context, $action, $params);
+
         static::fire('preDispatch', [$app, $request, $response]);  // 分发之前触发	如果在一个请求处理过程中, 发生了forward 或 callfunc, 则这个事件会被触发多次
 
-        $dispatcher = $app->getDispatch($route);
-        $dispatcher::dispatch($routeInfo, $params);  //分发
-
-        static::fire('postDispatch', [$app, $request, $response]);  // 分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
-    }
-
-    /**
-     * 根据指定的 $uri  dispatch 执行指定 Action 获得缓冲区输出 丢弃函数返回结果  不会影响 $request 实例
-     * @param string $uri
-     * @param array|null $params
-     * @param string|null $route
-     */
-    public static function _forward($uri, array $params = null, $route = null)
-    {
-        $app = static::instance();
-        $request = Request::instance();
-        $response = Response::instance();
-        list($route, list($routeInfo, $uri_params)) = $app->route(Request::instance()->cloneAndHookUri($uri), $route);
-        $params = array_merge($uri_params, $params);
-        static::fire('preDispatch', [$app, $request, $response]);  // 分发之前触发	如果在一个请求处理过程中, 发生了forward 或 callfunc, 则这个事件会被触发多次
-
-        $dispatcher = $app->getDispatch($route);
-        $dispatcher::dispatch($routeInfo, $params);  //分发
+        $dispatcher::dispatch( $context, $action, $params);  //分发
 
         static::fire('postDispatch', [$app, $request, $response]);  // 分发结束之后触发	此时动作已经执行结束, 视图也已经渲染完成. 和preDispatch类似, 此事件也可能触发多次
     }
@@ -198,8 +182,8 @@ final class Application implements DispatchInterface, RouteInterface
     public function addRoute($route, RouteInterface $routeObj, DispatchInterface $dispatch = null)
     {
         $route = strtolower($route);
-        if ($this->_run) {
-            throw new AppStartUpError('cannot add route after run');
+        if ( $this->_bootstrap_completed ) {
+            throw new AppStartUpError('cannot addRoute after bootstrap completed');
         }
         if ($route == $this->_route_name) {
             throw new AppStartUpError("route:{$route} is default route");
@@ -282,10 +266,9 @@ final class Application implements DispatchInterface, RouteInterface
      * @param array $params
      * @return string
      */
-    public function ford(array $routerArr, array $params = [])
+    public function url(array $routerArr, array $params = [])
     {
-        $request = Request::instance();
-        return $request::urlTo($routerArr, $params);
+        return SYSTEM_HOST;
     }
 
     /**
@@ -303,34 +286,38 @@ final class Application implements DispatchInterface, RouteInterface
 
     /**
      * 根据对象和方法名 获取 修复后的参数
-     * @param DispatchAbleInterface $object
+     * @param BaseContext $object
      * @param $action
      * @param array $params
      * @return array
      */
-    public static function fixActionParams(DispatchAbleInterface $object, $action, array $params)
+    public static function fixMethodParams(BaseContext $object, $action, array $params)
     {
-        return ApiHelper::fixActionParams($object, $action, $params);
+        $params = ApiHelper::fixActionParams($object, $action, $params);
+        $object->getRequest()->setParams($params);
+        return $params;
     }
 
     /**
-     * @param string $action
+     * @param array $routeInfo
      * @return string
      */
-    public static function fixActionName($action)
+    public static function fixMethodName(array $routeInfo)
     {
-        return $action;
+        return $routeInfo[1];
     }
 
     /**
+     * @param Request $request
+     * @param Response $response
      * @param array $routeInfo
      * @param string $action
      * @return BaseController
      * @throws AppStartUpError
      */
-    public static function fixActionObject(array $routeInfo, $action)
+    public static function fixMethodContext(Request $request, Response $response, array $routeInfo, $action)
     {
-        Request::instance()->setSessionStart(true);  // 开启 session
+        $request->setSessionStart(true);  // 开启 session
 
         $controller = (isset($routeInfo[0]) && !empty($routeInfo[0])) ? $routeInfo[0] : '';
         $module = isset($routeInfo[2]) ? $routeInfo[2] : '';
@@ -344,45 +331,32 @@ final class Application implements DispatchInterface, RouteInterface
         if (!class_exists($namespace)) {
             throw new AppStartUpError("class:{$namespace} not exists with routeInfo:" . json_encode($routeInfo));
         }
-        $object = new $namespace();
+        $object = new $namespace($request, $response);
         if (!($object instanceof BaseController)) {
             throw new AppStartUpError("class:{$namespace} isn't instanceof ControllerAbstract with routeInfo:" . json_encode($routeInfo));
         }
         if (!is_callable([$object, $action])) {
             throw new AppStartUpError("action:{$namespace}->{$action} not allowed with routeInfo:" . json_encode($routeInfo));
         }
+
+        $object->beforeAction();  //控制器 beforeAction 不允许显式输出
         return $object;
     }
 
     /**
-     * 调用分发 请在方法开头加上 固定流程 调用自身接口
-     *        $request = Request::getInstance();
-     *        $actionFunc = self::fixActionName($routeInfo[1]);
-     *        $controller = self::fixActionObject($routeInfo, $actionFunc);
-     *        $params = self::fixActionParams($controller, $actionFunc, $params);
-     *        $request->setParams($params);
-     * @param array $routeInfo
+     * @param BaseContext $context
+     * @param Response $action
      * @param array $params
-     * @return void
      */
-    public static function dispatch(array $routeInfo, array $params)
+    public static function dispatch(BaseContext $context, $action, array $params)
     {
-        $request = Request::instance();
-        $action = self::fixActionName($routeInfo[1]);
-        $object = self::fixActionObject($routeInfo, $action);
-        $fixed_params = self::fixActionParams($object, $action, $params);
-
-        $object->beforeAction();  //控制器 beforeAction 不允许显式输出
         ob_start();
-
-        $request->setParams($fixed_params);
-        call_user_func_array([$object, $action], $fixed_params);
+        call_user_func_array([$context, $action], $params);
         $buffer = ob_get_contents();
         ob_end_clean();
 
         if (!empty($buffer)) {
-            $response = Response::instance();
-            $response->appendBody($buffer);
+            $context->getResponse()->appendBody($buffer);
         }
     }
 
@@ -611,5 +585,7 @@ final class Application implements DispatchInterface, RouteInterface
         }
         return join($seq, $tmp_list);
     }
+
+
 
 }

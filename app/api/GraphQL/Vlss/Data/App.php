@@ -19,7 +19,7 @@ class App extends BaseOrm
     public $create_time;   #记录创建时间
     public $uptime;   #更新时间
 
-    protected static $_tablename = 'vlss_app';
+    protected static $_table_name = 'vlss_app';
 
     protected static function _fixItem($val)
     {

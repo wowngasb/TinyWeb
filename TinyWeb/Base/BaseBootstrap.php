@@ -29,6 +29,7 @@ abstract class BaseBootstrap
         $app->setAppName($appname);  // 添加默认简单路由
 
         self::debugStrap();
+        $app->setBootstrapCompleted();
         return $app;
     }
 
@@ -75,7 +76,7 @@ abstract class BaseBootstrap
         Application::on('dispatchLoopStartup', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();
             $data = ['route' => $request->getCurrentRoute(), 'routeInfo' => $request->strRouteInfo(), 'params' => $request->getParams(), 'body' => $response->getBody()];
-            if($request->isSessionStarted()){
+            if ($request->isSessionStarted()) {
                 $data['session'] = Request::_session();
             }
             self::debugConsole($data, get_class($obj) . ' #dispatchLoopStartup', 1);

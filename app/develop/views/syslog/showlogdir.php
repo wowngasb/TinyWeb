@@ -66,7 +66,7 @@
                     height: 70
                 },
                 xclass: 'controller',
-                content: '<h2>日志管理系统，仅供内部人员使用。<a href="<?=\TinyWeb\Request::urlTo(['syslog', 'selectapi', 'develop'], [])?>" target="view_window">调试API</a></h2>'
+                content: '<h2>日志管理系统，仅供内部人员使用。<a href="<?=\TinyWeb\Request::urlTo($request, ['syslog', 'selectapi', 'develop'], [])?>" target="view_window">调试API</a></h2>'
             }, {
                 xclass: 'controller',
                 layout: {
@@ -177,10 +177,10 @@
             file_url = file_url.replace('showlogfile', 'downloadlogfile');
             window.open(file_url);
         });
-        $('.checkbox').on('change', function() {
-            var tag = trim( $(this).text() ).toLowerCase();
+        $('.checkbox').on('change', function () {
+            var tag = trim($(this).text()).toLowerCase();
             var is_show = $(this).find('input[type=checkbox]').is(':checked');
-            $('iframe').each(function(idx, obj){
+            $('iframe').each(function (idx, obj) {
                 is_show ? $(obj.contentDocument).find('.log-' + tag).show() : $(obj.contentDocument).find('.log-' + tag).hide();
             });
         });

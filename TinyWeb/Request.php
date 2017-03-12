@@ -26,7 +26,7 @@ final class Request
 
     protected $_current_route = '';  // 当前使用的 路由名称 在注册路由时给出的
     protected $_route_info = [];  // 当前 路由信息 [$controller, $action, $module]
-    protected $_params = null;  // 匹配到的参数 用于调用 action
+    protected $_params = [];  // 匹配到的参数 用于调用 action
 
     private $_session_started = false;
     private $_session_start = false;
@@ -94,7 +94,7 @@ final class Request
         return $this->_session_started ? session_id() : '';
     }
 
-    private function __construct()
+    public function __construct()
     {
         $this->_request_timestamp = microtime(true);
         $this->_request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
@@ -260,14 +260,16 @@ final class Request
 
     /**
      * 根据 路由信息 和 参数 按照路由规则生成 url
+     * @param Request $request
      * @param array $routerArr
      * @param array $params
      * @return string
+     * @throws AppStartUpError
      */
-    public static function urlTo(array $routerArr, array $params = [])
+    public static function urlTo(Request $request, array $routerArr, array $params = [])
     {
-        $route = self::instance()->getCurrentRoute();
-        return Application::instance()->getRoute($route)->ford($routerArr, $params);
+        $route = $request->getCurrentRoute();
+        return Application::instance()->getRoute($route)->url($routerArr, $params);
     }
 
     /**

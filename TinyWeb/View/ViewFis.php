@@ -16,11 +16,11 @@ use TinyWeb\Plugin\FisResource;
 class ViewFis extends ViewSimple
 {
 
-    private static function initFisResource(){
-        //设置配置和模板文件夹
+    public static function initFisResource($release_dir)
+    {
         FisResource::setConfig(array(
-            'config_dir'    => ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, ['public', 'tpl']),
-            'template_dir'  => ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, ['public', 'tpl']),
+            'config_dir'    => ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$release_dir, 'tpl']),
+            'template_dir'  => ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$release_dir, 'tpl']),
         ));
     }
 
@@ -32,8 +32,6 @@ class ViewFis extends ViewSimple
      */
     public static function  widget($widget_path, array $tpl_vars = [])
     {
-        self::initFisResource();
-
         ob_start();
         Fis::widget($widget_path, $tpl_vars);
         $buffer = ob_get_contents();
@@ -49,7 +47,6 @@ class ViewFis extends ViewSimple
      */
     public static function  display($view_path, array $tpl_vars = [])
     {
-        self::initFisResource();
         Fis::display($view_path, $tpl_vars);
     }
 

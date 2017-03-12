@@ -71,7 +71,7 @@ class RouteSupervar implements RouteInterface
      * @param array $params 参数数组
      * @return string
      */
-    public function ford(array $routeInfo, array $params = [])
+    public function url(array $routeInfo, array $params = [])
     {
         list($default_controller, $default_action, $default_module) = self::getDefaultRouteInfo();
         unset($params[$this->route_key]);

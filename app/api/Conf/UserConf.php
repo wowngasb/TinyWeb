@@ -10,10 +10,12 @@ namespace app\api\Conf;
 
 
 use app\api\OrmDao\Basic\User;
-use TinyWeb\Base\BaseModel;
+use TinyWeb\Base\BaseModelTrait;
 
-class UserConf extends BaseModel
+class UserConf
 {
+    use BaseModelTrait;
+
     const TIME_CACHE = 30000;
     private static $_user_dict = [];
 

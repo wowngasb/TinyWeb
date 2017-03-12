@@ -14,7 +14,7 @@ use TinyWeb\Base\BaseOrm;
 
 class App  extends BaseOrm
 {
-    protected static $_tablename = 'vlss_app';
+    protected static $_table_name = 'vlss_app';
 
 
 }

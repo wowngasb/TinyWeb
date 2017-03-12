@@ -2,26 +2,17 @@
 /**
  * Created by PhpStorm.
  * User: Administrator
- * Date: 2016/8/31 0031
- * Time: 14:52
+ * Date: 2017/3/12 0012
+ * Time: 15:26
  */
 
-namespace TinyWeb\Base;
+namespace TinyWeb\Plugin;
+
 
 use TinyWeb\Helper\RedisHelper;
-use TinyWeb\Plugin\LogTrait;
-use TinyWeb\Plugin\RpcTrait;
 
-/**
- * Model类，基类
- *
- * @package api\abstracts
- */
-abstract class BaseModel {
-
-    use LogTrait, RpcTrait;
-    protected static $detail_log = false;
-
+trait CacheTrait
+{
     /**
      * 使用redis缓存函数调用的结果 优先使用缓存中的数据
      * @param string $method 所在方法 方便检索
@@ -43,7 +34,7 @@ abstract class BaseModel {
         $timeCache = intval($timeCache) > 0 ? intval($timeCache) : 0;
         $redis = RedisHelper::getInstance();
         if(empty($redis)){
-            self::error("redis getInstance error", __METHOD__, __CLASS__, __LINE__);
+            LogTrait::error("redis getInstance error", __METHOD__, __CLASS__, __LINE__);
             return  $func();
         }
         $rKey = "BMCache:{$method}:{$tag}";
@@ -68,13 +59,12 @@ abstract class BaseModel {
             } else {
                 $log_msg = "call func filter now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$json['_update_']}";
             }
-            $is_log && self::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
+            $is_log && LogTrait::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
         } else {
             $log_msg = "cached now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$json['_update_']}";
-            $is_log && self::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
+            $is_log && LogTrait::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
         }
 
         return $data;
     }
-
 }

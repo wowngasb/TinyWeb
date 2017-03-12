@@ -11,12 +11,11 @@ namespace app\common;
 
 use TinyWeb\Controller\ControllerFis;
 
-abstract class Controller extends ControllerFis
+class Controller extends ControllerFis
 {
 
     public function beforeAction()
     {
-        parent::beforeAction();
+        self::setFisReleaseDir('public');
     }
-
 }

@@ -14,5 +14,5 @@ use TinyWeb\Base\BaseOrm;
 class Permission extends BaseOrm
 {
 
-    protected static $_tablename = 'rbac_permission';
+    protected static $_table_name = 'rbac_permission';
 }

@@ -11,9 +11,6 @@ use TinyWeb\Base\BaseApi;
  */
 class YarApiHub extends BaseApi {
     
-    public function __construct() {
-        parent::__construct();
-    }
 
     #####################################
     ############### YarHub ###############

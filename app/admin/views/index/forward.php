@@ -22,6 +22,6 @@
 
 <p>constants:</p>
 <pre><?= var_dump(get_defined_constants(1)['user']) ?></pre>
-<p><a href="<?=\TinyWeb\Request::urlTo(['index', 'index', ''], ['name'=>'abc', 'id'=>123, ])?>">跳转连接测试</a></p>
+<p><a href="<?=\TinyWeb\Request::urlTo($request, ['index', 'index', ''], ['name'=>'abc', 'id'=>123, ])?>">跳转连接测试</a></p>
 </body>
 </html>

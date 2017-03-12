@@ -59,7 +59,7 @@ class RouteSimple implements RouteInterface
      * @param array $params 参数数组
      * @return string
      */
-    public function ford(array $routeInfo, array $params = [])
+    public function url(array $routeInfo, array $params = [])
     {
         list($default_controller, $default_action, $default_module) = self::getDefaultRouteInfo();
         unset($params[$this->module_key], $params[$this->controller_key], $params[$this->action_key]);

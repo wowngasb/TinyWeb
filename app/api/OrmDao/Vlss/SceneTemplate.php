@@ -13,7 +13,7 @@ use TinyWeb\Base\BaseOrm;
 
 class SceneTemplate extends BaseOrm
 {
-    protected static $_tablename = 'vlss_scene_template';
+    protected static $_table_name = 'vlss_scene_template';
 
     protected static function _fixItem($val)
     {

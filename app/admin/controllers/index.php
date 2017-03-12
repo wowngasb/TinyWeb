@@ -25,7 +25,7 @@ class index extends Controller
 
     public function index()
     {
-        Application::forward(['index', 'forward', 'admin'], ['name'=>'abc', 'id'=>123456], 'simple');
+        Application::forward($this->request, $this->response, ['index', 'forward', 'admin'], ['name'=>'abc', 'id'=>123456], 'simple');
     }
 
 

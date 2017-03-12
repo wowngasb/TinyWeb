@@ -18,10 +18,6 @@ class VlssMgr extends BaseApi
 {
     const TIME_CACHE = 300;
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
 
     public function test($vlss_id)
     {

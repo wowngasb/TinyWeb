@@ -15,23 +15,6 @@ final class Response
     protected $_code = 200;  // 响应给请求端的HTTP状态码
     protected $_body = [];  // 响应给请求的body
 
-    private static $_instance = null;
-
-    /**
-     * @return Response
-     */
-    public static function instance()
-    {
-        if (!(self::$_instance instanceof self)) {
-            self::$_instance = new static();
-        }
-        return self::$_instance;
-    }
-
-    private function __construct()
-    {
-    }
-
     /**
      * 添加响应header
      * @param string $string

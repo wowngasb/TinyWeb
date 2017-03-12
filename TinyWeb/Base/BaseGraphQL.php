@@ -8,27 +8,14 @@
 
 namespace TinyWeb\Base;
 
-use GraphQL\Schema;
-use TinyWeb\DispatchAbleInterface;
-use TinyWeb\Request;
 
-abstract class BaseGraphQL extends BaseModel implements DispatchAbleInterface
+abstract class BaseGraphQL extends  BaseApi
 {
 
-    public $request;
-    public $user;
+    use BaseModelTrait;
 
     /**
-     * @param Request $request
-     * @param BaseCurrentUser $user
-     */
-    public function __construct(Request $request, BaseCurrentUser $user){
-        $this->request = $request;
-        $this->user = $user;
-    }
-
-    /**
-     * @return Schema
+     * @return mixed
      */
     abstract public function schema();
 

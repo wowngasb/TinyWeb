@@ -15,5 +15,5 @@ use TinyWeb\Base\BaseOrm;
 class UserRole extends BaseOrm
 {
 
-    protected static $_tablename = 'rbac_user_role';
+    protected static $_table_name = 'rbac_user_role';
 }

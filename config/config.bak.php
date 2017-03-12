@@ -1,4 +1,7 @@
 <?php
+!defined('REQUEST_MICROTIME') && define('REQUEST_MICROTIME', microtime(true));
+!defined('ROOT_PATH') && define("ROOT_PATH", dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR );
+
 if(!defined('DEV_MODEL')){
     define('DEV_MODEL', 'DEBUG');  //开发模式  DEBUG 调试  PRODUCT 产品
     //define('XHPROF', 'XHPROF:CPU+MEMORY+BUILTINS');  //开启XHPROF性能分析

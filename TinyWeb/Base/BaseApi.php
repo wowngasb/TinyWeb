@@ -2,28 +2,21 @@
 
 namespace TinyWeb\Base;
 
-use TinyWeb\DispatchAbleInterface;
 use TinyWeb\Helper\RedisHelper;
 
-abstract class BaseApi extends BaseModel implements DispatchAbleInterface {
+abstract class BaseApi extends BaseContext {
 
-
-    public function __construct() {
-        # code...
-    }
+    use BaseModelTrait;
 
     /**
      * 过滤常见的 API参数  子类按照顺序依次调用父类此方法
-     * @param $request  array  执行API的参数
-     * @param $origin_request  array  原始http请求参数$_REQUSET
      * @return array  处理后的 API 执行参数 将用于调用方法
      */
-    public function hookAccessAndFilterRequest(array $request, array $origin_request) {
+    public function beforeApi() {
         false && func_get_args();
 
         self::_apiLimitByTimeRange("ADMIN_KEY_", 60, 100);   //api 调用次数检查
 
-        return $request;  //直接返回请求参数
     }
 
     /*

@@ -25,11 +25,12 @@ class deploy extends Controller
     {
         parent::beforeAction();
         if (!index::authDevelopKey()) {  //认证 不通过
-            Application::redirect(Request::urlTo(['index', 'index', 'develop']));
+            Application::redirect(Request::urlTo($this->request, ['index', 'index', 'develop']));
         }
     }
 
-    public function phpInfo(){
+    public function phpInfo()
+    {
         phpinfo();
     }
 

@@ -9,7 +9,6 @@
 namespace TinyWeb\Base;
 
 use TinyWeb\Application;
-use TinyWeb\DispatchAbleInterface;
 use TinyWeb\Plugin\EventTrait;
 use TinyWeb\Request;
 use TinyWeb\Response;
@@ -19,21 +18,18 @@ use TinyWeb\ViewInterface;
  * Class Controller
  * @package TinyWeb
  */
-abstract class BaseController extends BaseModel implements DispatchAbleInterface
+abstract class BaseController extends BaseContext
 {
-    use EventTrait;
+    use EventTrait, BaseModelTrait;
 
     protected $_view = null;
 
     protected $routeInfo = [];  // 在路由完成后, 请求被分配到的路由信息 [$_controller, $_action, $_module]
     protected $appname = '';
 
-    public function __construct()
+    public function __construct(Request $request, Response $response)
     {
-        $request = Request::instance();
-        if (!$request->isRouted()) {  //强制结束路由过程
-            $request->setRouted();
-        }
+        parent::__construct($request, $response);
         $this->routeInfo = $request->getRouteInfo();
 
         $this->appname = Application::instance()->getAppName();
@@ -42,10 +38,7 @@ abstract class BaseController extends BaseModel implements DispatchAbleInterface
     /**
      * Controller 构造完成之后 具体action 之前调佣 通常用于初始化 需显示调用父类 beforeAction
      */
-    public function beforeAction()
-    {
-        Response::instance()->addHeader('Content-Type: text/html;charset=utf-8', true);
-    }
+    abstract public function beforeAction();
 
     /**
      * 为 Controller 绑定模板引擎
@@ -81,37 +74,9 @@ abstract class BaseController extends BaseModel implements DispatchAbleInterface
     /**
      * @param string $tpl_path
      */
-    public function display($tpl_path = '')
-    {
-        if (empty($tpl_path)) {
-            $tpl_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$this->appname, $this->routeInfo[2], 'views', $this->routeInfo[0], $this->routeInfo[1] . '.php']);
-        } else {
-            $tpl_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$this->appname, $this->routeInfo[2], 'views', $tpl_path]);
-        }
-        $view = $this->getView();
-        $params = $view->getAssign();
-        static::fire('preDisplay', [$this, $tpl_path, $params]);
-        $view->display($tpl_path, $params);
-    }
+    abstract protected function display($tpl_path = '');
 
-    public function widget($tpl_path, array $params)
-    {
-        $tpl_path = strtolower(trim($tpl_path));
-        if (empty($tpl_path)) {
-            return '';
-        }
-
-        $routeInfo = $this->routeInfo;
-        $appname = $this->appname;
-        $params['routeInfo'] = $routeInfo;
-        $params['appname'] = $appname;
-        $tpl_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$appname, 'widget', $tpl_path]);
-
-        static::fire('preWidget', [$this, $tpl_path, $params]);
-        $buffer = $this->getView()->widget($tpl_path, $params);
-        return $buffer;
-    }
-
+    abstract protected function widget($tpl_path, array $params);
 
     /**
      *  注册回调函数  回调参数为 callback($this, $tpl_path, $params)

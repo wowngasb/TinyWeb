@@ -11,31 +11,40 @@ namespace TinyWeb\Controller;
 
 use TinyWeb\Application;
 use TinyWeb\Base\BaseController;
+use TinyWeb\Request;
+use TinyWeb\Response;
 use TinyWeb\View\ViewFis;
 
-class ControllerFis extends BaseController
+abstract class ControllerFis extends BaseController
 {
-    private $_fis_release_dir = 'public';
+    private static $fis_release_dir = 'public';   //Fis3发布的目录  必须放置在 ROOT_PATH 下面
 
     /**
-     * @param string $fis_release_dir Fis3发布的目录  必须放置在 ROOT_PATH 下面
+     * ControllerFis constructor.
+     * @param Request $request
+     * @param Response $response
      */
-    protected function setFisReleaseDir($fis_release_dir)
+    final public function __construct(Request $request, Response $response)
     {
-        $this->_fis_release_dir = $fis_release_dir;
+        parent::__construct($request, $response);
+
+        $this->setView(new ViewFis());
     }
 
-    final public function __construct()
+    /**
+     * @param string $fis_release_dir
+     */
+    public static function setFisReleaseDir($fis_release_dir)
     {
-        parent::__construct();
-        $this->setView(new ViewFis());
+        self::$fis_release_dir = $fis_release_dir;
     }
 
     /**
      * @param string $tpl_path
      */
-    public function display($tpl_path = '')
+    protected function display($tpl_path = '')
     {
+        ViewFis::initFisResource(self::$fis_release_dir);
         if (empty($tpl_path)) {
             $tpl_path = Application::join('/', [$this->routeInfo[2], 'views', $this->routeInfo[0], $this->routeInfo[1] . '.php']);
         } else {
@@ -44,11 +53,14 @@ class ControllerFis extends BaseController
         $view = $this->getView();
         $params = $view->getAssign();
         static::fire('preDisplay', [$this, $tpl_path, $params]);
+        $params['request'] = $this->request;
         $view->display($tpl_path, $params);
     }
 
-    public function widget($tpl_path, array $params)
+    protected function widget($tpl_path, array $params)
     {
+        ViewFis::initFisResource(static::$fis_release_dir);
+
         $tpl_path = strtolower(trim($tpl_path));
         if (empty($tpl_path)) {
             return '';
@@ -61,6 +73,7 @@ class ControllerFis extends BaseController
         $tpl_path = Application::join(DIRECTORY_SEPARATOR, ['widget', $tpl_path]);
 
         static::fire('preWidget', [$this, $tpl_path, $params]);
+        $params['request'] = $this->request;
         $buffer = $this->getView()->widget($tpl_path, $params);
         return $buffer;
     }

@@ -13,5 +13,5 @@ use TinyWeb\Base\BaseOrm;
 
 class SceneGroup extends BaseOrm
 {
-    protected static $_tablename = 'vlss_scene_group';
+    protected static $_table_name = 'vlss_scene_group';
 }

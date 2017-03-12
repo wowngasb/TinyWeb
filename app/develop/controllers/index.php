@@ -5,7 +5,6 @@ namespace app\develop\controllers;
 use app\common\Controller;
 use TinyWeb\Application;
 use TinyWeb\Request;
-use TinyWeb\Response;
 
 class index extends Controller
 {
@@ -14,13 +13,13 @@ class index extends Controller
     {
         parent::beforeAction();
         if (self::authDevelopKey()) {  //认证 通过
-            Application::redirect(Request::urlTo(['Syslog', 'index', 'develop']));
+            Application::redirect(Request::urlTo($this->request, ['Syslog', 'index', 'develop']));
         }
     }
 
     public function index()
     {
-        Application::instance()->forward(['Index', 'auth', 'develop']);
+        Application::instance()->forward($this->request, $this->response, ['Index', 'auth', 'develop']);
     }
 
     public function auth()
@@ -28,7 +27,7 @@ class index extends Controller
         $develop_key = Request::_post('develop_key', '');
         Request::set_session('develop_key', $develop_key);
         if (self::authDevelopKey()) {  //认证 通过
-            Application::redirect(Request::urlTo(['Syslog', 'index', 'develop']));
+            Application::redirect(Request::urlTo($this->request, ['Syslog', 'index', 'develop']));
         } else {
             $err_msg = empty($develop_key) ? 'Input develop key.' : 'Auth failed.';
             $html_str = <<<EOT
@@ -38,7 +37,7 @@ class index extends Controller
 </form>
 <span>{$err_msg}</span>
 EOT;
-            Response::instance()->appendBody($html_str);
+            $this->response->appendBody($html_str);
         }
     }
 

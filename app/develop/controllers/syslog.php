@@ -15,18 +15,18 @@ class sysLog extends Controller
     {
         parent::beforeAction();
         if ( !index::authDevelopKey() ) {  //认证 不通过
-            Application::redirect(Request::urlTo(['index', 'index', 'develop']));
+            Application::redirect(Request::urlTo($this->request, ['index', 'index', 'develop']));
         }
     }
 
     public function index() {
-        Application::instance()->forward(['syslog', 'showLogDir', 'develop']);
+        Application::instance()->forward($this->request, $this->response, ['syslog', 'showLogDir', 'develop']);
     }
 
     public function showLogDir()
     {
         $arr_dir = LogHelper::getLogPathArray();
-        $arr_dir = self::fixPathData($arr_dir);
+        $arr_dir = $this->fixPathData($arr_dir);
         $json_dir = json_encode($arr_dir);
 
         $this->assign('tool_title', '后台日志查看系统');
@@ -36,8 +36,6 @@ class sysLog extends Controller
 
     public function showLogFile()
     {
-        $this->layout = 'empty_buihtml';
-
         $path = Request::_get('file', '');
         $this->assign('tool_title', $path);
 
@@ -90,7 +88,7 @@ class sysLog extends Controller
         exit;
     }
 
-    private static function fixPathData($arr_dir)
+    private function fixPathData($arr_dir)
     {
         /*[{text : '1',id : '1',children: [{text : '11',id : '11',href:'11.html'}]},
           {text : '2',id : '2',expanded : true,children : [
@@ -107,7 +105,7 @@ class sysLog extends Controller
                 $rst[] = [
                     'text' => $val['name'],
                     'id' => $val['name'],
-                    'href' => Request::urlTo(['syslog', 'showlogfile', 'develop'], ['file' => $val['path'], 'scroll_to' => 'end']),
+                    'href' => Request::urlTo($this->request, ['syslog', 'showlogfile', 'develop'], ['file' => $val['path'], 'scroll_to' => 'end']),
                     'leaf' => true,
                     'file_info' => "create_time : {$val['ctime_str']}, modify_time : {$val['mtime_str']}, size : {$val['size_str']}",
                 ];

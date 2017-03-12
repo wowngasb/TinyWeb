@@ -8,7 +8,6 @@
 
 namespace TinyWeb\Base;
 
-use GraphQL\Utils;
 use TinyWeb\Application;
 use TinyWeb\Exception\OrmStartUpError;
 use TinyWeb\Helper\DbHelper;
@@ -27,10 +26,11 @@ use TinyWeb\Helper\DbHelper;
  * 例如 [   ['whereNull', 'updated_at'],  ]   对应  ->whereNull('updated_at')
  * @package app\common\Base
  */
-abstract class BaseOrm extends BaseModel
+abstract class BaseOrm
 {
+    use BaseModelTrait;
 
-    protected static $_tablename = '';
+    protected static $_table_name = '';
     protected static $_primary_key = 'id';
     protected static $_max_select_item_counts = 10000;  //最多获取1w条记录 防止数据库拉取条目过多
 
@@ -52,13 +52,10 @@ abstract class BaseOrm extends BaseModel
         return self::$m_instance[$name];
     }
 
-    public function __construct(array $data = [])
+    public function __construct()
     {
-        if (empty(static::$_tablename) || empty(static::$_primary_key)) {
+        if (empty(static::$_table_name) || empty(static::$_primary_key)) {
             throw new OrmStartUpError('Dao:' . class_basename($this) . ' init with empty tablename or primary_key');
-        }
-        if (!empty($data)) {
-            Utils::assign($this, $data);
         }
         $name = get_class($this);
         if (is_null($this->db)) {
@@ -119,7 +116,7 @@ abstract class BaseOrm extends BaseModel
      */
     protected static function tableItem(array $where = [])
     {
-        $table = static::instance()->db->table(static::$_tablename);
+        $table = static::instance()->db->table(static::$_table_name);
         $query_list = [];
         foreach ($where as $key => $item) {
             if (is_integer($key) && is_array($item)) {

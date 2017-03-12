@@ -8,7 +8,7 @@ use TinyWeb\Exception\OrmParamsError;
 
 class User extends BaseOrm
 {
-    protected static $_tablename = 'basic_user';
+    protected static $_table_name = 'basic_user';
 
     protected static function _fixItem($val)
     {

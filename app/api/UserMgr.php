@@ -11,11 +11,6 @@ class UserMgr extends BaseApi
 
     protected static $detail_log = true;
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     protected static function validName($name)
     {
         if (!preg_match("/^[0-9a-zA-Z]{6,18}$/i", $name)) {
