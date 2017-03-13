@@ -6,13 +6,13 @@
  * Time: 18:11
  */
 
-namespace app\common\Dispatch;
+namespace TinyWeb\Dispatch;
 
 
-use app\Bootstrap;
 use TinyWeb\Base\BaseApi;
 use Exception;
 use TinyWeb\Application;
+use TinyWeb\Base\BaseBootstrap;
 use TinyWeb\Base\BaseContext;
 use TinyWeb\Base\BaseModelTrait;
 use TinyWeb\DispatchInterface;
@@ -81,14 +81,14 @@ class ApiDispatch implements DispatchInterface
     {
         try {
             $result = call_user_func_array([$context, $action], $params);
-            Bootstrap::_D([
+            BaseBootstrap::_D([
                 'class' => get_class($context),
                 'method' => $action,
                 'params' => $params,
                 'result' => $result
             ], 'api');
         } catch (Exception $ex) {
-            Bootstrap::_D((array)$ex, 'api Exception');
+            BaseBootstrap::_D((array)$ex, 'api Exception');
             $result = self::traceExceptionAsResult($ex);
         }
 
