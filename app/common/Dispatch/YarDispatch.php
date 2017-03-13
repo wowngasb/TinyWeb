@@ -6,7 +6,7 @@
  * Time: 18:22
  */
 
-namespace TinyWeb\Dispatch;
+namespace app\common\Dispatch;
 
 
 use TinyWeb\Base\BaseContext;
