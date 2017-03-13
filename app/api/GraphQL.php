@@ -9,24 +9,20 @@
 namespace app\api;
 
 
-use app\api\GraphQL\Vlss\Types;
+use app\api\GraphQL\Schema;
+use app\Bootstrap;
 use TinyWeb\Base\BaseApi;
 use Youshido\GraphQL\Execution\Processor;
-use Youshido\GraphQL\Schema\Schema;
 
 class GraphQL extends BaseApi
 {
 
-    public function exec($params){
-        $schema = new Schema([
-            'query' => Types::query()
-        ]);
+    public function exec($query = '{hello}', array $variables = null)
+    {
+        $schema = new Schema();
         $processor = new Processor($schema);
-
-        $requestString = isset($params['query']) ? $params['query'] : '{hello}';
-        $variableValues = isset($params['variables']) ? $params['variables'] : null;
-
-        $result = $processor->processPayload($requestString, $variableValues)->getResponseData();
+        Bootstrap::_D($query, '$query');
+        $result = $processor->processPayload($query, $variables)->getResponseData();
 
         return $result;
     }

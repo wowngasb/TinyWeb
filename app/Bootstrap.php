@@ -9,10 +9,11 @@
 
 namespace app;
 
-use app\common\Dispatch\ApiDispatch;
 use TinyWeb\Base\BaseBootstrap;
 use TinyWeb\Application;
-use TinyWeb\Route\RouteApi;
+use TinyWeb\Dispatch\ApiDispatch;
+use TinyWeb\Dispatch\YarDispatch;
+use TinyWeb\Route\RoutePrefix;
 use TinyWeb\Route\RouteSimple;
 
 final class Bootstrap extends BaseBootstrap
@@ -27,9 +28,8 @@ final class Bootstrap extends BaseBootstrap
      */
     public static function bootstrap($appname, Application $app)
     {
-        $api = new ApiDispatch();
-        $app->addRoute('api', new RouteApi('api'), $api)
-            ->addRoute('yar', new RouteApi('yar'), $api)
+        $app->addRoute('api', new RoutePrefix('api'), new ApiDispatch())
+            ->addRoute('yar', new RoutePrefix('yar'), new YarDispatch())
             ->addRoute('simple', new RouteSimple('m', 'c', 'a'));  // 添加默认简单路由
 
         return parent::bootstrap($appname, $app);

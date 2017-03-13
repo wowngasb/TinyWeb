@@ -13,7 +13,7 @@ use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\Request;
 use TinyWeb\RouteInterface;
 
-class RouteApi implements RouteInterface
+class RoutePrefix implements RouteInterface
 {
     private $module_name = 'api';
 

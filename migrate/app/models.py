@@ -13,7 +13,7 @@ class BasicUser(Base):
 
     id = Column(Integer, primary_key=True)   #虚拟演播厅自增id
     login_name = Column(String(16), nullable=False, unique=True)   #用户管理后台登录名
-    password = Column(String(32), nullable=False)   #用户管理后台登录名
+    password = Column(String(32), nullable=False)   #用户管理后台登录密码
     email = Column(String(32), nullable=False)   #用户邮箱
     telephone = Column(String(16), nullable=False)   #用户手机号
     access_id = Column(String(64), nullable=False)   #奥点云access_id

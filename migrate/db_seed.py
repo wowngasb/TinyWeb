@@ -134,7 +134,7 @@ group_list = [
                 }
             },
             {
-                "scene_name":"字幕1-1",
+                "scene_name":"字幕",
                 "scene_type":"hsms-subtitle",
                 "scene_sort":3,
                 "scene_config":{

@@ -23,6 +23,14 @@ fis.match('**', {
 fis.match('/index.php', {
     release: '/index.php'
 });
+fis.match("/dist/**",{
+    isJsLike: false,
+    isCssLike: false,
+    isHtmlLike: false,
+    useMap: false,
+    release: '/$0'
+});
+
 fis.match("/static/**",{
     release: '/$0'
 });
