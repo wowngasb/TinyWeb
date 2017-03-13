@@ -9,9 +9,9 @@
 namespace app\api\GraphQL;
 
 
-use app\api\GraphQL\Basic\User as BasicUser;
-use app\api\GraphQL\Vlss\App as VlssApp;
-use app\api\OrmDao\Basic\User as BasicUserDao;
+use app\api\Conf\UserConf;
+use app\api\GraphQL\Basic\BasicUser as BasicUser;
+use app\api\GraphQL\Vlss\VlssApp as VlssApp;
 use app\api\OrmDao\Vlss\App as VlssAppDao;
 use Youshido\GraphQL\Config\Schema\SchemaConfig;
 use Youshido\GraphQL\Execution\ResolveInfo;
@@ -46,7 +46,7 @@ class Schema extends AbstractSchema
                     'id'   => new IdType(),
                 ],
                 'resolve' => function ($value, array $args, ResolveInfo $info) {
-                    return BasicUserDao::getItem($args['id']);
+                    return UserConf::getDataById($args['id']);
                 }
             ],
             'vlssApp'           => [

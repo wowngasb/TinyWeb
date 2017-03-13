@@ -11,6 +11,9 @@ namespace TinyWeb\Base;
 use TinyWeb\Application;
 use TinyWeb\Exception\OrmStartUpError;
 use TinyWeb\Helper\DbHelper;
+use TinyWeb\Traits\CacheTrait;
+use TinyWeb\Traits\LogTrait;
+use TinyWeb\Traits\RpcTrait;
 
 /**
  * Class BaseOrmModel
@@ -28,7 +31,7 @@ use TinyWeb\Helper\DbHelper;
  */
 abstract class BaseOrm
 {
-    use BaseModelTrait;
+    use LogTrait, RpcTrait, CacheTrait;
 
     protected static $_table_name = '';
     protected static $_primary_key = 'id';
@@ -188,7 +191,7 @@ abstract class BaseOrm
 
         $rst = [];
         foreach ($data as $key => $val) {
-            $rst[$key] = static::_fixItem($val);
+            $rst[$key] = static::_fixItem((array)$val);
         }
         return $rst;
     }
@@ -209,7 +212,7 @@ abstract class BaseOrm
         $rst = [];
         foreach ($data as $key => $val) {
             $id = $val[static::$_primary_key];
-            $rst[$id] = static::_fixItem($val);
+            $rst[$id] = static::_fixItem((array)$val);
         }
         return $rst;
     }
@@ -238,7 +241,7 @@ abstract class BaseOrm
         $table = static::tableItem($where);
         $item = $table->first($columns);
         static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
-        return static::_fixItem($item);
+        return static::_fixItem((array)$item);
     }
 
     /**

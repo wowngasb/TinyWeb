@@ -15,14 +15,14 @@ use TinyWeb\RouteInterface;
 
 class RoutePrefix implements RouteInterface
 {
-    private $module_name = 'api';
+    private $module_name = '';
 
-    public function __construct($module_name='api')
+    public function __construct($module_name)
     {
-        $this->module_name =$module_name;
-        if(empty($this->module_name)){
-            throw new AppStartUpError('RouteApi module_name empty');
+        if (empty($module_name)) {
+            throw new AppStartUpError(__CLASS__ . ' module_name empty');
         }
+        $this->module_name = $module_name;
     }
 
     public function getModuleName()
@@ -44,7 +44,7 @@ class RoutePrefix implements RouteInterface
         $matches = [];
         preg_match("/{$reg_str}/i", $uri, $matches);
 
-        if ( isset($matches[1]) && isset($matches[2]) ) {
+        if (isset($matches[1]) && isset($matches[2])) {
             $routeInfo = [$matches[1], $matches[2], $this->module_name];
             return [$routeInfo, $_REQUEST];
         } else {

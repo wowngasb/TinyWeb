@@ -9,10 +9,14 @@
 namespace TinyWeb\Base;
 
 
+use TinyWeb\Traits\CacheTrait;
+use TinyWeb\Traits\LogTrait;
+use TinyWeb\Traits\RpcTrait;
+
 abstract class BaseGraphQL extends  BaseApi
 {
 
-    use BaseModelTrait;
+    use LogTrait, RpcTrait, CacheTrait;
 
     /**
      * @return mixed

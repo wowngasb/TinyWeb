@@ -6,9 +6,10 @@ use TinyWeb\Base\BaseApi;
 
 class UserMgr extends BaseApi
 {
-    public function getUser($user_id){
-        $user = User::getItem($user_id);
-        return ['user' => $user];
+    public function getUser($id){
+        $user = User::getDataById($id);
+        $login_name = User::login_name($id);
+        return ['user' => $user, 'login_name'=>$login_name];
     }
 
 }

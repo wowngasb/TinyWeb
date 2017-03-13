@@ -5,6 +5,7 @@ namespace app\api\OrmDao\Basic;
 use TinyWeb\Application;
 use TinyWeb\Base\BaseOrm;
 use TinyWeb\Exception\OrmParamsError;
+use TinyWeb\Traits\CacheTrait;
 
 class User extends BaseOrm
 {
@@ -16,6 +17,66 @@ class User extends BaseOrm
             unset($val['password']);
         }
         return $val;
+    }
+
+
+    use CacheTrait;
+
+    /**
+     * @return BaseOrm
+     */
+    protected static function getOrm(){
+        return static::instance();
+    }
+
+    public static function login_name($id)
+    {
+        return self::getFiledById('login_name', $id);
+    }
+
+    public static function email($id)
+    {
+        return self::getFiledById('email', $id);
+    }
+
+    public static function telephone($id)
+    {
+        return self::getFiledById('telephone', $id);
+    }
+
+    public static function access_id($id)
+    {
+        return self::getFiledById('access_id', $id);
+    }
+
+    public static function access_key($id)
+    {
+        return self::getFiledById('access_key', $id);
+    }
+
+    public static function aodian_uin($id)
+    {
+        return self::getFiledById('aodian_uin', $id);
+    }
+
+    public static function dms_sub_key($id)
+    {
+        return self::getFiledById('dms_sub_key', $id);
+    }
+
+    public static function dms_pub_key($id)
+    {
+        return self::getFiledById('dms_pub_key', $id);
+    }
+
+    public static function dms_s_key($id)
+    {
+        return self::getFiledById('dms_s_key', $id);
+    }
+
+    public static function state($id)
+    {
+        return self::getFiledById('state', $id);
     }
 
     private static function _hashPassWord($password)

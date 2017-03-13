@@ -9,7 +9,10 @@
 namespace TinyWeb\Base;
 
 use TinyWeb\Application;
-use TinyWeb\Plugin\EventTrait;
+use TinyWeb\Traits\CacheTrait;
+use TinyWeb\Traits\EventTrait;
+use TinyWeb\Traits\LogTrait;
+use TinyWeb\Traits\RpcTrait;
 use TinyWeb\Request;
 use TinyWeb\Response;
 use TinyWeb\ViewInterface;
@@ -20,7 +23,7 @@ use TinyWeb\ViewInterface;
  */
 abstract class BaseController extends BaseContext
 {
-    use EventTrait, BaseModelTrait;
+    use EventTrait,  LogTrait, RpcTrait, CacheTrait;
 
     protected $_view = null;
 

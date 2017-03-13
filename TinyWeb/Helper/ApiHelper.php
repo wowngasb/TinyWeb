@@ -3,7 +3,7 @@
 namespace TinyWeb\Helper;
 
 use TinyWeb\Exception\ApiParamsError;
-use TinyWeb\Plugin\LogTrait;
+use TinyWeb\Traits\LogTrait;
 use TinyWeb\Request;
 
 class ApiHelper

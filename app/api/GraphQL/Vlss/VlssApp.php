@@ -9,6 +9,7 @@
 namespace app\api\GraphQL\Vlss;
 
 
+use app\api\GraphQL\Basic\BasicUser;
 use app\api\GraphQL\Vlss\Enum\AppStateEnum;
 use Youshido\GraphQL\Config\Object\ObjectTypeConfig;
 use Youshido\GraphQL\Type\Object\AbstractObjectType;
@@ -18,7 +19,7 @@ use Youshido\GraphQL\Type\Scalar\IdType;
 use Youshido\GraphQL\Type\Scalar\IntType;
 use Youshido\GraphQL\Type\Scalar\StringType;
 
-class App extends AbstractObjectType
+class VlssApp extends AbstractObjectType
 {
 
     protected static $_orm = null;
@@ -44,6 +45,10 @@ class App extends AbstractObjectType
             ->addField('user_id', [
                 'type'              => new NonNullType(new IntType()),
                 'description'       => '用户id',
+            ])
+            ->addField('user', [
+                'type'              => new NonNullType(new BasicUser()),
+                'description'       => '用户',
             ])
             ->addField('lcps_host', [
                 'type'              => new NonNullType(new StringType()),
@@ -74,6 +79,5 @@ class App extends AbstractObjectType
                 'description'       => '更新时间',
             ]);
     }
-
 
 }

@@ -6,7 +6,7 @@ use TinyWeb\Base\BaseController;
 use TinyWeb\Exception\RouteError;
 use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\Helper\ApiHelper;
-use TinyWeb\Plugin\EventTrait;
+use TinyWeb\Traits\EventTrait;
 
 /**
  * Class Application

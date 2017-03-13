@@ -2,7 +2,7 @@
 
 namespace TinyWeb\Helper;
 
-use TinyWeb\Plugin\LogTrait;
+use TinyWeb\Traits\LogTrait;
 
 class RpcHelper
 {

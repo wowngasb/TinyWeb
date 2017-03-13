@@ -18,7 +18,7 @@ use Youshido\GraphQL\Type\Scalar\IdType;
 use Youshido\GraphQL\Type\Scalar\IntType;
 use Youshido\GraphQL\Type\Scalar\StringType;
 
-class User extends AbstractObjectType
+class BasicUser extends AbstractObjectType
 {
 
     /**
@@ -35,10 +35,6 @@ class User extends AbstractObjectType
             ->addField('login_name', [
                 'type'              => new NonNullType(new StringType()),
                 'description'       => '用户管理后台登录名',
-            ])
-            ->addField('password', [
-                'type'              => new NonNullType(new StringType()),
-                'description'       => '用户管理后台登录密码',
             ])
             ->addField('email', [
                 'type'              => new NonNullType(new StringType()),

@@ -6,7 +6,7 @@
  * Time: 1:56
  */
 
-namespace TinyWeb\Plugin;
+namespace TinyWeb\Traits;
 
 
 use TinyWeb\Exception\AppStartUpError;

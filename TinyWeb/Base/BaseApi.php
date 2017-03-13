@@ -3,10 +3,13 @@
 namespace TinyWeb\Base;
 
 use TinyWeb\Helper\RedisHelper;
+use TinyWeb\Traits\CacheTrait;
+use TinyWeb\Traits\LogTrait;
+use TinyWeb\Traits\RpcTrait;
 
 abstract class BaseApi extends BaseContext {
 
-    use BaseModelTrait;
+    use LogTrait, RpcTrait, CacheTrait;
 
     /**
      * 过滤常见的 API参数  子类按照顺序依次调用父类此方法

@@ -13,18 +13,19 @@ use app\Bootstrap;
 use TinyWeb\Base\BaseApi;
 use Exception;
 use TinyWeb\Application;
-use TinyWeb\Base\BaseBootstrap;
 use TinyWeb\Base\BaseContext;
-use TinyWeb\Base\BaseModelTrait;
 use TinyWeb\DispatchInterface;
 use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\Helper\ApiHelper;
+use TinyWeb\Traits\CacheTrait;
+use TinyWeb\Traits\LogTrait;
+use TinyWeb\Traits\RpcTrait;
 use TinyWeb\Request;
 use TinyWeb\Response;
 
 class ApiDispatch implements DispatchInterface
 {
-    use BaseModelTrait;
+    use LogTrait, RpcTrait, CacheTrait;
 
     /**
      * 根据对象和方法名 获取 修复后的参数

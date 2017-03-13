@@ -1,6 +1,6 @@
 <?php
 
-namespace TinyWeb\Plugin;
+namespace TinyWeb\Traits;
 
 
 use TinyWeb\Application;
