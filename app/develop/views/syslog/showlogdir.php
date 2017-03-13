@@ -26,23 +26,16 @@
             color: #fff;
             background-color: #337ab7;
             border-color: #2e6da4;
-            border-top-width: 1px;
-            border-top-style: solid;
-            border-top-color: transparent;
-            border-right-width: 1px;
-            border-right-style: solid;
-            border-right-color: transparent;
-            border-left-width: 1px;
-            border-left-style: solid;
-            border-left-color: transparent;
-            border-bottom-width: 1px;
-            border-bottom-style: solid;
-            border-bottom-color: transparent;
+            border: 1px solid transparent;
             border-radius: 4px;
         }
 
-        .opt input {
-            width: 75%;
+        .opt .input_text {
+            width: 80%;
+        }
+
+        .opt .input_checkbox {
+            margin-left: 10px;
         }
     </style>
 </head>
@@ -53,6 +46,14 @@
     var LOG_TAB;
     var DIR_TREE;
     var DIR_NODES = <?=$json_dir?>;
+    function trim(str) { //删除左右两端的空格
+        return str.replace(/(^\s*)|(\s*$)/g, "");
+    }
+
+    function reload(obj) {
+        //$('.opt').find("[type='checkbox']").attr("checked","true");
+        obj.reload();
+    }
 
     BUI.use(['bui/layout', 'bui/tab', 'bui/data', 'bui/tree'], function (Layout, Tab, Data, Tree) {
         var control = new Layout.Viewport({
@@ -88,7 +89,7 @@
                     width: 150
                 },
                 elCls: 'red',
-                content: "<div class='opt'><p><input type='text' name='filter_input'></p><p><a id='btn_filter'>过滤</a><a id='btn_reload'>刷新</a></p><p><a id='btn_home'>最前</a><a id='btn_end'>最后</a></p><p><a id='btn_download'>下载</a><a id='btn_clear'>清空</a></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> DEBUG </label></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> INFO </label></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> WARN </label></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> ERROR </label></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> FATAL </label></p></div>"
+                content: "<div class='opt'><p><input type='text' name='filter_input' class='input_text'></p><p><a id='btn_filter'>高亮</a><a id='btn_reload'>刷新</a></p><p><a id='btn_home'>最前</a><a id='btn_end'>最后</a></p><p><a id='btn_download'>下载</a><a id='btn_clear'>清空</a></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> DEBUG </label></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> INFO </label></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> WARN </label></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> ERROR </label></p><p><label class='checkbox'><input class='input_checkbox' type='checkbox' checked> FATAL </label></p></div>"
             }, {
                 layout: {
                     region: 'west',
@@ -126,8 +127,8 @@
 
             $('#file_info').text(node.file_info);
             if (href) {
-                var api_name = node.parent.id.split('_').slice(-1)[0] ? node.parent.id.split('_').slice(-1)[0] : node.parent.id.split('_').slice(-2)[0];
-                var day_str = text.split('-').slice(-1)[0].split('.')[0];
+                var api_name = !node.parent.id ? node.text : node.parent.id.split('_').slice(-1)[0] ? node.parent.id.split('_').slice(-1)[0] : node.parent.id.split('_').slice(-2)[0];
+                var day_str = text.split('-').slice(-1)[0] ? text.split('-').slice(-1)[0].split('.')[0] : '';
                 LOG_TAB.addTab({
                     title: api_name + '-' + day_str,
                     href: href,
@@ -137,16 +138,21 @@
         });
         $('#btn_filter').on('click', function () {
             var tmp = LOG_TAB.getActivedItem();
-            if (!tmp) {
+            var text = $('.input_text[name=filter_input]').val();
+            if (!tmp || !text) {
                 return;
             }
+            $('iframe').each(function (idx, obj) {
+                var tmp = $(obj.contentDocument).find('#log_code').html().replace(new RegExp(text,'gm'), "<b class='log_highlight'>" + text + "</b>");
+                $(obj.contentDocument).find('#log_code').html(tmp);
+            });
         });
         $('#btn_reload').on('click', function () {
             var tmp = LOG_TAB.getActivedItem();
             if (!tmp) {
                 return;
             }
-            tmp.reload();
+            reload(tmp);
         });
         $('#btn_home').on('click', function () {
             var tmp = LOG_TAB.getActivedItem();
@@ -155,8 +161,8 @@
             }
             var file_url = tmp.getAttrVals().href;
             file_url = file_url.replace('scroll_to=end', 'scroll_to=home');
-            tmp.set('href', file_url)
-            tmp.reload();
+            tmp.set('href', file_url);
+            reload(tmp);
         });
         $('#btn_end').on('click', function () {
             var tmp = LOG_TAB.getActivedItem();
@@ -166,7 +172,7 @@
             var file_url = tmp.getAttrVals().href;
             file_url = file_url.replace('scroll_to=home', 'scroll_to=end');
             tmp.set('href', file_url);
-            tmp.reload();
+            reload(tmp);
         });
         $('#btn_download').on('click', function () {
             var tmp = LOG_TAB.getActivedItem();
@@ -200,7 +206,7 @@
                         console.error(data.error);
                         alert(data.msg);
                     } else {
-                        tmp.reload();
+                        reload(tmp);
                     }
                 }
             });

@@ -19,7 +19,12 @@
             background: #887ddd;
             border-radius: 4px;
         }
-
+        .log_highlight {
+            padding: 3px;
+            color: white;
+            background: #B966EA;
+            border-radius: 4px;
+        }
         .log_green {
             padding: 3px;
             color: white;
@@ -104,6 +109,13 @@
             var h = $(document).height() - $(window).height();
             $(document).scrollTop(h);
         }
+        setInterval(function(){
+            $(window.parent.document).find('.checkbox').each(function(idx, obj){
+                var tag = trim($(obj).text()).toLowerCase();
+                var is_show = $(obj).find('input[type=checkbox]').is(':checked');
+                is_show ? $('.log-' + tag).show() : $('.log-' + tag).hide();
+            });
+        }, 100);
     });
 </script>
 </body>
