@@ -36,7 +36,6 @@ abstract class BaseOrm
 
     /* @var \Illuminate\Database\Connection */
     private $db = null;
-
     private static $m_instance = [];
 
     /**
@@ -71,10 +70,10 @@ abstract class BaseOrm
     protected static function debugSql($sql, $param, $tag = 'sql')
     {
         $tag = str_replace(__CLASS__, 'SQL', $tag);
-        BaseBootstrap::_D(['sql' => self::showQuery($sql, $param)], $tag);
+        BaseBootstrap::_D(['sql' => static::showQuery($sql, $param)], $tag);
     }
 
-    protected static function showQuery($query, $params)
+    final protected static function showQuery($query, $params)
     {
         $keys = [];
         $values = [];
@@ -105,7 +104,7 @@ abstract class BaseOrm
         return $val;
     }
 
-    protected static function v($val, $key, $default = null)
+    private static function _v($val, $key, $default = null)
     {
         return isset($val[$key]) ? $val[$key] : $default;
     }
@@ -126,7 +125,7 @@ abstract class BaseOrm
             } else {
                 $tag = 'where';
                 if (is_array($item)) {
-                    $query = [$key, self::v($item, 0, null), self::v($item, 1, null), self::v($item, 2, 'and')];
+                    $query = [$key, self::_v($item, 0), self::_v($item, 1), self::_v($item, 2, 'and')];
                 } else {
                     $query = [$key, '=', $item, 'and'];
                 }
@@ -155,7 +154,7 @@ abstract class BaseOrm
     {
         $table = static::tableItem($where);
         $count = $table->count($columns);
-        self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return $count;
     }
 
@@ -185,7 +184,7 @@ abstract class BaseOrm
             $table->orderBy($sort_option['field'], $sort_option['direction']);
         }
         $data = $table->get($columns);
-        self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
 
         $rst = [];
         foreach ($data as $key => $val) {
@@ -205,7 +204,7 @@ abstract class BaseOrm
         $table = static::tableItem($where);
         $table->take(static::$_max_select_item_counts);
         $data = $table->get($columns);
-        self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
 
         $rst = [];
         foreach ($data as $key => $val) {
@@ -238,7 +237,7 @@ abstract class BaseOrm
     {
         $table = static::tableItem($where);
         $item = $table->first($columns);
-        self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return static::_fixItem($item);
     }
 
@@ -262,7 +261,7 @@ abstract class BaseOrm
         }
         $table = static::tableItem();
         $id = $table->insertGetId($data, static::$_primary_key);
-        self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return $id;
     }
 
@@ -277,7 +276,7 @@ abstract class BaseOrm
         unset($data['create_time'], $data['uptime'], $data[static::$_primary_key]);
         $table = static::tableItem()->where(static::$_primary_key, $id);
         $update = $table->update($data);
-        self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return $update;
     }
 
@@ -290,7 +289,7 @@ abstract class BaseOrm
     {
         $table = static::tableItem()->where(static::$_primary_key, $id);
         $delete = $table->delete();
-        self::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
         return $delete;
     }
 
