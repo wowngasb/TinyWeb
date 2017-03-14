@@ -296,6 +296,22 @@ abstract class BaseOrm
         return $delete;
     }
 
+    public function incItem($id, $filed, $value = 1)
+    {
+        $table = static::tableItem()->where(static::$_primary_key, $id);
+        $increment = $table->increment($filed, $value);
+        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        return $increment;
+    }
+
+    public function decItem($id, $filed, $value = 1)
+    {
+        $table = static::tableItem()->where(static::$_primary_key, $id);
+        $decrement = $table->decrement($filed, $value);
+        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        return $decrement;
+    }
+
     /**
      * 更新或插入数据  优先根据条件查询数据 无法查询到数据时插入数据
      * @param array $where 检索条件数组 具体格式参见文档
