@@ -9,17 +9,16 @@
 namespace app\api\GraphQL\Vlss;
 
 
-use app\api\GraphQL\Vlss\Enum\SceneTemplateStateEnum;
+use app\api\GraphQL\Vlss\Enum\SceneGroupStateEnum;
 use Youshido\GraphQL\Config\Object\ObjectTypeConfig;
 use Youshido\GraphQL\Type\Object\AbstractObjectType;
 
 use Youshido\GraphQL\Type\NonNullType;
 use Youshido\GraphQL\Type\Scalar\DateTimeType;
 use Youshido\GraphQL\Type\Scalar\IdType;
-use Youshido\GraphQL\Type\Scalar\IntType;
 use Youshido\GraphQL\Type\Scalar\StringType;
 
-class SceneTemplate  extends AbstractObjectType
+class VlssSceneGroup  extends AbstractObjectType
 {
 
     /**
@@ -36,24 +35,12 @@ class SceneTemplate  extends AbstractObjectType
                 'type'              => new NonNullType(new IdType()),
                 'description'       => '虚拟演播厅id',
             ])
-            ->addField('template_name', [
+            ->addField('group_name', [
                 'type'              => new NonNullType(new StringType()),
-                'description'       => '模板名称',
-            ])
-            ->addField('switch_config', [
-                'type'              => new NonNullType(new StringType()),
-                'description'       => '模版配置 格式为 json 字符串',
-            ])
-            ->addField('front_pic', [
-                'type'              => new NonNullType(new StringType()),
-                'description'       => '前景图片',
-            ])
-            ->addField('back_pic', [
-                'type'              => new NonNullType(new StringType()),
-                'description'       => '背景图片',
+                'description'       => '场景组名称',
             ])
             ->addField('state', [
-                'type'              => new SceneTemplateStateEnum(),
+                'type'              => new SceneGroupStateEnum(),
                 'description'       => '状态',
             ])
             ->addField('create_time', [

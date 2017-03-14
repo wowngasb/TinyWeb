@@ -12,7 +12,7 @@ namespace app\api\OrmDao\Vlss;
 
 use TinyWeb\Base\BaseOrm;
 
-class App  extends BaseOrm
+class VlssApp  extends BaseOrm
 {
     protected static $_table_name = 'vlss_app';
 

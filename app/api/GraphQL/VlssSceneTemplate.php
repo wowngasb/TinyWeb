@@ -9,18 +9,16 @@
 namespace app\api\GraphQL\Vlss;
 
 
-use app\api\GraphQL\Vlss\Enum\SceneItemStateEnum;
-use app\api\GraphQL\Vlss\Enum\SceneTypeEnum;
+use app\api\GraphQL\Vlss\Enum\SceneTemplateStateEnum;
 use Youshido\GraphQL\Config\Object\ObjectTypeConfig;
 use Youshido\GraphQL\Type\Object\AbstractObjectType;
 
 use Youshido\GraphQL\Type\NonNullType;
 use Youshido\GraphQL\Type\Scalar\DateTimeType;
 use Youshido\GraphQL\Type\Scalar\IdType;
-use Youshido\GraphQL\Type\Scalar\IntType;
 use Youshido\GraphQL\Type\Scalar\StringType;
 
-class SceneItem  extends AbstractObjectType
+class VlssSceneTemplate  extends AbstractObjectType
 {
 
     /**
@@ -33,28 +31,28 @@ class SceneItem  extends AbstractObjectType
                 'type'              => new NonNullType(new IdType()),
                 'description'       => '自增id',
             ])
-            ->addField('group_id', [
+            ->addField('vlss_id', [
                 'type'              => new NonNullType(new IdType()),
-                'description'       => '所属场景组id',
+                'description'       => '虚拟演播厅id',
             ])
-            ->addField('scene_name', [
+            ->addField('template_name', [
                 'type'              => new NonNullType(new StringType()),
-                'description'       => '场景名称',
+                'description'       => '模板名称',
             ])
-            ->addField('scene_config', [
+            ->addField('switch_config', [
                 'type'              => new NonNullType(new StringType()),
-                'description'       => '场景配置 格式为 json 字符串',
+                'description'       => '模版配置 格式为 json 字符串',
             ])
-            ->addField('scene_type', [
-                'type'              => new SceneTypeEnum(),
-                'description'       => '场景类型',
+            ->addField('front_pic', [
+                'type'              => new NonNullType(new StringType()),
+                'description'       => '前景图片',
             ])
-            ->addField('scene_sort', [
-                'type'              => new NonNullType(new IntType()),
-                'description'       => '场景叠加排序',
+            ->addField('back_pic', [
+                'type'              => new NonNullType(new StringType()),
+                'description'       => '背景图片',
             ])
             ->addField('state', [
-                'type'              => new SceneItemStateEnum(),
+                'type'              => new SceneTemplateStateEnum(),
                 'description'       => '状态',
             ])
             ->addField('create_time', [

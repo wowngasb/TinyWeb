@@ -26,7 +26,6 @@ class BasicUser extends AbstractObjectType
      */
     public function build($config)
     {
-
         $config
             ->addField('id', [
                 'type'              => new NonNullType(new IdType()),

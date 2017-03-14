@@ -9,17 +9,16 @@
 namespace app\api\GraphQL;
 
 
-use app\api\Conf\UserConf;
 use app\api\GraphQL\Basic\BasicUser as BasicUser;
 use app\api\GraphQL\Vlss\VlssApp as VlssApp;
-use app\api\OrmDao\Vlss\App as VlssAppDao;
+use app\api\OrmDao\Vlss\VlssApp as VlssAppDao;
 use Youshido\GraphQL\Config\Schema\SchemaConfig;
 use Youshido\GraphQL\Execution\ResolveInfo;
 use Youshido\GraphQL\Schema\AbstractSchema;
 use Youshido\GraphQL\Type\Scalar\IdType;
 use Youshido\GraphQL\Type\Scalar\StringType;
 
-class Schema extends AbstractSchema
+class GraphQLSchema extends AbstractSchema
 {
 
     public function build(SchemaConfig $config)

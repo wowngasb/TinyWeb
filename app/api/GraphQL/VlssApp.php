@@ -28,7 +28,7 @@ class VlssApp extends AbstractObjectType
     {
         parent::__construct($config);
         if(empty(static::$_orm)){
-            static::$_orm = new \app\api\OrmDao\Vlss\App();
+            static::$_orm = new \app\api\OrmDao\Vlss\VlssApp();
         }
     }
 

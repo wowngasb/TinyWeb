@@ -8,17 +8,18 @@
 
 namespace app\api\GraphQL\Vlss;
 
-
-use app\api\GraphQL\Vlss\Enum\SceneGroupStateEnum;
+use app\api\GraphQL\Vlss\Enum\SceneItemStateEnum;
+use app\api\GraphQL\Vlss\Enum\SceneTypeEnum;
 use Youshido\GraphQL\Config\Object\ObjectTypeConfig;
 use Youshido\GraphQL\Type\Object\AbstractObjectType;
 
 use Youshido\GraphQL\Type\NonNullType;
 use Youshido\GraphQL\Type\Scalar\DateTimeType;
 use Youshido\GraphQL\Type\Scalar\IdType;
+use Youshido\GraphQL\Type\Scalar\IntType;
 use Youshido\GraphQL\Type\Scalar\StringType;
 
-class SceneGroup  extends AbstractObjectType
+class VlssSceneItem  extends AbstractObjectType
 {
 
     /**
@@ -31,16 +32,28 @@ class SceneGroup  extends AbstractObjectType
                 'type'              => new NonNullType(new IdType()),
                 'description'       => '自增id',
             ])
-            ->addField('vlss_id', [
+            ->addField('group_id', [
                 'type'              => new NonNullType(new IdType()),
-                'description'       => '虚拟演播厅id',
+                'description'       => '所属场景组id',
             ])
-            ->addField('group_name', [
+            ->addField('scene_name', [
                 'type'              => new NonNullType(new StringType()),
-                'description'       => '场景组名称',
+                'description'       => '场景名称',
+            ])
+            ->addField('scene_config', [
+                'type'              => new NonNullType(new StringType()),
+                'description'       => '场景配置 格式为 json 字符串',
+            ])
+            ->addField('scene_type', [
+                'type'              => new SceneTypeEnum(),
+                'description'       => '场景类型',
+            ])
+            ->addField('scene_sort', [
+                'type'              => new NonNullType(new IntType()),
+                'description'       => '场景叠加排序',
             ])
             ->addField('state', [
-                'type'              => new SceneGroupStateEnum(),
+                'type'              => new SceneItemStateEnum(),
                 'description'       => '状态',
             ])
             ->addField('create_time', [
