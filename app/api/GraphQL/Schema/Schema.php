@@ -6,7 +6,7 @@
  * Time: 13:19
  */
 
-namespace app\api\GraphQL;
+namespace app\api\GraphQL\Schema;
 
 
 use app\api\GraphQL\Basic\BasicUser as BasicUser;
@@ -18,7 +18,7 @@ use Youshido\GraphQL\Schema\AbstractSchema;
 use Youshido\GraphQL\Type\Scalar\IdType;
 use Youshido\GraphQL\Type\Scalar\StringType;
 
-class GraphQLSchema extends AbstractSchema
+class Schema extends AbstractSchema
 {
 
     public function build(SchemaConfig $config)

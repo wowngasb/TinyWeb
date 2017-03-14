@@ -104,7 +104,7 @@ trait CacheTrait
             return self::$_cache_dict[$id];
         }
         $data = self::_cacheDataByRedis(__METHOD__, "id[{$id}]", function()use($id){
-            $tmp = static::getOrm()->getItem($id);
+            $tmp = static::getItem($id);
             return self::_fixData($tmp);
         }, function($data){
             return !empty($data);
@@ -122,7 +122,7 @@ trait CacheTrait
             return [];
         }
         if(!empty($data)){
-            static::getOrm()->setItem($id, $data);
+            static::getItem($id, $data);
         }
         return self::getDataById($id, 0);
     }
