@@ -2,9 +2,9 @@
 <head>
     <meta charset="UTF-8">
 <title><?= $title ?>-1234</title>
-<?=\TinyWeb\Traits\Fis::framework('static/js/mod.js'); ?>
-<?=\TinyWeb\Traits\Fis::placeholder('css');?>
-<?=\TinyWeb\Traits\Fis::import('static/js/jquery-1.8.1.min.js'); ?>
+<?=\TinyWeb\Plugin\Fis::framework('static/js/mod.js'); ?>
+<?=\TinyWeb\Plugin\Fis::placeholder('css');?>
+<?=\TinyWeb\Plugin\Fis::import('static/js/jquery-1.8.1.min.js'); ?>
 </head>
 <body>
 <h1><?= $beforeAction ?>-[AUTO]</h1>
@@ -23,7 +23,7 @@
     <button type="button" id="btn-test">测试</button>
 </form>
 </body>
-<?=TinyWeb\Traits\Fis::scriptStart()?>
+<?=TinyWeb\Plugin\Fis::scriptStart()?>
 <script type="text/javascript">
 $(function(){
     $("#btn-test").click(function(){
@@ -39,6 +39,6 @@ $(function(){
     });
 });
 </script>
-<?=\TinyWeb\Traits\Fis::scriptEnd()?>
-<?=\TinyWeb\Traits\Fis::placeholder('js')?>
+<?=\TinyWeb\Plugin\Fis::scriptEnd()?>
+<?=\TinyWeb\Plugin\Fis::placeholder('js')?>
 </html>

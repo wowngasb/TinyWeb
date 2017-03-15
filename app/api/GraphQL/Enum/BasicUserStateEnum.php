@@ -6,12 +6,12 @@
  * Time: 15:45
  */
 
-namespace app\api\GraphQL\Basic\Enum;
+namespace app\api\GraphQL\Enum;
 
 
 use Youshido\GraphQL\Type\Enum\AbstractEnumType;
 
-class UserStateEnum extends AbstractEnumType
+class BasicUserStateEnum extends AbstractEnumType
 {
 
     /**

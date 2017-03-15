@@ -6,12 +6,12 @@
  * Time: 13:40
  */
 
-namespace app\api\GraphQL\Vlss\Enum;
+namespace app\api\GraphQL\Enum;
 
 
 use Youshido\GraphQL\Type\Enum\AbstractEnumType;
 
-class SceneGroupStateEnum extends AbstractEnumType
+class VlssAppStateEnum extends AbstractEnumType
 {
 
     /**
@@ -21,12 +21,13 @@ class SceneGroupStateEnum extends AbstractEnumType
     {
         return [
             ['value' => 1, 'name' => 'NORMAL'],
+            ['value' => 2, 'name' => 'FROZEN'],
             ['value' => 9, 'name' => 'DELETE'],
         ];
     }
 
     public function getDescription()
     {
-        return '虚拟演播厅场景组状态';
+        return '虚拟演播厅状态';
     }
 }

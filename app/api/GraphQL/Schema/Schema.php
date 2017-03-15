@@ -9,16 +9,15 @@
 namespace app\api\GraphQL\Schema;
 
 
-use app\api\GraphQL\Basic\BasicUser as BasicUser;
-use app\api\GraphQL\Vlss\VlssApp as VlssApp;
-use app\api\OrmDao\Vlss\VlssApp as VlssAppDao;
+use app\api\GraphQL\BasicUser;
+use app\api\GraphQL\VlssApp;
+use TinyWeb\Base\BaseGraphQLSchema;
 use Youshido\GraphQL\Config\Schema\SchemaConfig;
 use Youshido\GraphQL\Execution\ResolveInfo;
-use Youshido\GraphQL\Schema\AbstractSchema;
 use Youshido\GraphQL\Type\Scalar\IdType;
 use Youshido\GraphQL\Type\Scalar\StringType;
 
-class Schema extends AbstractSchema
+class Schema extends BaseGraphQLSchema
 {
 
     public function build(SchemaConfig $config)
@@ -45,14 +44,17 @@ class Schema extends AbstractSchema
                     'id'   => new IdType(),
                 ],
                 'resolve' => function ($value, array $args, ResolveInfo $info) {
-                    return UserConf::getDataById($args['id']);
+                    return BasicUser::getDataById($args['id']);
                 }
             ],
             'vlssApp'           => [
                 'type'    => new VlssApp(),
                 'description'       => '虚拟演播厅信息',
+                'args'    => [
+                    'id'   => new IdType(),
+                ],
                 'resolve' => function ($value, array $args, ResolveInfo $info) {
-                    return VlssAppDao::getItem($args['id']);
+                    return VlssApp::getDataById($args['id']);
                 }
             ],
         ]);

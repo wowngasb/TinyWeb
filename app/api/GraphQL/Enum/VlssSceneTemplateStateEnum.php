@@ -6,12 +6,12 @@
  * Time: 14:13
  */
 
-namespace app\api\GraphQL\Vlss\Enum;
+namespace app\api\GraphQL\Enum;
 
 
 use Youshido\GraphQL\Type\Enum\AbstractEnumType;
 
-class SceneTemplateStateEnum extends AbstractEnumType
+class VlssSceneTemplateStateEnum extends AbstractEnumType
 {
 
     /**

@@ -19,7 +19,7 @@ class GraphQL extends BaseApi
 
     public function exec($query = '{hello}', array $variables = null)
     {
-        $schema = new Schema();
+        $schema = new Schema($this);  //使用 this 作为上下文 传入 Schema
         $processor = new Processor($schema);
         Bootstrap::_D($query, '$query');
         $result = $processor->processPayload($query, $variables)->getResponseData();

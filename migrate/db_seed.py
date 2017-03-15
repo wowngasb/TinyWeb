@@ -58,9 +58,24 @@ db.session.commit()
 template_list = [
     {
         "switch_config":[
-            {"w":"208","h":"100","x":"107","y":"202","checked":"1","v":"100","z":"3"},
-            {"w":"262","h":"115","x":"236","y":"115","checked":"1","v":"0","z":"2"},
-            {"w":"100","h":"100","x":"0","y":"0","checked":"0","v":"0","z":"1"}
+            {
+                "name": "btn1",
+                "enable": True,
+                "param": [
+                    {"w":208,"h":100,"x":107,"y":202,"checked":True,"v":100,"z":3},
+                    {"w":262,"h":115,"x":236,"y":115,"checked":True,"v":0,"z":2},
+                    {"w":100,"h":100,"x":0,"y":0,"checked":False,"v":0,"z":1}
+                ],
+            },
+            {
+                "name": "btn2",
+                "enable": False,
+                "param": [
+                    {"w":208,"h":100,"x":107,"y":202,"checked":True,"v":100,"z":3},
+                    {"w":262,"h":115,"x":236,"y":115,"checked":True,"v":0,"z":2},
+                    {"w":100,"h":100,"x":0,"y":0,"checked":False,"v":0,"z":1}
+                ],
+            }
         ],
         "front_pic":"http://test25.aodianyun.com/dist/studio/static/desk01.png",
         "back_pic":"http://test25.aodianyun.com/dist/studio/static/bg01.jpg",
@@ -68,9 +83,24 @@ template_list = [
     },
     {
         "switch_config":[
-            {"w":"214","h":"169","x":"324","y":"120","checked":"1","v":"100","z":"3"},
-            {"w":"210","h":"131","x":"263","y":"103","checked":"1","v":"0","z":"2"},
-            {"w":"194","h":"118","x":"35","y":"29","checked":"1","v":"0","z":"1"}
+            {
+                "name": "btn1",
+                "enable": True,
+                "param": [
+                    {"w":208,"h":100,"x":107,"y":202,"checked":True,"v":100,"z":3},
+                    {"w":262,"h":115,"x":236,"y":115,"checked":True,"v":0,"z":2},
+                    {"w":100,"h":100,"x":0,"y":0,"checked":False,"v":0,"z":1}
+                ],
+            },
+            {
+                "name": "btn2",
+                "enable": False,
+                "param": [
+                    {"w":208,"h":100,"x":107,"y":202,"checked":True,"v":100,"z":3},
+                    {"w":262,"h":115,"x":236,"y":115,"checked":True,"v":0,"z":2},
+                    {"w":100,"h":100,"x":0,"y":0,"checked":False,"v":0,"z":1}
+                ],
+            }
         ],
         "front_pic":"http://test25.aodianyun.com/dist/studio/static/desk02.png",
         "back_pic":"http://test25.aodianyun.com/dist/studio/static/bg02.jpg",
@@ -78,9 +108,24 @@ template_list = [
     },
     {
         "switch_config":[
-            {"w":"320","h":"180","x":"267","y":"118","checked":"1","v":"100","z":"3"},
-            {"w":"210","h":"133","x":"34","y":"58","checked":"1","v":"0","z":"2"},
-            {"w":"100","h":"100","x":"0","y":"0","checked":"0","v":"0","z":"1"}
+            {
+                "name": "btn1",
+                "enable": True,
+                "param": [
+                    {"w":208,"h":100,"x":107,"y":202,"checked":True,"v":100,"z":3},
+                    {"w":262,"h":115,"x":236,"y":115,"checked":True,"v":0,"z":2},
+                    {"w":100,"h":100,"x":0,"y":0,"checked":False,"v":0,"z":1}
+                ],
+            },
+            {
+                "name": "btn2",
+                "enable": False,
+                "param": [
+                    {"w":208,"h":100,"x":107,"y":202,"checked":True,"v":100,"z":3},
+                    {"w":262,"h":115,"x":236,"y":115,"checked":True,"v":0,"z":2},
+                    {"w":100,"h":100,"x":0,"y":0,"checked":False,"v":0,"z":1}
+                ],
+            }
         ],
         "front_pic":"http://test25.aodianyun.com/dist/studio/static/desk03.png",
         "back_pic":"http://test25.aodianyun.com/dist/studio/static/bg03.jpg",
@@ -94,7 +139,7 @@ for vlss in vlss_list:
         continue
     [db.session.add(   #为每个 vlss_app 写入 模版信息
             models.VlssSceneTemplate(
-                vlss_id=tmp.id,
+                app_id=tmp.id,
                 template_name=template['template_name'],
                 front_pic=template['front_pic'],
                 back_pic=template['back_pic'],
@@ -153,36 +198,6 @@ group_list = [
                         "scrollTimes":"0"
                     }
                 }
-            },
-            {
-                "scene_name":"台标",
-                "scene_type":"hsms-tvlogo",
-                "scene_sort":1,
-                "scene_config":{
-                    "position":"1",
-                    "url":"http://1436.long-vod.cdn.aodianyun.com/mfs/1436/wis/0x0/4a131ca49fc6362af23618f085f4d62b.png"
-                }
-            },
-            {
-                "scene_name":"记分牌",
-                "scene_type":"hsms-scoreboard",
-                "scene_sort":1,
-                "scene_config":{
-                    "backgound":"http://test25.aodianyun.com/aae/hsms/assets/img/hsms-scoreboard/scoreboard.png",
-                    "homeNamedText":{
-                        "text":"炎帝"
-                    },"awayNameText":{
-                        "text":"黄帝"
-                    },
-                    "scoreText":{
-                        "text":"3：0"
-                    },
-                    "clockText":{
-                        "mtext":"10",
-                        "stext":"00",
-                        "control":"playTime"
-                    }
-                }
             }
         ]
     },
@@ -205,7 +220,7 @@ for vlss in vlss_list:
         if not models.VlssSceneGroup.query.filter_by(group_name=group['group_name']).first():
             db.session.add(   #为每个 vlss_app 写入 场景组信息
                 models.VlssSceneGroup(
-                    vlss_id=tmp.id,
+                    app_id=tmp.id,
                     group_name=group['group_name'],
                     create_time=datetime.datetime.now(),
                     state=1

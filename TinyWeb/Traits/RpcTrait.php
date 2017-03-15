@@ -2,8 +2,6 @@
 
 namespace TinyWeb\Traits;
 
-
-use TinyWeb\Application;
 use TinyWeb\Helper\ApiHelper;
 
 trait RpcTrait
@@ -73,12 +71,10 @@ trait RpcTrait
             self::$_yar_ret_list[] = $retval;
         };
         \Yar_Concurrent_Client::reset();
-        $session_id = session_id();
-        $session_data = Application::encrypt(json_encode($_SESSION), 30);
-        $yar_api_host = YAR_API_HOST . self::$_yar_hub_class . "/?_YAR_SESSION_ID={$session_id}&_YAR_SESSION_DATA={$session_data}";
+        $yar_api_host = "";
         foreach ($params_arr as $key => $val) {
             $args = ['class_name' => $class_name, 'method_name' => $method_name, 'params' => $val, 'init_params' => $init_params, 'uptime' => microtime(true),];  //参数只有30秒有效期
-            \Yar_Concurrent_Client::call($yar_api_host, self::$_yar_hub_method, [Application::encrypt(json_encode($args), 30),], $yar_callback);
+            \Yar_Concurrent_Client::call($yar_api_host, self::$_yar_hub_method, [json_encode($args),], $yar_callback);
         }
         \Yar_Concurrent_Client::loop(); //send
         return self::$_yar_ret_list;
@@ -89,7 +85,6 @@ trait RpcTrait
         if (empty($_params)) {
             return [];
         }
-        $params = Application::decrypt($_params);
         if (empty($params)) {
             return [];
         }

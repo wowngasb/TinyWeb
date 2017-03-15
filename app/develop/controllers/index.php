@@ -32,7 +32,7 @@ class index extends Controller
             $err_msg = empty($develop_key) ? 'Input develop key.' : 'Auth failed.';
             $html_str = <<<EOT
 <form action="" method="POST">
-    Auth：<input type="text" value="{$develop_key}" placeholder="develop_key" name="develop_key">
+    Auth:<input type="text" value="{$develop_key}" placeholder="develop_key" name="develop_key">
     <button type="submit">Login</button>
 </form>
 <span>{$err_msg}</span>

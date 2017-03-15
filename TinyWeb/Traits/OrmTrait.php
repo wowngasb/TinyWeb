@@ -14,37 +14,217 @@ use TinyWeb\Base\BaseBootstrap;
 use TinyWeb\Exception\OrmStartUpError;
 use TinyWeb\Helper\DbHelper;
 
+/**
+ * Class BaseOrmModel
+ * array $where  检索条件数组 格式为 dict 每个元素都表示一个检索条件  条件之间为 and 关系
+ * ① [  `filed` => `value`, ]   例如 ['votes' => 100, ]
+ *    key不为数值，value不是数组   表示 某个字段为某值的检索 对应 ->where('votes', 100)
+ * ② [  `filed` => [``, ``], ]   例如 ['votes' => ['>', 100], ]
+ *    key不为数值的元素 表示 某个字段为某值的检索 对应  ->where('votes', '>', 100)
+ * ③ [ [``, ``], ]
+ *    key为数值的元素 表示 使用某种检索
+ * 例如 [   ['whereBetween', 'votes', [1, 100]],  ]   对应  ->whereBetween('votes', [1, 100])
+ * 例如 [   ['whereIn', 'id', [1, 2, 3]],  ]   对应  ->whereIn('id', [1, 2, 3])
+ * 例如 [   ['whereNull', 'updated_at'],  ]   对应  ->whereNull('updated_at')
+ * @package TinyWeb\Traits
+ */
+
 trait OrmTrait
 {
 
-    protected static $_table_name = '';
-    protected static $_primary_key = 'id';
-    protected static $_max_select_item_counts = 10000;  //最多获取1w条记录 防止数据库拉取条目过多
+    use CacheTrait;
 
     private static $_db = null;
+    private static $_cache_dict = [];
+
+    ####################################
+    ############ 获取配置 ##############
+    ####################################
+
+    /**
+     * 使用这个特性的子类必须 实现这个方法 返回特定格式的数组 表示数据表的配置
+     * @return array
+     */
+    protected static function getOrmConfig()
+    {
+        return [
+            'table_name' => '',     //数据表名
+            'primary_key' => '',   //数据表主键
+            'max_select' => 5000,  //最多获取 5000 条记录 防止数据库拉取条目过多
+            'db_name' => '',       //数据库名
+            'cache_time' => 0,     //数据缓存时间
+        ];
+    }
+
+    ####################################
+    ############ 可重写方法 #############
+    ####################################
+
+    /**
+     * 根据主键获取数据 自动使用缓存
+     * @param $id
+     * @param null $timeCache
+     * @return array|null
+     */
+    public static function getDataById($id, $timeCache = null)
+    {
+
+        if (is_null($timeCache)) {
+            $timeCache = static::getOrmConfig()['cache_time'];
+        }
+        $id = intval($id);
+        if ($id <= 0) {
+            return [];
+        }
+        if (isset(self::$_cache_dict[$id])) {
+            return self::$_cache_dict[$id];
+        }
+        $db_name = static::getOrmConfig()['db_name'];
+        $table_name = static::getOrmConfig()['table_name'];
+        $data = static::_cacheDataByRedis("{$db_name}:{$table_name}", "id:{$id}", function () use ($id) {
+            $tmp = static::getItem($id);
+            return $tmp;
+        }, function ($data) {
+            return !empty($data);
+        }, $timeCache, false, 'DbCache');
+
+        if (!empty($data)) {
+            self::$_cache_dict[$id] = $data;
+        }
+        return $data;
+    }
+
+    /**
+     * 根据主键更新数据 自动更新缓存
+     * @param $id
+     * @param array $data
+     * @return array 返回更新后的数据
+     */
+    public static function setDataById($id, array $data)
+    {
+        $id = intval($id);
+        if ($id <= 0) {
+            return [];
+        }
+        if (!empty($data)) {
+            static::getItem($id, $data);
+        }
+        return self::getDataById($id, 0);
+    }
+
+    /**
+     * 添加新数据 自动更新缓存
+     * @param array $data
+     * @return array
+     */
+    public static function newDataItem(array $data)
+    {
+        if (!empty($data)) {
+            $id = static::newItem($data);
+            return self::getDataById($id, 0);
+        } else {
+            return [];
+        }
+    }
+
+    /**
+     * @param $val
+     * @return mixed
+     */
+    protected static function _fixItem($val)
+    {
+        return $val;
+    }
+
+    ####################################
+    ############ 辅助函数 ##############
+    ####################################
+
+    /**
+     * @param $name
+     * @param $arguments
+     * @return string
+     */
+    public static function __callStatic($name, $arguments)
+    {
+        return static::getFiledById($name, $arguments[0], isset($arguments[1]) ? $arguments[1] : null);
+    }
+
+    /**
+     * 根据主键获取某个字段的值
+     * @param string $name
+     * @param int $id
+     * @param mixed $default
+     * @return mixed
+     */
+    public static function getFiledById($name, $id, $default = null)
+    {
+        $tmp = self::getDataById($id);
+        return isset($tmp[$name]) ? $tmp[$name] : $default;
+    }
+
+    /**
+     * 获取一个数组的指定键值 未设置则使用 默认值
+     * @param array $val
+     * @param string $key
+     * @param mixed $default 默认值 默认为 null
+     * @return mixed
+     */
+    protected static function _v(array $val, $key, $default = null)
+    {
+        return isset($val[$key]) ? $val[$key] : $default;
+    }
+
+    /**
+     * 根据魔术常量获取获取 类名 并转换为 小写字母加下划线格式 的 数据表名
+     * @param string $str
+     * @return string
+     */
+    protected static function _class2table($str)
+    {
+        $idx = strripos($str, '::');
+        $str = $idx > 0 ? substr($str, 0, $idx) : $str;
+        $idx = strripos($str, '\\');
+        $str = $idx > 0 ? substr($str, $idx + 1) : $str;
+        return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
+    }
+
+    /**
+     * 根据魔术常量获取获取 函数名 并转换为 小写字母加下划线格式 的 字段名
+     * @param string $str
+     * @return string
+     */
+    protected static function _method2field($str)
+    {
+        $idx = strripos($str, '::');
+        $str = $idx > 0 ? substr($str, $idx + 2) : $str;
+        return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
+    }
 
     /**
      * @return \Illuminate\Database\Connection
      * @throws OrmStartUpError
      */
-    public static function intiDb()
+    private static function _getDb()
     {
-        if (empty(static::$_table_name) || empty(static::$_primary_key)) {
-            throw new OrmStartUpError('Orm:' . __CLASS__ . ' intiDb with empty tablename or primary_key');
+        if (!empty(self::$_db)) {
+            return self::$_db;
         }
-        if (is_null(static::$_db)) {
-            static::$_db = DbHelper::initDb()->getConnection(Application::instance()->getEnv('ENV_MYSQL_DB'));
+        $config = static::getOrmConfig();
+        if (empty($config['table_name']) || empty($config['primary_key']) || empty($config['max_select']) || empty($config['db_name'])) {
+            throw new OrmStartUpError('Orm:' . __CLASS__ . 'with error config');
         }
-        return static::$_db;
+        self::$_db = DbHelper::initDb()->getConnection($config['db_name']);
+        return self::$_db;
     }
 
-    protected static function debugSql($sql, $param, $tag = 'sql')
+    protected static function debugSql($time, $sql, $param, $tag = 'sql')
     {
-        $tag = str_replace(__CLASS__, 'SQL', $tag);
-        BaseBootstrap::_D(['sql' => static::showQuery($sql, $param)], $tag);
+        $tag = str_replace(__TRAIT__, 'SQL', $tag);
+        BaseBootstrap::_D(['sql' => static::showQuery($sql, $param), 'use'=>round($time * 1000, 2) . 'ms'], $tag);
     }
 
-    final protected static function showQuery($query, $params)
+    protected static function showQuery($query, $params)
     {
         $keys = [];
         $values = [];
@@ -66,19 +246,9 @@ trait OrmTrait
         return $query;
     }
 
-    /**
-     * @param $val
-     * @return mixed
-     */
-    protected static function _fixItem($val)
-    {
-        return $val;
-    }
-
-    private static function _v($val, $key, $default = null)
-    {
-        return isset($val[$key]) ? $val[$key] : $default;
-    }
+    ####################################
+    ########### 条目操作函数 ############
+    ####################################
 
     /**
      * @param array $where 检索条件数组 具体格式参见文档
@@ -86,8 +256,8 @@ trait OrmTrait
      */
     protected static function tableItem(array $where = [])
     {
-
-        $table = static::intiDb()->table(static::$_table_name);
+        $table_name = static::getOrmConfig()['table_name'];
+        $table = static::_getDb()->table($table_name);
         $query_list = [];
         foreach ($where as $key => $item) {
             if (is_integer($key) && is_array($item)) {
@@ -124,9 +294,10 @@ trait OrmTrait
      */
     public static function countItem(array $where = [], array $columns = ['*'])
     {
+        $start_time = microtime(true);
         $table = static::tableItem($where);
         $count = $table->count($columns);
-        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
         return $count;
     }
 
@@ -141,26 +312,29 @@ trait OrmTrait
      */
     public static function selectItem($start = 0, $limit = 0, array $sort_option = [], array $where = [], array $columns = ['*'])
     {
+        $start_time = microtime(true);
+        $max_select = static::getOrmConfig()['max_select'];
         $table = static::tableItem($where);
         $start = $start <= 0 ? 0 : $start;
-        $limit = $limit > static::$_max_select_item_counts ? static::$_max_select_item_counts : $limit;
+        $limit = $limit > $max_select ? $max_select : $limit;
         if ($start > 0) {
             $table->skip($start);
         }
         if ($limit > 0) {
             $table->take($limit);
         } else {
-            $table->take(static::$_max_select_item_counts);
+            $table->take($max_select);
         }
         if (!empty($sort_option['field']) && !empty($sort_option['direction'])) {
             $table->orderBy($sort_option['field'], $sort_option['direction']);
         }
         $data = $table->get($columns);
-        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
 
         $rst = [];
         foreach ($data as $key => $val) {
-            $rst[$key] = static::_fixItem((array)$val);
+            $val = (array)$val;
+            $rst[$key] = static::_fixItem($val);
         }
         return $rst;
     }
@@ -173,15 +347,19 @@ trait OrmTrait
      */
     public static function dictItem(array $where = [], array $columns = ['*'])
     {
+        $start_time = microtime(true);
+        $max_select = static::getOrmConfig()['max_select'];
+        $primary_key = static::getOrmConfig()['primary_key'];
         $table = static::tableItem($where);
-        $table->take(static::$_max_select_item_counts);
+        $table->take($max_select);
         $data = $table->get($columns);
-        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
 
         $rst = [];
         foreach ($data as $key => $val) {
-            $id = $val[static::$_primary_key];
-            $rst[$id] = static::_fixItem((array)$val);
+            $val = (array)$val;
+            $id = $val[$primary_key];
+            $rst[$id] = static::_fixItem($val);
         }
         return $rst;
     }
@@ -195,7 +373,8 @@ trait OrmTrait
      */
     public static function getItem($value, $filed = null, array $columns = ['*'])
     {
-        $filed = $filed ?: static::$_primary_key;
+        $primary_key = static::getOrmConfig()['primary_key'];
+        $filed = $filed ?: $primary_key;
         return static::firstItem([strtolower($filed) => $value], $columns);
     }
 
@@ -207,9 +386,10 @@ trait OrmTrait
      */
     public static function firstItem(array $where, array $columns = ['*'])
     {
+        $start_time = microtime(true);
         $table = static::tableItem($where);
         $item = $table->first($columns);
-        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
         return static::_fixItem((array)$item);
     }
 
@@ -220,7 +400,9 @@ trait OrmTrait
      */
     public static function newItem(array $data)
     {
-        unset($data[static::$_primary_key]);
+        $start_time = microtime(true);
+        $primary_key = static::getOrmConfig()['primary_key'];
+        unset($data[$primary_key]);
         $time_str = date('Y-m-d H:i:s');
         $default = [
             'create_time' => $time_str,
@@ -232,8 +414,8 @@ trait OrmTrait
             }
         }
         $table = static::tableItem();
-        $id = $table->insertGetId($data, static::$_primary_key);
-        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        $id = $table->insertGetId($data, $primary_key);
+        static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
         return $id;
     }
 
@@ -245,10 +427,12 @@ trait OrmTrait
      */
     public static function setItem($id, array $data)
     {
-        unset($data['create_time'], $data['uptime'], $data[static::$_primary_key]);
-        $table = static::tableItem()->where(static::$_primary_key, $id);
+        $start_time = microtime(true);
+        $primary_key = static::getOrmConfig()['primary_key'];
+        unset($data['create_time'], $data['uptime'], $data[$primary_key]);
+        $table = static::tableItem()->where($primary_key, $id);
         $update = $table->update($data);
-        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
         return $update;
     }
 
@@ -259,25 +443,45 @@ trait OrmTrait
      */
     public static function delItem($id)
     {
-        $table = static::tableItem()->where(static::$_primary_key, $id);
+        $start_time = microtime(true);
+        $primary_key = static::getOrmConfig()['primary_key'];
+        $table = static::tableItem()->where($primary_key, $id);
         $delete = $table->delete();
-        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
         return $delete;
     }
 
+    /**
+     * 根据主键增加某字段的值
+     * @param int $id 主键id
+     * @param string $filed 需要增加的字段
+     * @param int $value 需要改变的值 默认为 1
+     * @return int  操作影响的行数
+     */
     public function incItem($id, $filed, $value = 1)
     {
-        $table = static::tableItem()->where(static::$_primary_key, $id);
+        $start_time = microtime(true);
+        $primary_key = static::getOrmConfig()['primary_key'];
+        $table = static::tableItem()->where($primary_key, $id);
         $increment = $table->increment($filed, $value);
-        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
         return $increment;
     }
 
+    /**
+     * 根据主键减少某字段的值
+     * @param int $id 主键id
+     * @param string $filed 需要减少的字段
+     * @param int $value 需要改变的值 默认为 1
+     * @return int  操作影响的行数
+     */
     public function decItem($id, $filed, $value = 1)
     {
-        $table = static::tableItem()->where(static::$_primary_key, $id);
+        $start_time = microtime(true);
+        $primary_key = static::getOrmConfig()['primary_key'];
+        $table = static::tableItem()->where($primary_key, $id);
         $decrement = $table->decrement($filed, $value);
-        static::debugSql($table->toSql(), $table->getBindings(), __METHOD__);
+        static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
         return $decrement;
     }
 
@@ -289,22 +493,14 @@ trait OrmTrait
      */
     public static function upsertItem(array $where, array $data)
     {
+        $primary_key = static::getOrmConfig()['primary_key'];
         $tmp = static::firstItem($where);
         if (empty($tmp)) {
             return static::newItem($data);
         } else {
-            $id = $tmp[static::$_primary_key];
+            $id = $tmp[$primary_key];
             static::setItem($id, $data);
             return $id;
         }
-    }
-
-    /**
-     * 获取分页获取数据最大条目数
-     * @return int
-     */
-    public static function getMaxSelectItemCounts()
-    {
-        return static::$_max_select_item_counts;
     }
 }

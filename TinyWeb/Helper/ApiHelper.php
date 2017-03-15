@@ -2,9 +2,7 @@
 
 namespace TinyWeb\Helper;
 
-use TinyWeb\Exception\ApiParamsError;
 use TinyWeb\Traits\LogTrait;
-use TinyWeb\Request;
 
 class ApiHelper
 {
@@ -62,22 +60,6 @@ class ApiHelper
         }
         $rc = new \ReflectionClass($class_name);
         return $rc->hasMethod($method_name);
-    }
-
-    private static function api_log($tag, $class_name, $method, $param, $rst)
-    {
-        $class = self::_getClassName($class_name);
-        $log = LogHelper::create("rpc_{$class}");
-        $rst_str = json_encode($rst);
-        $param_str = json_encode($param);
-        $info_msg = "{$method}@args:{$param_str}, rst:{$rst_str}";
-        if ( (isset($rst['errno']) && $rst['errno'] == 0) || !isset($rst['error']) ) {
-            $tag = !empty($tag) ? $tag : 'DEBUG';
-            $log->writeLog($info_msg, $tag);
-        } else {
-            $tag = !empty($tag) ? $tag : 'ERROR';
-            $log->writeLog($info_msg, $tag);
-        }
     }
 
     public static function model2js($cls, $method_list, $dev_debug=true)
