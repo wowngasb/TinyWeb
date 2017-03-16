@@ -60,7 +60,6 @@ template_list = [
         "switch_config":[
             {
                 "name": "btn1",
-                "enable": True,
                 "param": [
                     {"w":208,"h":100,"x":107,"y":202,"checked":True,"v":100,"z":3},
                     {"w":262,"h":115,"x":236,"y":115,"checked":True,"v":0,"z":2},
@@ -69,7 +68,6 @@ template_list = [
             },
             {
                 "name": "btn2",
-                "enable": False,
                 "param": [
                     {"w":208,"h":100,"x":107,"y":202,"checked":True,"v":100,"z":3},
                     {"w":262,"h":115,"x":236,"y":115,"checked":True,"v":0,"z":2},
@@ -85,7 +83,6 @@ template_list = [
         "switch_config":[
             {
                 "name": "btn1",
-                "enable": True,
                 "param": [
                     {"w":208,"h":100,"x":107,"y":202,"checked":True,"v":100,"z":3},
                     {"w":262,"h":115,"x":236,"y":115,"checked":True,"v":0,"z":2},
@@ -94,7 +91,6 @@ template_list = [
             },
             {
                 "name": "btn2",
-                "enable": False,
                 "param": [
                     {"w":208,"h":100,"x":107,"y":202,"checked":True,"v":100,"z":3},
                     {"w":262,"h":115,"x":236,"y":115,"checked":True,"v":0,"z":2},
@@ -110,7 +106,6 @@ template_list = [
         "switch_config":[
             {
                 "name": "btn1",
-                "enable": True,
                 "param": [
                     {"w":208,"h":100,"x":107,"y":202,"checked":True,"v":100,"z":3},
                     {"w":262,"h":115,"x":236,"y":115,"checked":True,"v":0,"z":2},
@@ -119,7 +114,6 @@ template_list = [
             },
             {
                 "name": "btn2",
-                "enable": False,
                 "param": [
                     {"w":208,"h":100,"x":107,"y":202,"checked":True,"v":100,"z":3},
                     {"w":262,"h":115,"x":236,"y":115,"checked":True,"v":0,"z":2},
