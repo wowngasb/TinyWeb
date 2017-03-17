@@ -21,7 +21,7 @@ class GraphQL extends BaseApi
     {
         $schema = new Schema($this);  //使用 this 作为上下文 传入 Schema
         $processor = new Processor($schema);
-        Bootstrap::_D($query, '$query');
+        Bootstrap::_D($query, 'GraphQL::exec');
         $result = $processor->processPayload($query, $variables)->getResponseData();
 
         return $result;

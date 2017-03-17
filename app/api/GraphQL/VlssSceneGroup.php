@@ -23,7 +23,7 @@ use Youshido\GraphQL\Type\Scalar\DateTimeType;
 use Youshido\GraphQL\Type\Scalar\IdType;
 use Youshido\GraphQL\Type\Scalar\StringType;
 
-class VlssSceneGroup  extends AbstractObjectType
+class VlssSceneGroup extends AbstractObjectType
 {
 
     use OrmTrait;
@@ -35,38 +35,40 @@ class VlssSceneGroup  extends AbstractObjectType
     {
         $config
             ->addField('id', [
-                'type'              => new NonNullType(new IdType()),
-                'description'       => '自增id',
+                'type' => new NonNullType(new IdType()),
+                'description' => '自增id',
             ])
             ->addField('vlss_id', [
-                'type'              => new NonNullType(new IdType()),
-                'description'       => '虚拟演播厅id',
+                'type' => new NonNullType(new IdType()),
+                'description' => '虚拟演播厅id',
             ])
             ->addField('group_name', [
-                'type'              => new NonNullType(new StringType()),
-                'description'       => '场景组名称',
+                'type' => new NonNullType(new StringType()),
+                'description' => '场景组名称',
             ])
             ->addField('items', [
                 'type' => new ListType(new VlssSceneItem()),
-                'description'       => '场景元素',
-                'args'    => [
-                    'state'   => new ListType(new VlssSceneItemStateEnum()),
+                'description' => '场景元素',
+                'args' => [
+                    'state' => new ListType(new VlssSceneItemStateEnum()),
                 ],
                 'resolve' => function ($value, array $args, ResolveInfo $info) {
-                    return array_values(VlssSceneItem::dictItem(['group_id'=>$value['id'], ['whereIn', 'state', $args['state']], ]));
+                    $tmp = VlssSceneItem::dictDataWithGroupIdState($value['id'], $args['state']);
+                    self::debug("id:{$value['id']},state:" . json_encode($args['state']) . ",tmp:" . json_encode($tmp), __METHOD__, __CLASS__, __LINE__);
+                    return array_values($tmp);
                 }
             ])
             ->addField('state', [
-                'type'              => new VlssSceneGroupStateEnum(),
-                'description'       => '状态',
+                'type' => new VlssSceneGroupStateEnum(),
+                'description' => '状态',
             ])
             ->addField('create_time', [
-                'type'              => new DateTimeType(),
-                'description'       => '记录创建时间',
+                'type' => new DateTimeType(),
+                'description' => '记录创建时间',
             ])
             ->addField('uptime', [
-                'type'              => new DateTimeType(),
-                'description'       => '更新时间',
+                'type' => new DateTimeType(),
+                'description' => '更新时间',
             ]);
     }
 
@@ -80,4 +82,6 @@ class VlssSceneGroup  extends AbstractObjectType
             'cache_time' => 300,     //数据缓存时间
         ];
     }
+
+
 }

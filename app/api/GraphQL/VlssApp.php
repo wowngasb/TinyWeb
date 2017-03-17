@@ -46,6 +46,7 @@ class VlssApp extends AbstractObjectType
                 'type'              => new BasicUser(),
                 'description'       => '用户',
                 'resolve' => function ($value, array $args, ResolveInfo $info) {
+                    false && func_get_args();
                     return BasicUser::getDataById($value['user_id']);
                 }
             ])
@@ -68,6 +69,7 @@ class VlssApp extends AbstractObjectType
                     'state'   => new ListType(new VlssSceneGroupStateEnum()),
                 ],
                 'resolve' => function ($value, array $args, ResolveInfo $info) {
+                    false && func_get_args();
                     return array_values(VlssSceneGroup::dictItem(['app_id'=>$value['id'], ['whereIn', 'state', $args['state']], ]));
                 }
             ])
@@ -82,6 +84,7 @@ class VlssApp extends AbstractObjectType
                     'state'   => new ListType(new VlssSceneTemplateStateEnum()),
                 ],
                 'resolve' => function ($value, array $args, ResolveInfo $info) {
+                    false && func_get_args();
                     return array_values(VlssSceneTemplate::dictItem(['app_id'=>$value['id'], ['whereIn', 'state', $args['state']], ]));
                 }
             ])

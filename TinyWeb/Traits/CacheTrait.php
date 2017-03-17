@@ -12,6 +12,8 @@ use TinyWeb\Helper\RedisHelper;
 
 trait CacheTrait
 {
+    protected static $_REDIS_PREFIX_CACHE = 'BMCache';
+
     /**
      * 使用redis缓存函数调用的结果 优先使用缓存中的数据
      * @param string $method 所在方法 方便检索
@@ -21,12 +23,15 @@ trait CacheTrait
      * @param int $timeCache 允许的数据缓存时间 为0 表示强制刷新缓存 默认为300 负数表示清空缓存 不执行调用
      * @param bool $is_log 是否显示日志
      * @param string $prefix 缓存键 的 前缀
-     * @return array|null
+     * @return array
      */
-    protected static function  _cacheDataByRedis($method, $tag, \Closure $func, \Closure $filter, $timeCache = 300, $is_log = false, $prefix = 'BMCache')
+    protected static function  _cacheDataByRedis($method, $tag, \Closure $func, \Closure $filter, $timeCache = 300, $is_log = false, $prefix = null)
     {
         if (empty($tag) || empty($method)) {
             return $func();
+        }
+        if (is_null($prefix)) {
+            $prefix = static::$_REDIS_PREFIX_CACHE;
         }
         $method = str_replace('\\', '_', $method);
         $method = str_replace('::', '@', $method);
@@ -45,14 +50,14 @@ trait CacheTrait
             $json_str = $redis->get($rKey);
             $json = !empty($json_str) ? json_decode($json_str, true) : [];
             $json['_update_'] = isset($json['_update_']) ? $json['_update_'] : $now;
-            if( isset($json['data']) && $now - $json['_update_'] < $timeCache ){
+            if (isset($json['data']) && $now - $json['_update_'] < $timeCache) {
                 $log_msg = "cached now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$json['_update_']}";
                 $is_log && LogTrait::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
                 return $json['data'];
             }
         }
 
-        $json = ['_update_' => $now, 'data' => $func() ];
+        $json = ['_update_' => $now, 'data' => $func()];
         if ($filter($json['data'])) {
             ($timeCache > 0) ? $redis->setex($rKey, $timeCache, json_encode(['data' => $json['data'], '_update_' => $now])) : $redis->del($rKey);
             $log_msg = "cache func now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$json['_update_']}";

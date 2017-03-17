@@ -13,6 +13,7 @@ use TinyWeb\Application;
 use TinyWeb\Base\BaseBootstrap;
 use TinyWeb\Exception\OrmStartUpError;
 use TinyWeb\Helper\DbHelper;
+use TinyWeb\Helper\RedisHelper;
 
 /**
  * Class BaseOrmModel
@@ -26,13 +27,19 @@ use TinyWeb\Helper\DbHelper;
  * 例如 [   ['whereBetween', 'votes', [1, 100]],  ]   对应  ->whereBetween('votes', [1, 100])
  * 例如 [   ['whereIn', 'id', [1, 2, 3]],  ]   对应  ->whereIn('id', [1, 2, 3])
  * 例如 [   ['whereNull', 'updated_at'],  ]   对应  ->whereNull('updated_at')
+ *
+ * 注意：
+ * $_REDIS_PREFIX_DB 下级数据缓存 建议只用数据表级缓存
+ * 同一分类下的缓存数据必须来源于同一张表  不可缓存连表数据 防止无法分析依赖
+ * 缓存的key 需要自己生成有意义的字符串 及 匹配清除缓存的 匹配字符串
  * @package TinyWeb\Traits
  */
-
 trait OrmTrait
 {
 
-    use CacheTrait;
+    use CacheTrait, LogTrait;
+
+    protected static $_REDIS_PREFIX_DB = 'DbCache';
 
     private static $_db = null;
     private static $_cache_dict = [];
@@ -68,10 +75,13 @@ trait OrmTrait
      */
     public static function getDataById($id, $timeCache = null)
     {
+        $cfg = static::getOrmConfig();
+        $cache_time = $cfg['cache_time'];
+        $db_name = $cfg['db_name'];
+        $table_name = $cfg['table_name'];
+        $primary_key = $cfg['primary_key'];
 
-        if (is_null($timeCache)) {
-            $timeCache = static::getOrmConfig()['cache_time'];
-        }
+        $timeCache = is_null($timeCache) ? $cache_time : intval($timeCache);
         $id = intval($id);
         if ($id <= 0) {
             return [];
@@ -79,14 +89,13 @@ trait OrmTrait
         if (isset(self::$_cache_dict[$id])) {
             return self::$_cache_dict[$id];
         }
-        $db_name = static::getOrmConfig()['db_name'];
-        $table_name = static::getOrmConfig()['table_name'];
-        $data = static::_cacheDataByRedis("{$db_name}:{$table_name}", "id:{$id}", function () use ($id) {
+
+        $data = static::_cacheDataByRedis("{$db_name}:{$table_name}", "{$primary_key}[{$id}]", function () use ($id) {
             $tmp = static::getItem($id);
             return $tmp;
         }, function ($data) {
             return !empty($data);
-        }, $timeCache, false, 'DbCache');
+        }, $timeCache, false, static::$_REDIS_PREFIX_DB);
 
         if (!empty($data)) {
             self::$_cache_dict[$id] = $data;
@@ -134,6 +143,62 @@ trait OrmTrait
     protected static function _fixItem($val)
     {
         return $val;
+    }
+
+    ####################################
+    ############ 辅助函数 ##############
+    ####################################
+
+    /**
+     * 根据前缀匹配来删除Query的缓存  只针对表一级的缓存
+     * @param array $query 查询数组 需要带有 free 字段  匹配前缀 可以使用通配符
+     * @return array
+     * @throws OrmStartUpError
+     */
+    protected static function freeQuery(array $query)
+    {
+        if (empty($query['free'])) {
+            throw new OrmStartUpError("freeQuery with empty free");
+        }
+        $cfg = static::getOrmConfig();
+        $db_name = $cfg['db_name'];
+        $table_name = $cfg['table_name'];
+        $query['method'] = !empty($query['method']) ? $query['method'] : "{$db_name}:{$table_name}";
+        $query['prefix'] = !empty($query['prefix']) ? $query['prefix'] : static::$_REDIS_PREFIX_DB;
+
+        $redis = RedisHelper::getInstance();
+        $preg = "{$query['prefix']}:{$query['method']}:{$query['free']}";
+        $keys = $redis->keys($preg);
+        foreach ($keys as $key) {
+            $redis->del($key);
+        }
+        return [];
+    }
+
+    /**
+     * 运行查询 并给出缓存的key 缓存结果  默认只缓存非空结果
+     * @param array $query
+     * @return array
+     * @throws OrmStartUpError
+     */
+    protected static function runQuery(array $query)
+    {
+        if (empty($query['tag']) || empty($query['func'])) {
+            throw new OrmStartUpError("runQuery with empty tag or func");
+        }
+        $cfg = static::getOrmConfig();
+        $db_name = $cfg['db_name'];
+        $table_name = $cfg['table_name'];
+        $cache_time = $cfg['cache_time'];
+        //默认只缓存非空的结果
+        $query['filter'] = !empty($query['filter']) ? $query['filter'] : function ($data) {
+            return !empty($data);
+        };
+        $query['method'] = !empty($query['method']) ? $query['method'] : "{$db_name}:{$table_name}";
+        $query['is_log'] = !empty($query['is_log']) ? $query['is_log'] : false;
+        $query['prefix'] = !empty($query['prefix']) ? $query['prefix'] : static::$_REDIS_PREFIX_DB;
+        $query['timeCache'] = !empty($query['timeCache']) ? $query['timeCache'] : $cache_time;
+        return static::_cacheDataByRedis($query['method'], $query['tag'], $query['func'], $query['filter'], $query['timeCache'], $query['is_log'], $query['prefix']);
     }
 
     ####################################
@@ -210,18 +275,25 @@ trait OrmTrait
         if (!empty(self::$_db)) {
             return self::$_db;
         }
-        $config = static::getOrmConfig();
-        if (empty($config['table_name']) || empty($config['primary_key']) || empty($config['max_select']) || empty($config['db_name'])) {
+        $cfg = static::getOrmConfig();
+        if (empty($cfg['table_name']) || empty($cfg['primary_key']) || empty($cfg['max_select']) || empty($cfg['db_name'])) {
             throw new OrmStartUpError('Orm:' . __CLASS__ . 'with error config');
         }
-        self::$_db = DbHelper::initDb()->getConnection($config['db_name']);
+        self::$_db = DbHelper::initDb()->getConnection($cfg['db_name']);
         return self::$_db;
     }
 
     protected static function debugSql($time, $sql, $param, $tag = 'sql')
     {
-        $tag = str_replace(__TRAIT__, 'SQL', $tag);
-        BaseBootstrap::_D(['sql' => static::showQuery($sql, $param), 'use'=>round($time * 1000, 2) . 'ms'], $tag);
+        $cfg = static::getOrmConfig();
+        $db_name = $cfg['db_name'];
+        $table_name = $cfg['table_name'];
+
+        $sql_str = static::showQuery($sql, $param);
+        $use_str = round($time * 1000, 2) . 'ms';
+        self::debug("SQL({$use_str}) {$sql_str}", $tag, __CLASS__, __LINE__);
+        $_tag = str_replace(__TRAIT__, "SQL >> {$db_name}.{$table_name}({$use_str})", $tag);
+        BaseBootstrap::_D($sql_str, $_tag);
     }
 
     protected static function showQuery($query, $params)
@@ -256,7 +328,8 @@ trait OrmTrait
      */
     protected static function tableItem(array $where = [])
     {
-        $table_name = static::getOrmConfig()['table_name'];
+        $cfg = static::getOrmConfig();
+        $table_name = $cfg['table_name'];
         $table = static::_getDb()->table($table_name);
         $query_list = [];
         foreach ($where as $key => $item) {
@@ -312,8 +385,9 @@ trait OrmTrait
      */
     public static function selectItem($start = 0, $limit = 0, array $sort_option = [], array $where = [], array $columns = ['*'])
     {
+        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $max_select = static::getOrmConfig()['max_select'];
+        $max_select = $cfg['max_select'];
         $table = static::tableItem($where);
         $start = $start <= 0 ? 0 : $start;
         $limit = $limit > $max_select ? $max_select : $limit;
@@ -347,9 +421,10 @@ trait OrmTrait
      */
     public static function dictItem(array $where = [], array $columns = ['*'])
     {
+        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $max_select = static::getOrmConfig()['max_select'];
-        $primary_key = static::getOrmConfig()['primary_key'];
+        $max_select = $cfg['max_select'];
+        $primary_key = $cfg['primary_key'];
         $table = static::tableItem($where);
         $table->take($max_select);
         $data = $table->get($columns);
@@ -373,7 +448,8 @@ trait OrmTrait
      */
     public static function getItem($value, $filed = null, array $columns = ['*'])
     {
-        $primary_key = static::getOrmConfig()['primary_key'];
+        $cfg = static::getOrmConfig();
+        $primary_key = $cfg['primary_key'];
         $filed = $filed ?: $primary_key;
         return static::firstItem([strtolower($filed) => $value], $columns);
     }
@@ -400,8 +476,9 @@ trait OrmTrait
      */
     public static function newItem(array $data)
     {
+        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $primary_key = static::getOrmConfig()['primary_key'];
+        $primary_key = $cfg['primary_key'];
         unset($data[$primary_key]);
         $time_str = date('Y-m-d H:i:s');
         $default = [
@@ -427,8 +504,9 @@ trait OrmTrait
      */
     public static function setItem($id, array $data)
     {
+        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $primary_key = static::getOrmConfig()['primary_key'];
+        $primary_key = $cfg['primary_key'];
         unset($data['create_time'], $data['uptime'], $data[$primary_key]);
         $table = static::tableItem()->where($primary_key, $id);
         $update = $table->update($data);
@@ -443,8 +521,9 @@ trait OrmTrait
      */
     public static function delItem($id)
     {
+        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $primary_key = static::getOrmConfig()['primary_key'];
+        $primary_key = $cfg['primary_key'];
         $table = static::tableItem()->where($primary_key, $id);
         $delete = $table->delete();
         static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
@@ -460,8 +539,9 @@ trait OrmTrait
      */
     public function incItem($id, $filed, $value = 1)
     {
+        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $primary_key = static::getOrmConfig()['primary_key'];
+        $primary_key = $cfg['primary_key'];
         $table = static::tableItem()->where($primary_key, $id);
         $increment = $table->increment($filed, $value);
         static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
@@ -477,8 +557,9 @@ trait OrmTrait
      */
     public function decItem($id, $filed, $value = 1)
     {
+        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $primary_key = static::getOrmConfig()['primary_key'];
+        $primary_key = $cfg['primary_key'];
         $table = static::tableItem()->where($primary_key, $id);
         $decrement = $table->decrement($filed, $value);
         static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
@@ -493,7 +574,8 @@ trait OrmTrait
      */
     public static function upsertItem(array $where, array $data)
     {
-        $primary_key = static::getOrmConfig()['primary_key'];
+        $cfg = static::getOrmConfig();
+        $primary_key = $cfg['primary_key'];
         $tmp = static::firstItem($where);
         if (empty($tmp)) {
             return static::newItem($data);

@@ -8,7 +8,8 @@
 
 namespace app\api;
 
-use app\api\OrmDao\Vlss\SceneGroup;
+use app\api\GraphQL\VlssApp;
+use app\api\GraphQL\VlssSceneItem;
 use TinyWeb\Base\BaseApi;
 
 class VlssMgr extends BaseApi
@@ -17,8 +18,16 @@ class VlssMgr extends BaseApi
 
     public function getApp($id)
     {
-        $app = SceneGroup::getItem($id);
+        $app = VlssApp::getItem($id);
         return ['app' => $app];
+    }
+
+    public function setSceneItemSort($id, $scene_sort){
+        return [
+            'update' => VlssSceneItem::setDataById($id, [
+                'scene_sort' => $scene_sort,
+            ]),
+        ];
     }
 
 }
