@@ -35,7 +35,7 @@ abstract class BaseController extends BaseContext
         parent::__construct($request, $response);
         $this->routeInfo = $request->getRouteInfo();
 
-        $this->appname = Application::instance()->getAppName();
+        $this->appname = Application::getInstance()->getAppName();
     }
 
     /**

@@ -9,6 +9,7 @@
 namespace TinyWeb\Dispatch;
 
 
+use Exception;
 use TinyWeb\Base\BaseContext;
 use TinyWeb\DispatchInterface;
 use TinyWeb\Request;
@@ -23,7 +24,7 @@ class YarDispatch   implements DispatchInterface
      * @param array $params
      * @return array
      */
-    public static function fixMethodParams(BaseContext $context, $action, array $params)
+    public static function initMethodParams(BaseContext $context, $action, array $params)
     {
         // TODO: Implement fixMethodParams() method.
     }
@@ -33,7 +34,7 @@ class YarDispatch   implements DispatchInterface
      * @param array $routeInfo
      * @internal param string $action
      */
-    public static function fixMethodName(array $routeInfo)
+    public static function initMethodName(array $routeInfo)
     {
         // TODO: Implement fixMethodName() method.
     }
@@ -46,7 +47,7 @@ class YarDispatch   implements DispatchInterface
      * @param string $action
      * @return BaseContext 可返回实现此接口的 其他对象 方便做类型限制
      */
-    public static function fixMethodContext(Request $request, Response $response, array $routeInfo, $action)
+    public static function initMethodContext(Request $request, Response $response, array $routeInfo, $action)
     {
         // TODO: Implement fixMethodContext() method.
     }
@@ -60,5 +61,16 @@ class YarDispatch   implements DispatchInterface
     public static function dispatch(BaseContext $context, $action, array $params)
     {
         // TODO: Implement dispatch() method.
+    }
+
+    /**
+     * 处理异常接口 用于捕获分发过程中的异常
+     * @param Request $request
+     * @param Response $response
+     * @param Exception $ex
+     */
+    public static function traceException(Request $request, Response $response, Exception $ex)
+    {
+        // TODO: Implement traceException() method.
     }
 }

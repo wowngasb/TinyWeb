@@ -36,7 +36,7 @@ abstract class BaseBootstrap
     public static function debugConsole($data, $tags = null, $ignoreTraceCalls = 0)
     {
         if (!empty($tags)) {
-            $tags = strval($tags) . ':' . Application::instance()->usedMilliSecond() . 'ms';
+            $tags = strval($tags) . ':' . Application::getInstance()->usedMilliSecond() . 'ms';
         }
         Connector::getInstance()->getDebugDispatcher()->dispatchDebug($data, $tags, $ignoreTraceCalls);
     }
@@ -61,7 +61,7 @@ abstract class BaseBootstrap
         }
 
         //开启 辅助调试模式 注册对应事件
-        Connector::getInstance()->setPassword(Application::instance()->getEnv('DEVELOP_KEY'), true);
+        Connector::getInstance()->setPassword(Application::getInstance()->getEnv('DEVELOP_KEY'), true);
 
         Application::on('routerStartup', function (Application $obj, Request $request, Response $response) {
             false && func_get_args();

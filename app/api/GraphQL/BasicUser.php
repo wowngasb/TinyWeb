@@ -103,14 +103,14 @@ class BasicUser extends AbstractObjectType
             'table_name' => static::_class2table(__METHOD__),     //数据表名
             'primary_key' => 'id',   //数据表主键
             'max_select' => 5000,  //最多获取 5000 条记录 防止数据库拉取条目过多
-            'db_name' => Application::instance()->getEnv('ENV_MYSQL_DB'),       //数据库名
+            'db_name' => Application::getInstance()->getEnv('ENV_MYSQL_DB'),       //数据库名
             'cache_time' => 300,     //数据缓存时间
         ];
     }
 
     private static function _hashPassWord($password)
     {    //使用自定义的 hash 算法 防止彩虹表破解
-        $secret_key = Application::instance()->getEnv('CRYPT_KEY', '');
+        $secret_key = Application::getInstance()->getEnv('CRYPT_KEY', '');
         $tmp = strtolower(md5($password));
         $tmp = strtolower(md5($secret_key . $tmp));
         return strtolower(md5($tmp . $secret_key));

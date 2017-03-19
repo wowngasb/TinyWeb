@@ -39,14 +39,14 @@ class RoutePrefix implements RouteInterface
      */
     public function route(Request $request)
     {
-        $uri = $request->getRequestUri();
+        $uri = $request->getRequestPath();
         $reg_str = "^\/{$this->module_name}\/([A-Za-z0-9_.]+)\/([A-Za-z0-9_]+)";
         $matches = [];
         preg_match("/{$reg_str}/i", $uri, $matches);
 
         if (isset($matches[1]) && isset($matches[2])) {
             $routeInfo = [$matches[1], $matches[2], $this->module_name];
-            return [$routeInfo, $_REQUEST];
+            return [$routeInfo, $request->_request()];
         } else {
             return [null, null];
         }

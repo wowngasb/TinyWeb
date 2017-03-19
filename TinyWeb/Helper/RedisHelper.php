@@ -62,9 +62,9 @@ class RedisHelper
             return null;
         }
         $redis = new Redis();
-        $host = Application::instance()->getEnv('ENV_REDIS_HOST', 'localhost');
-        $port = Application::instance()->getEnv('ENV_REDIS_PORT', 6379);
-        $pass = Application::instance()->getEnv('ENV_REDIS_PASS', '');
+        $host = Application::getInstance()->getEnv('ENV_REDIS_HOST', 'localhost');
+        $port = Application::getInstance()->getEnv('ENV_REDIS_PORT', 6379);
+        $pass = Application::getInstance()->getEnv('ENV_REDIS_PASS', '');
         if (!$redis->connect($host, $port)) {
             return null;
         }

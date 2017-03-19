@@ -44,11 +44,14 @@ class RouteSimple implements RouteInterface
     public function route(Request $request)
     {
         list($default_controller, $default_action, $default_module) = self::getDefaultRouteInfo();
+        if ($request->_get($this->controller_key, '') === '') {
+            return [null, null];
+        }
         $controller = $request->_get($this->controller_key, $default_controller);
         $action = $request->_get($this->action_key, $default_action);
         $module = $request->_get($this->module_key, $default_module);
         $routeInfo = [strtolower($controller), strtolower($action), strtolower($module),];
-        $params = $_REQUEST;
+        $params = $request->_request();
         unset($params[$this->module_key], $params[$this->controller_key], $params[$this->action_key]);
         return [$routeInfo, $params];
     }

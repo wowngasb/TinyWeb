@@ -9,6 +9,7 @@
 namespace app\index\controllers;
 
 use app\common\Controller;
+use TinyWeb\Application;
 
 class index extends Controller
 {
@@ -24,6 +25,17 @@ class index extends Controller
     {
         $this->assign('title', 'Index Test');
         $this->display();
+    }
+
+    public function pageNotFound()
+    {
+        $error_file = 'error.html';
+        $error_str = self::_cacheDataByRedis(__METHOD__, "error_file={$error_file}", function () use ($error_file) {
+            return file_get_contents(Application::join('\\', [ROOT_PATH, Application::getInstance()->getAppName(), 'static', $error_file]));
+        }, function ($data) {
+            return !empty($data);
+        });
+        $this->response->setResponseCode(404)->appendBody($error_str);
     }
 
 }

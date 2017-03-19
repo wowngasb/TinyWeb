@@ -36,7 +36,7 @@ class index extends Controller
         $this->assign('age', $age);
 
         $this->assign('title', 'Index Test');
-        $this->assign('config', Application::instance()->getConfig());
+        $this->assign('config', Application::getInstance()->getConfig());
         $this->display();
     }
 

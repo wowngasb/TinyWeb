@@ -78,7 +78,7 @@ class VlssSceneGroup extends AbstractObjectType
             'table_name' => static::_class2table(__METHOD__),     //数据表名
             'primary_key' => 'id',   //数据表主键
             'max_select' => 5000,  //最多获取 5000 条记录 防止数据库拉取条目过多
-            'db_name' => Application::instance()->getEnv('ENV_MYSQL_DB'),       //数据库名
+            'db_name' => Application::getInstance()->getEnv('ENV_MYSQL_DB'),       //数据库名
             'cache_time' => 300,     //数据缓存时间
         ];
     }

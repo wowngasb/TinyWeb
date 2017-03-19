@@ -15,8 +15,8 @@ class MemcacheHelper
         if (!isset(self::$instance)) {
             try {
                 self::$instance = new Memcache();
-                $host = Application::instance()->getEnv('ENV_MEMCACHE_HOST', 'localhost');
-                $port = Application::instance()->getEnv('ENV_MEMCACHE_PORT', 11211);
+                $host = Application::getInstance()->getEnv('ENV_MEMCACHE_HOST', 'localhost');
+                $port = Application::getInstance()->getEnv('ENV_MEMCACHE_PORT', 11211);
                 if (!self::$instance->connect($host, $port)) {
                     throw new Exception('connect memcache server failed!');
                 }

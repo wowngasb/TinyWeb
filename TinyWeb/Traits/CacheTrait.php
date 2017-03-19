@@ -8,10 +8,12 @@
 
 namespace TinyWeb\Traits;
 
-use TinyWeb\Helper\RedisHelper;
+use phpFastCache\CacheManager;
+use TinyWeb\Application;
 
 trait CacheTrait
 {
+    protected static $_REDIS_DEFAULT_EXPIRES = 300;
     protected static $_REDIS_PREFIX_CACHE = 'BMCache';
 
     /**
@@ -23,9 +25,11 @@ trait CacheTrait
      * @param int $timeCache 允许的数据缓存时间 为0 表示强制刷新缓存 默认为300 负数表示清空缓存 不执行调用
      * @param bool $is_log 是否显示日志
      * @param string $prefix 缓存键 的 前缀
+     * @param array $tags 标记数组
      * @return array
+     * @throws \phpFastCache\Exceptions\phpFastCacheDriverCheckException
      */
-    protected static function  _cacheDataByRedis($method, $tag, \Closure $func, \Closure $filter, $timeCache = 300, $is_log = false, $prefix = null)
+    protected static function  _cacheDataByRedis($method, $tag, \Closure $func, \Closure $filter, $timeCache = null, $is_log = false, $prefix = null, array $tags = [])
     {
         if (empty($tag) || empty($method)) {
             return $func();
@@ -33,39 +37,63 @@ trait CacheTrait
         if (is_null($prefix)) {
             $prefix = static::$_REDIS_PREFIX_CACHE;
         }
-        $method = str_replace('\\', '_', $method);
-        $method = str_replace('::', '@', $method);
+        if (is_null($timeCache)) {
+            $timeCache = static::$_REDIS_DEFAULT_EXPIRES;
+        }
+        $method = str_replace('::', '.', $method);
         $now = time();
         $timeCache = intval($timeCache);
-        $redis = RedisHelper::getInstance();
-        $rKey = !empty($prefix) ? "{$prefix}:{$method}:{$tag}" : "{$method}:{$tag}";
 
-        if (empty($redis)) {
-            LogTrait::error("redis getInstance error", __METHOD__, __CLASS__, __LINE__);
+        $InstanceCache = CacheManager::getInstance('predis', [
+            'host' => Application::getInstance()->getEnv('ENV_REDIS_HOST'),
+            'port' => Application::getInstance()->getEnv('ENV_REDIS_PORT', 6379),
+            'password' => Application::getInstance()->getEnv('ENV_REDIS_PASS', null),
+            'database' => Application::getInstance()->getEnv('ENV_REDIS_DB', null),
+        ]);
+
+        $rKey = !empty($prefix) ? "{$prefix}:{$method}?{$tag}" : "{$method}?{$tag}";
+
+        if (empty($InstanceCache)) {
+            LogTrait::error("CacheManager getInstance error", __METHOD__, __CLASS__, __LINE__);
             return $func();
         } else if ($timeCache < 0) {
-            $redis->del($rKey);
+            $InstanceCache->deleteItem($rKey);
             return [];
         } else if ($timeCache > 0) {
-            $json_str = $redis->get($rKey);
-            $json = !empty($json_str) ? json_decode($json_str, true) : [];
-            $json['_update_'] = isset($json['_update_']) ? $json['_update_'] : $now;
-            if (isset($json['data']) && $now - $json['_update_'] < $timeCache) {
-                $log_msg = "cached now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$json['_update_']}";
+            $itemObj = $InstanceCache->getItem($rKey);
+            $val = $itemObj->get();
+            $val = !empty($val) ? $val : [];
+            $val['_update_'] = isset($val['_update_']) ? $val['_update_'] : $now;
+            if (isset($val['data']) && $now - $val['_update_'] < $timeCache) {
+                $log_msg = "cached now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$val['_update_']}";
                 $is_log && LogTrait::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
-                return $json['data'];
+                return $val['data'];
             }
         }
 
-        $json = ['_update_' => $now, 'data' => $func()];
-        if ($filter($json['data'])) {
-            ($timeCache > 0) ? $redis->setex($rKey, $timeCache, json_encode(['data' => $json['data'], '_update_' => $now])) : $redis->del($rKey);
-            $log_msg = "cache func now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$json['_update_']}";
+        $val = ['_update_' => $now, 'data' => $func()];
+        if ($filter($val['data'])) {
+            if (($timeCache > 0)) {
+                $itemObj = $InstanceCache->getItem($rKey);
+                $itemObj->set($val)->expiresAfter($timeCache)->setTags($tags);
+                $InstanceCache->save($itemObj);
+            } else {
+                $InstanceCache->deleteItem($rKey);
+            }
+            if ($is_log) {
+                $log_msg = "cache func now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$val['_update_']}";
+                $status = $InstanceCache->getStats();
+                LogTrait::debug($log_msg . ",status:" . json_encode($status), __METHOD__, __CLASS__, __LINE__);
+            }
         } else {
-            $log_msg = "filter skip now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$json['_update_']}";
+            if ($is_log) {
+                $log_msg = "filter skip now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$val['_update_']}";
+                $status = $InstanceCache->getStats();
+                LogTrait::debug($log_msg . ",status:" . json_encode($status), __METHOD__, __CLASS__, __LINE__);
+            }
         }
-        $is_log && LogTrait::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
-        return $json['data'];
+
+        return $val['data'];
     }
 
 }

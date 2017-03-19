@@ -47,6 +47,17 @@ final class Request
         return $tmp;
     }
 
+    public function __construct()
+    {
+        $this->_request_timestamp = microtime(true);
+        $this->_request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
+        $this->_method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : '';
+        $this->_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
+        $this->_http_referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+        $this->_this_url = SYSTEM_HOST . substr($this->_request_uri, 1);
+        $this->_csrf_token = self::_request('CSRF', '');
+    }
+
     /**
      * @return Request
      */
@@ -94,16 +105,7 @@ final class Request
         return $this->_session_started ? session_id() : '';
     }
 
-    public function __construct()
-    {
-        $this->_request_timestamp = microtime(true);
-        $this->_request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
-        $this->_method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : '';
-        $this->_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
-        $this->_http_referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-        $this->_this_url = SYSTEM_HOST . substr($this->_request_uri, 1);
-        $this->_csrf_token = self::_request('CSRF', '');
-    }
+
 
     public function get_request_timestamp()
     {
@@ -253,9 +255,17 @@ final class Request
     /**
      * @return string
      */
-    public function getRequestUri()
+    public function getRequestPath()
     {
-        return $this->_request_uri;
+        $tmp = explode('?', $this->_request_uri);
+        $path = !empty($tmp[0]) ? $tmp[0] : '/';
+        while (strpos($path, '//') !== false) {
+            $path = str_replace('//', '/', $path);
+        }
+        if (substr($path, -1, 1) != '/') {
+            $path .= '/';
+        }
+        return $path;
     }
 
     /**
@@ -269,7 +279,7 @@ final class Request
     public static function urlTo(Request $request, array $routerArr, array $params = [])
     {
         $route = $request->getCurrentRoute();
-        return Application::instance()->getRoute($route)->url($routerArr, $params);
+        return Application::getInstance()->getRoute($route)->url($routerArr, $params);
     }
 
     /**
@@ -365,7 +375,7 @@ final class Request
     /**
      * @param $name
      * @param string $default
-     * @return string
+     * @return array | string
      */
     public static function _request($name = null, $default = '')
     {

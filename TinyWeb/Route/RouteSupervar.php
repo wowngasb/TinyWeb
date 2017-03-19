@@ -43,6 +43,9 @@ class RouteSupervar implements RouteInterface
     {
         list($default_controller, $default_action, $default_module) = self::getDefaultRouteInfo();
         $route_value = $request->_get($this->route_key, '');
+        if(empty($route_value)){
+            return [null, null];
+        }
         while (strpos($route_value, '//') !== false) {
             $route_value = str_replace('//', '/', $route_value);
         }
@@ -60,7 +63,7 @@ class RouteSupervar implements RouteInterface
 
 
         $routeInfo = [strtolower($controller), strtolower($action), strtolower($module),];
-        $params = $_REQUEST;
+        $params = $request->_request();
         unset($params[$this->route_key]);
         return [$routeInfo, $params];
     }

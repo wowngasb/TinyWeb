@@ -89,17 +89,15 @@ trait OrmTrait
         if (isset(self::$_cache_dict[$id])) {
             return self::$_cache_dict[$id];
         }
-
-        $data = static::_cacheDataByRedis("{$db_name}:{$table_name}", "{$primary_key}[{$id}]", function () use ($id) {
+        $tag = "{$primary_key}={$id}";
+        $table = "{$db_name}.{$table_name}";
+        $data = static::_cacheDataByRedis($table, $tag, function () use ($id) {
             $tmp = static::getItem($id);
             return $tmp;
         }, function ($data) {
             return !empty($data);
-        }, $timeCache, false, static::$_REDIS_PREFIX_DB);
+        }, $timeCache, false, static::$_REDIS_PREFIX_DB, ["{$table}?$tag", ]);
 
-        if (!empty($data)) {
-            self::$_cache_dict[$id] = $data;
-        }
         return $data;
     }
 

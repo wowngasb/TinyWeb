@@ -19,7 +19,7 @@ class index extends Controller
 
     public function index()
     {
-        Application::instance()->forward($this->request, $this->response, ['Index', 'auth', 'develop']);
+        Application::getInstance()->forward($this->request, $this->response, ['Index', 'auth', 'develop']);
     }
 
     public function auth()
@@ -44,7 +44,7 @@ EOT;
     public static function authDevelopKey()
     {
         $tmp_key = md5(rand(0, 999999));
-        return Application::strCmp(Application::instance()->getEnv('DEVELOP_KEY', $tmp_key), Request::_session('develop_key', ''));
+        return Application::strCmp(Application::getInstance()->getEnv('DEVELOP_KEY', $tmp_key), Request::_session('develop_key', ''));
     }
 
 }

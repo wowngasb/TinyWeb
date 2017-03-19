@@ -18,6 +18,10 @@ class ApiHelper
         'warn' => 1,
         'error' => 1,
         'fatal' => 1,
+        'beforeapi'=> 1,
+        'beforeaction'=> 1,
+        'getrequest' => 1,
+        'getresponse' => 1,
     ];
 
     public static function fixActionParams($obj, $func, $params)

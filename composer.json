@@ -22,7 +22,8 @@
   "require": {
     "php": ">=5.5",
     "illuminate/database": "5.2.*",
-    "youshido/graphql": "^1.2"
+    "youshido/graphql": "^1.2",
+    "phpFastCache/phpFastCache": "^5.0"
   },
   "require-dev": {
     "php-console/php-console": "^3.1",

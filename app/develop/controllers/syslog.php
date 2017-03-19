@@ -20,7 +20,7 @@ class sysLog extends Controller
     }
 
     public function index() {
-        Application::instance()->forward($this->request, $this->response, ['syslog', 'showLogDir', 'develop']);
+        Application::getInstance()->forward($this->request, $this->response, ['syslog', 'showLogDir', 'develop']);
     }
 
     public function showLogDir()

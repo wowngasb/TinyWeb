@@ -34,7 +34,7 @@ class ApiDispatch implements DispatchInterface
      * @param array $params
      * @return array
      */
-    public static function fixMethodParams(BaseContext $object, $action, array $params)
+    public static function initMethodParams(BaseContext $object, $action, array $params)
     {
         if (isset($_SERVER['CONTENT_TYPE']) && stripos($_SERVER['CONTENT_TYPE'], 'application/json') !== false && $_SERVER['REQUEST_METHOD'] == "POST") {
             $json_str = file_get_contents('php://input') ?: '';
@@ -51,7 +51,7 @@ class ApiDispatch implements DispatchInterface
      * @param array $routeInfo
      * @return string
      */
-    public static function fixMethodName(array $routeInfo)
+    public static function initMethodName(array $routeInfo)
     {
         return strtolower($routeInfo[0]) == 'GraphQL' ? 'exec' : $routeInfo[1];
     }
@@ -65,9 +65,9 @@ class ApiDispatch implements DispatchInterface
      * @return BaseApi 可返回实现此接口的 其他对象 方便做类型限制
      * @throws AppStartUpError
      */
-    public static function fixMethodContext(Request $request, Response $response, array $routeInfo, $action)
+    public static function initMethodContext(Request $request, Response $response, array $routeInfo, $action)
     {
-        $namespace = "\\" . Application::join("\\", [Application::instance()->getAppName(), 'api', $routeInfo[0]]);
+        $namespace = "\\" . Application::join("\\", [Application::getInstance()->getAppName(), 'api', $routeInfo[0]]);
         $context = new $namespace($request, $response);
         if (!($context instanceof BaseApi)) {
             throw new AppStartUpError("class:{$namespace} isn't instanceof BaseApiModel with routeInfo:" . json_encode($routeInfo));
@@ -89,17 +89,23 @@ class ApiDispatch implements DispatchInterface
                 'params' => $params,
                 'result' => $result
             ], 'api');
+            $json_str = isset($params['callback']) && !empty($params['callback']) ? "{$params['callback']}(" . json_encode($result) . ');' : json_encode($result);
+            $context->getResponse()->addHeader('Content-Type: application/json;charset=utf-8', false)->appendBody($json_str);
         } catch (Exception $ex) {
             Bootstrap::_D((array)$ex, 'api Exception');
-            $result = self::traceExceptionAsResult($ex);
+            self::traceException($context->getRequest(), $context->getResponse(), $ex);
         }
-
-        $json_str = isset($params['callback']) && !empty($params['callback']) ? "{$params['callback']}(" . json_encode($result) . ');' : json_encode($result);
-        $context->getResponse()->addHeader('Content-Type: application/json;charset=utf-8', false)->appendBody($json_str);
     }
 
-    private static function traceExceptionAsResult(Exception $ex)
+    /**
+     * 处理异常接口 用于捕获分发过程中的异常
+     * @param Request $request
+     * @param Response $response
+     * @param Exception $ex
+     */
+    public static function traceException(Request $request, Response $response, Exception $ex)
     {
+        $params = $request->getParams();
         $code = $ex->getCode();  // errno为0 或 无error字段 表示没有错误  errno设置为0 会忽略error字段
         $error = (DEV_MODEL == 'DEBUG') ? [
             'Exception' => get_class($ex),
@@ -117,6 +123,7 @@ class ApiDispatch implements DispatchInterface
             $ex = $ex->getPrevious();
             $result['error']['errors'][] = (DEV_MODEL == 'DEBUG') ? ['Exception' => get_class($ex), 'code' => $ex->getCode(), 'message' => $ex->getMessage(), 'file' => $ex->getFile() . ' [' . $ex->getLine() . ']'] : ['code' => $ex->getCode(), 'message' => $ex->getMessage()];
         }
-        return $result;
+        $json_str = isset($params['callback']) && !empty($params['callback']) ? "{$params['callback']}(" . json_encode($result) . ');' : json_encode($result);
+        $response->addHeader('Content-Type: application/json;charset=utf-8', false)->appendBody($json_str);
     }
 }
