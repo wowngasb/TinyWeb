@@ -18,7 +18,11 @@
 
 文本标记语言-Markdown：[Markdown——入门指南 -by Te_Lee](http://www.jianshu.com/p/1e402922ee32/)
 
+前端工程构建工具-fis3：[fis3 官方文档](http://fis.baidu.com/fis3/docs/beginning/intro.html)
+
 前端打包工具-webpack：[Webpack 中文指南](http://webpackdoc.com/)
+
+
 
 python包管理工具-pip: [python教程-pip by 廖雪峰](http://www.liaoxuefeng.com/wiki/0014316089557264a6b348958f449949df42a6d3a2e542c000/00143186362353505516c5d4e38456fb225c18cc5b54ffb000)
 
