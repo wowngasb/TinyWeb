@@ -1,0 +1,8 @@
+2017-03-17 17:36:11 [DEBUG] TinyWeb\Traits\OrmTrait::debugSql[289] SQL(9ms) select * from `basic_user` where `id` = 1 limit 1
+2017-03-17 17:36:38 [DEBUG] TinyWeb\Traits\OrmTrait::debugSql[289] SQL(11ms) select * from `basic_user` where `id` = 1 limit 1
+2017-03-17 17:42:24 [DEBUG] TinyWeb\Traits\OrmTrait::firstItem[291] SQL(10ms) select * from `basic_user` where `id` = 1 limit 1
+2017-03-17 17:48:23 [DEBUG] TinyWeb\Traits\OrmTrait::firstItem[291] SQL(15.6ms) select * from `basic_user` where `id` = 1 limit 1
+2017-03-17 17:54:36 [DEBUG] TinyWeb\Traits\OrmTrait::firstItem[291] SQL(9ms) select * from `basic_user` where `id` = 1 limit 1
+2017-03-17 18:00:42 [DEBUG] TinyWeb\Traits\OrmTrait::firstItem[291] SQL(8ms) select * from `basic_user` where `id` = 1 limit 1
+2017-03-17 18:21:01 [DEBUG] TinyWeb\Traits\OrmTrait::firstItem[294] SQL(8ms) select * from `basic_user` where `id` = 1 limit 1
+2017-03-17 18:27:27 [DEBUG] TinyWeb\Traits\OrmTrait::firstItem[294] SQL(9ms) select * from `basic_user` where `id` = 1 limit 1

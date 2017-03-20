@@ -1,0 +1,8 @@
+2017-03-17 17:36:10 [DEBUG] TinyWeb\Traits\OrmTrait::debugSql[289] SQL(61ms) select * from `vlss_app` where `id` = 1 limit 1
+2017-03-17 17:36:38 [DEBUG] TinyWeb\Traits\OrmTrait::debugSql[289] SQL(53ms) select * from `vlss_app` where `id` = 1 limit 1
+2017-03-17 17:42:24 [DEBUG] TinyWeb\Traits\OrmTrait::firstItem[291] SQL(62ms) select * from `vlss_app` where `id` = 1 limit 1
+2017-03-17 17:48:22 [DEBUG] TinyWeb\Traits\OrmTrait::firstItem[291] SQL(62.4ms) select * from `vlss_app` where `id` = 1 limit 1
+2017-03-17 17:54:36 [DEBUG] TinyWeb\Traits\OrmTrait::firstItem[291] SQL(66ms) select * from `vlss_app` where `id` = 1 limit 1
+2017-03-17 18:00:42 [DEBUG] TinyWeb\Traits\OrmTrait::firstItem[291] SQL(58ms) select * from `vlss_app` where `id` = 1 limit 1
+2017-03-17 18:21:00 [DEBUG] TinyWeb\Traits\OrmTrait::firstItem[294] SQL(53ms) select * from `vlss_app` where `id` = 1 limit 1
+2017-03-17 18:27:26 [DEBUG] TinyWeb\Traits\OrmTrait::firstItem[294] SQL(58ms) select * from `vlss_app` where `id` = 1 limit 1

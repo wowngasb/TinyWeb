@@ -1,0 +1,5 @@
+2017-03-16 10:08:47 [DEBUG] TinyWeb\Traits\CacheTrait::_cacheDataByRedis[50] cached now:1489655326, method:vlss_demo:vlss_scene_item, tag:group[1]state[1,2], timeCache:300, _update_:1489655183
+2017-03-16 10:08:47 [DEBUG] TinyWeb\Traits\CacheTrait::_cacheDataByRedis[62] filter skip now:1489655327, method:vlss_demo:vlss_scene_item, tag:group[2]state[1,2], timeCache:300, _update_:1489655327
+2017-03-16 10:08:47 [DEBUG] TinyWeb\Traits\CacheTrait::_cacheDataByRedis[62] filter skip now:1489655327, method:vlss_demo:vlss_scene_item, tag:group[3]state[1,2], timeCache:300, _update_:1489655327
+2017-03-16 10:08:47 [DEBUG] TinyWeb\Traits\CacheTrait::_cacheDataByRedis[62] filter skip now:1489655327, method:vlss_demo:vlss_scene_item, tag:group[4]state[1,2], timeCache:300, _update_:1489655327
+2017-03-16 10:09:44 [WARN] superAdmin cut this file by syslog, rename file：/app_api_GraphQL_VlssSceneItem/2017-03-16.log.1489655384

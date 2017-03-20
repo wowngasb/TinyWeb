@@ -1,0 +1,6 @@
+2017-03-09 03:43:18 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-09 03:43:22 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-09 03:43:23 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-09 03:44:08 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-09 03:44:10 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-09 03:44:12 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test

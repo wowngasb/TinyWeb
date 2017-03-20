@@ -1,0 +1,14 @@
+2017-03-08 08:48:08 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-08 08:48:15 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-08 08:49:22 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-08 08:51:26 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-08 08:51:27 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-08 08:51:31 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-08 08:51:51 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-08 08:52:50 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-08 08:52:54 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-08 08:52:58 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-08 08:53:00 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-08 08:53:03 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-08 08:53:05 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
+2017-03-08 08:53:10 [DEBUG] app\common\ApiDispatch::checkCsrfToken[172] CSRF ignore [POST] session_id:, this_url:http://tiny.app/api/VlssMgr/test
