@@ -192,7 +192,37 @@ group_list = [
                         "scrollTimes":"0"
                     }
                 }
-            }
+            },
+            {
+                 "scene_name":"台标",
+                 "scene_type":"hsms-tvlogo",
+                 "scene_sort":1,
+                 "scene_config":{
+                     "position":"1",
+                     "url":"http://1436.long-vod.cdn.aodianyun.com/mfs/1436/wis/0x0/4a131ca49fc6362af23618f085f4d62b.png"
+                 }
+             },
+             {
+                 "scene_name":"记分牌",
+                 "scene_type":"hsms-scoreboard",
+                 "scene_sort":1,
+                 "scene_config":{
+                     "backgound":"http://test25.aodianyun.com/aae/hsms/assets/img/hsms-scoreboard/scoreboard.png",
+                     "homeNamedText":{
+                         "text":"炎帝"
+                     },"awayNameText":{
+                         "text":"黄帝"
+                     },
+                     "scoreText":{
+                         "text":"3：0"
+                     },
+                     "clockText":{
+                         "mtext":"10",
+                         "stext":"00",
+                         "control":"playTime"
+                     }
+                 }
+             }
         ]
     },
     {
