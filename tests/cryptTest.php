@@ -1,6 +1,6 @@
 <?php
 
-const CRYPT_KEY = 'adadwwd';
+const CRYPT_KEY = '5d4&Y&^$$SSEfdaFfseF$Df%#Gg345DkkhDo^&34%@E';
 
 function safe_base64_encode($str) {
     $str = rtrim(strtr(base64_encode($str), '+/', '-_'), '='); 
@@ -23,18 +23,28 @@ function decrypt($string) {
     return authcode($string, 'DECODE', CRYPT_KEY);
 }
 
+function rand_str($length){
+    $str = '';
+    $tmp_str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
+    $max = strlen($tmp_str)-1;
+    for($i=0; $i<$length; $i++){
+        $str .= $tmp_str[ rand(0, $max) ];   //rand($min,$max)生成介于min和max两个数之间的一个随机整数
+    }
+    return $str;
+}
+  
 function authcode($string, $operation, $key, $expiry=0) {
-    $ckey_length = 4;// 动态密匙长度，相同的明文会生成不同密文就是依靠动态密匙
+    $ckey_length = 2;// 动态密匙长度，相同的明文会生成不同密文就是依靠动态密匙
     $key = md5($key);// 密匙
     $keya = md5(substr($key, 0, 16));// 密匙a会参与加解密
     $keyb = md5(substr($key, 16, 16));// 密匙b会用来做数据完整性验证
-    $keyc = $ckey_length ? ($operation == 'DECODE' ? substr($string, 0, $ckey_length): substr(md5(microtime()), -$ckey_length)) : '';// 密匙c用于变化生成的密文
+    $keyc = $ckey_length ? ($operation == 'DECODE' ? substr($string, 0, $ckey_length): rand_str(2) ): '';// 密匙c用于变化生成的密文
     $cryptkey = $keya.md5($keya.$keyc);// 参与运算的密匙
     $key_length = strlen($cryptkey);
     // 明文，前10位用来保存时间戳，解密时验证数据有效性，10到26位用来保存$keyb(密匙b)， 
     //解密时会通过这个密匙验证数据完整性
     // 如果是解码的话，会从第$ckey_length位开始，因为密文前$ckey_length位保存 动态密匙，以保证解密正确
-    $string = $operation == 'DECODE' ? safe_base64_decode(substr($string, $ckey_length)) : pack('L', $expiry>0 ? $expiry + time() : 0). hex2bin(substr(md5($string.$keyb), 0, 16)).$string;
+    $string = $operation == 'DECODE' ? safe_base64_decode(substr($string, $ckey_length)) : pack('L', $expiry>0 ? $expiry + time() : 0). hex2bin(substr(md5($string.$keyb), 0, 8)).$string;
     $string_length = strlen($string);
     $result = '';
     $box = range(0, 255);
@@ -63,8 +73,8 @@ function authcode($string, $operation, $key, $expiry=0) {
     if($operation == 'DECODE') {  
         // 验证数据有效性，请看未加密明文的格式
         $time = unpack('L', substr($result, 0, 4))[1];
-        $string = substr($result, 12);
-        if(($time == 0 || $time > time()) && bin2hex(substr($result, 4, 8)) == substr(md5($string.$keyb), 0, 16)) {
+        $string = substr($result, 8);
+        if(($time == 0 || $time > time()) && bin2hex(substr($result, 4, 4)) == substr(md5($string.$keyb), 0, 8)) {
             return $string;
         } else {
             return '';
@@ -74,7 +84,32 @@ function authcode($string, $operation, $key, $expiry=0) {
     }
 }
 
-$test = encrypt('123456');
+$test = encrypt('1234567890');
 echo strlen($test) . "\n";
 echo $test . "\n";
-echo decrypt($test);
+echo decrypt($test) . "\n";
+echo "\n";
+
+$test = encrypt('1');
+echo strlen($test) . "\n";
+echo $test . "\n";
+echo decrypt($test) . "\n";
+echo "\n";
+
+$test = encrypt(1234567890);
+echo strlen($test) . "\n";
+echo $test . "\n";
+echo decrypt($test) . "\n";
+echo "\n";
+
+$test = encrypt( pack('L', 1234567890) );
+echo strlen($test) . "\n";
+echo $test . "\n";
+echo unpack('L', decrypt($test))[1] . "\n";
+echo "\n";
+
+$test = encrypt( pack('L', 1) );
+echo strlen($test) . "\n";
+echo $test . "\n";
+echo unpack('L', decrypt($test))[1] . "\n";
+echo "\n";
