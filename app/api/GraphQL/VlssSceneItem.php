@@ -110,7 +110,7 @@ class VlssSceneItem extends AbstractObjectType
             static::setItem($id, $data);
         }
         $tmp = static::getDataById($id, 0);
-        static::dictDataWithGroupIdState($tmp['group_id'], [], -1);  //清除与本次数据更改相关的缓存
+        static::freeQuery(static::_qGroupIdState($tmp['group_id'], []));  //清除与本次数据更改相关的缓存  //清除与本次数据更改相关的缓存
         return $tmp;
     }
 
@@ -124,7 +124,7 @@ class VlssSceneItem extends AbstractObjectType
         if (!empty($data)) {
             $id = static::newItem($data);
             $tmp = static::getDataById($id, 0);
-            static::dictDataWithGroupIdState($tmp['group_id'], [], -1);  //清除与本次数据更改相关的缓存
+            static::freeQuery(static::_qGroupIdState($tmp['group_id'], []));  //清除与本次数据更改相关的缓存
             return $tmp;
         } else {
             return [];
@@ -138,16 +138,13 @@ class VlssSceneItem extends AbstractObjectType
      * 匹配的缓存清除 key 为 "group_id[xxx]:*"
      * @param $group_id
      * @param array $state
-     * @param int $timeCache
      * @return array|null
      */
-    public static function dictDataWithGroupIdState($group_id, array $state = [], $timeCache = null)
+    public static function _qGroupIdState($group_id, array $state = [])
     {
-        $cfg = static::getOrmConfig();
-        $query = [
-            'timeCache' => is_null($timeCache) ? $cfg['cache_time'] : $timeCache,
-            'tag' => "group_id[{$group_id}]:state[" . join(',', $state) . "]",
-            'free' => "group_id[{$group_id}]:*",
+        return [
+            'tag' => "group_id={$group_id}&state=" . join(',', $state),
+            'free' => "group_id={$group_id}",
             'func' => function () use ($group_id, $state) {
                 return VlssSceneItem::dictItem(['group_id' => $group_id, ['whereIn', 'state', $state],]);
             },
@@ -155,11 +152,6 @@ class VlssSceneItem extends AbstractObjectType
                 return isset($data);  //空的数组也会缓存
             }
         ];
-        $dict = $query['timeCache'] < 0 ? static::freeQuery($query) : static::runQuery($query);
-
-        $log_msg = "group_id:{$group_id},timeCache:{$query['timeCache']},query:" . json_encode($query) . ',rst:' . json_encode($dict);
-        self::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
-        return $dict;
     }
 
 }

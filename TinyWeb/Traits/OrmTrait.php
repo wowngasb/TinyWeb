@@ -96,7 +96,7 @@ trait OrmTrait
             return $tmp;
         }, function ($data) {
             return !empty($data);
-        }, $timeCache, false, static::$_REDIS_PREFIX_DB, ["{$table}?$tag", ]);
+        }, $timeCache, false, static::$_REDIS_PREFIX_DB, ["{$table}?$tag",]);
 
         return $data;
     }
@@ -165,11 +165,9 @@ trait OrmTrait
         $query['prefix'] = !empty($query['prefix']) ? $query['prefix'] : static::$_REDIS_PREFIX_DB;
 
         $redis = RedisHelper::getInstance();
-        $preg = "{$query['prefix']}:{$query['method']}:{$query['free']}";
+        $preg = "{$query['prefix']}:{$query['method']}:*{$query['free']}*";   //模糊匹配所有影响到的key
         $keys = $redis->keys($preg);
-        foreach ($keys as $key) {
-            $redis->del($key);
-        }
+        $redis->del($keys);  //删除匹配到的所有的key
         return [];
     }
 

@@ -53,7 +53,7 @@ class VlssSceneGroup extends AbstractObjectType
                     'state' => new ListType(new VlssSceneItemStateEnum()),
                 ],
                 'resolve' => function ($value, array $args, ResolveInfo $info) {
-                    $tmp = VlssSceneItem::dictDataWithGroupIdState($value['id'], $args['state']);
+                    $tmp = VlssSceneItem::runQuery(VlssSceneItem::_qGroupIdState($value['id'], $args['state']));
                     self::debug("id:{$value['id']},state:" . json_encode($args['state']) . ",tmp:" . json_encode($tmp), __METHOD__, __CLASS__, __LINE__);
                     return array_values($tmp);
                 }
