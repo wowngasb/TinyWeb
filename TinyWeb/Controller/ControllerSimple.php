@@ -10,12 +10,12 @@ namespace TinyWeb\Controller;
 
 
 use TinyWeb\Application;
-use TinyWeb\Base\BaseController;
+use TinyWeb\Base\AbstractController;
 use TinyWeb\Request;
 use TinyWeb\Response;
 use TinyWeb\View\ViewSimple;
 
-abstract class BaseControllerSimple extends BaseController
+abstract class AbstractControllerSimple extends AbstractController
 {
     final public function __construct(Request $request, Response $response)
     {

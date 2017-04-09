@@ -2,8 +2,8 @@
 namespace TinyWeb;
 
 use Exception;
-use TinyWeb\Base\BaseContext;
-use TinyWeb\Base\BaseController;
+use TinyWeb\Base\AbstractContext;
+use TinyWeb\Base\AbstractController;
 use TinyWeb\Exception\RouteError;
 use TinyWeb\Exception\AppStartUpError;
 use TinyWeb\Helper\ApiHelper;
@@ -300,12 +300,12 @@ final class Application implements DispatchInterface, RouteInterface
 
     /**
      * 根据对象和方法名 获取 修复后的参数
-     * @param BaseContext $object
+     * @param AbstractContext $object
      * @param $action
      * @param array $params
      * @return array
      */
-    public static function initMethodParams(BaseContext $object, $action, array $params)
+    public static function initMethodParams(AbstractContext $object, $action, array $params)
     {
         $params = ApiHelper::fixActionParams($object, $action, $params);
         $object->getRequest()->setParams($params);
@@ -326,7 +326,7 @@ final class Application implements DispatchInterface, RouteInterface
      * @param Response $response
      * @param array $routeInfo
      * @param string $action
-     * @return BaseController
+     * @return AbstractController
      * @throws AppStartUpError
      */
     public static function initMethodContext(Request $request, Response $response, array $routeInfo, $action)
@@ -346,7 +346,7 @@ final class Application implements DispatchInterface, RouteInterface
             throw new AppStartUpError("class:{$namespace} not exists with routeInfo:" . json_encode($routeInfo));
         }
         $object = new $namespace($request, $response);
-        if (!($object instanceof BaseController)) {
+        if (!($object instanceof AbstractController)) {
             throw new AppStartUpError("class:{$namespace} isn't instanceof ControllerAbstract with routeInfo:" . json_encode($routeInfo));
         }
         if (!is_callable([$object, $action])) {
@@ -358,11 +358,11 @@ final class Application implements DispatchInterface, RouteInterface
     }
 
     /**
-     * @param BaseContext $context
+     * @param AbstractContext $context
      * @param Response $action
      * @param array $params
      */
-    public static function dispatch(BaseContext $context, $action, array $params)
+    public static function dispatch(AbstractContext $context, $action, array $params)
     {
         ob_start();
         call_user_func_array([$context, $action], $params);

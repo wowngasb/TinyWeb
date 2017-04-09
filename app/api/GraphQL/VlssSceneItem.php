@@ -155,7 +155,7 @@ class VlssSceneItem extends AbstractObjectType
                 return isset($data);  //空的数组也会缓存
             }
         ];
-        $dict = $query['timeCache'] < 0 ? static::freeQuery($query) : static::runQuery($query);
+        $dict = $query['timeCache'] < 0 ? static::freeQuery($query) : static::runSelect($query);
 
         $log_msg = "group_id:{$group_id},timeCache:{$query['timeCache']},query:" . json_encode($query) . ',rst:' . json_encode($dict);
         self::debug($log_msg, __METHOD__, __CLASS__, __LINE__);

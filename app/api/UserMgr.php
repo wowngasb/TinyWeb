@@ -2,9 +2,9 @@
 namespace app\api;
 
 use app\api\GraphQL\BasicUser;
-use TinyWeb\Base\BaseApi;
+use TinyWeb\Base\AbstractApi;
 
-class UserMgr extends BaseApi
+class UserMgr extends AbstractApi
 {
     public function getUser($id){
         $user = BasicUser::getDataById($id);

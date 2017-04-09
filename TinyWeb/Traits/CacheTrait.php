@@ -19,19 +19,19 @@ trait CacheTrait
     /**
      * 使用redis缓存函数调用的结果 优先使用缓存中的数据
      * @param string $method 所在方法 方便检索
-     * @param string $tag redis 缓存tag 表示分类
-     * @param \Closure $func 获取结果的调用 没有任何参数  需要有返回结果
-     * @param \Closure $filter 判断结果是否可以缓存的调用 参数为 $func 的返回结果 返回值为bool
-     * @param int $timeCache 允许的数据缓存时间 为0 表示强制刷新缓存 默认为300 负数表示清空缓存 不执行调用
+     * @param string $key redis 缓存tag 表示分类
+     * @param callable $func 获取结果的调用 没有任何参数  需要有返回结果
+     * @param callable $filter 判断结果是否可以缓存的调用 参数为 $func 的返回结果 返回值为bool
+     * @param int $timeCache 允许的数据缓存时间 0表示返回函数结果并清空缓存  负数表示不执行调用只清空缓存  默认为300
      * @param bool $is_log 是否显示日志
      * @param string $prefix 缓存键 的 前缀
      * @param array $tags 标记数组
      * @return array
      * @throws \phpFastCache\Exceptions\phpFastCacheDriverCheckException
      */
-    protected static function  _cacheDataByRedis($method, $tag, \Closure $func, \Closure $filter, $timeCache = null, $is_log = false, $prefix = null, array $tags = [])
+    protected static function _cacheDataByRedis($method, $key, callable $func, callable $filter, $timeCache = null, $is_log = false, $prefix = null, array $tags = [])
     {
-        if (empty($tag) || empty($method)) {
+        if (empty($key) || empty($method)) {
             return $func();
         }
         if (is_null($prefix)) {
@@ -51,49 +51,48 @@ trait CacheTrait
             'database' => Application::getInstance()->getEnv('ENV_REDIS_DB', null),
         ]);
 
-        $rKey = !empty($prefix) ? "{$prefix}:{$method}?{$tag}" : "{$method}?{$tag}";
+        $rKey = !empty($prefix) ? "{$prefix}:{$method}?{$key}" : "{$method}?{$key}";
 
         if (empty($mCache)) {
-            LogTrait::error("CacheManager getInstance error", __METHOD__, __CLASS__, __LINE__);
+            self::_redisError("CacheManager getInstance error");
             return $func();
-        } else if ($timeCache < 0) {
-            $mCache->deleteItem($rKey);
-            return [];
-        } else if ($timeCache > 0) {
-            $itemObj = $mCache->getItem($rKey);
-            $val = $itemObj->get();
-            $val = !empty($val) ? $val : [];
-            $val['_update_'] = isset($val['_update_']) ? $val['_update_'] : $now;
-            if (isset($val['data']) && $now - $val['_update_'] < $timeCache) {
-                $log_msg = "cached now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$val['_update_']}";
-                $is_log && LogTrait::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
+        } else if ($timeCache > 0) {  //判断缓存有效期是否在要求之内  数据符合要求直接返回  不再执行 func
+            $val = $mCache->getItem($rKey)->get() ?: [];
+            if (isset($val['data']) && isset($val['_update_']) && $now - $val['_update_'] < $timeCache) {
+                $is_log && self::_redisDebug('cached', $now, $method, $key, $timeCache, $val['_update_'], $tags);
                 return $val['data'];
             }
         }
 
-        $val = ['_update_' => $now, 'data' => $func()];
-        if ($filter($val['data'])) {
-            if (($timeCache > 0)) {
-                $itemObj = $mCache->getItem($rKey);
-                $itemObj->set($val)->expiresAfter($timeCache)->setTags($tags);
-                $mCache->save($itemObj);
-            } else {
-                $mCache->deleteItem($rKey);
-            }
-            if ($is_log) {
-                $log_msg = "cache func now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$val['_update_']}";
-                $status = $mCache->getStats();
-                LogTrait::debug($log_msg . ",status:" . json_encode($status), __METHOD__, __CLASS__, __LINE__);
-            }
+        $val = ['_update_' => $now, 'data' => $timeCache >= 0 ? $func() : []];
+        if ($timeCache > 0 && $filter($val['data'])) {   //需要缓存 且缓存世间大于0 保存数据并加上 tags
+            $itemObj = $mCache->getItem($rKey)->set($val)->expiresAfter($timeCache);
+            !empty($tags) && $itemObj->setTags($tags);
+            $mCache->save($itemObj);
+            $is_log && self::_redisDebug('cache', $now, $method, $key, $timeCache, $val['_update_'], $tags);
         } else {
-            if ($is_log) {
-                $log_msg = "filter skip now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$val['_update_']}";
-                $status = $mCache->getStats();
-                LogTrait::debug($log_msg . ",status:" . json_encode($status), __METHOD__, __CLASS__, __LINE__);
-            }
+            $is_log && self::_redisDebug('filter skip', $now, $method, $key, $timeCache, $val['_update_'], $tags);
         }
 
+        if ($timeCache <= 0) {  //需要清除缓存并清除所有相关tags的缓存
+            $mCache->deleteItem($rKey);
+            !empty($tags) && $mCache->deleteItemsByTags($tags);
+            $is_log && self::_redisDebug('delete', $now, $method, $key, $timeCache, $val['_update_'], $tags);
+        }
         return $val['data'];
     }
 
+    protected static function _redisDebug($action, $now, $method, $key, $timeCache, $update, $tags)
+    {
+        $log_msg = "{$action} now:{$now}, method:{$method}, key:{$key}, timeCache:{$timeCache}, _update_:{$update}";
+        if (!empty($tags)) {
+            $log_msg .= ", tags:[" . join(',', $tags) . ']';
+        }
+        LogTrait::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
+    }
+
+    protected static function _redisError($log_msg)
+    {
+        LogTrait::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
+    }
 }

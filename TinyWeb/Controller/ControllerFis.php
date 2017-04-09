@@ -10,12 +10,12 @@ namespace TinyWeb\Controller;
 
 
 use TinyWeb\Application;
-use TinyWeb\Base\BaseController;
+use TinyWeb\Base\AbstractController;
 use TinyWeb\Request;
 use TinyWeb\Response;
 use TinyWeb\View\ViewFis;
 
-abstract class ControllerFis extends BaseController
+abstract class ControllerFis extends AbstractController
 {
     private static $fis_release_dir = 'public';   //Fis3发布的目录  必须放置在 ROOT_PATH 下面
 
