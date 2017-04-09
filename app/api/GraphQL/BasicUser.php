@@ -12,6 +12,7 @@ namespace app\api\GraphQL;
 use app\api\GraphQL\Enum\BasicUserStateEnum;
 use TinyWeb\Application;
 use TinyWeb\Exception\OrmParamsError;
+use TinyWeb\Func;
 use TinyWeb\Traits\OrmTrait;
 use Youshido\GraphQL\Config\Object\ObjectTypeConfig;
 use Youshido\GraphQL\Type\NonNullType;
@@ -129,7 +130,7 @@ class BasicUser extends AbstractObjectType
         }
         $user = self::getItem($id);
         $tmp = self::_hashPassWord($password);
-        return Application::strCmp($tmp, $user['password']);
+        return Func::str_cmp($tmp, $user['password']);
     }
 
     protected static function _fixItem($val)

@@ -16,6 +16,7 @@ use TinyWeb\Application;
 use TinyWeb\Base\AbstractContext;
 use TinyWeb\DispatchInterface;
 use TinyWeb\Exception\AppStartUpError;
+use TinyWeb\Func;
 use TinyWeb\Helper\ApiHelper;
 use TinyWeb\Traits\CacheTrait;
 use TinyWeb\Traits\LogTrait;
@@ -67,7 +68,7 @@ class ApiDispatch implements DispatchInterface
      */
     public static function initMethodContext(Request $request, Response $response, array $routeInfo, $action)
     {
-        $namespace = "\\" . Application::join("\\", [Application::getInstance()->getAppName(), 'api', $routeInfo[0]]);
+        $namespace = "\\" . Func::joinNotEmpty("\\", [Application::getInstance()->getAppName(), 'api', $routeInfo[0]]);
         $context = new $namespace($request, $response);
         if (!($context instanceof AbstractApi)) {
             throw new AppStartUpError("class:{$namespace} isn't instanceof BaseApiModel with routeInfo:" . json_encode($routeInfo));

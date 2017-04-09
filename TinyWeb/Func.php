@@ -11,47 +11,42 @@ namespace TinyWeb;
 
 class Func
 {
-    public static function hashPassWord($salt, $password)
-    {
-        return md5(md5($salt . $password));
-    }
+
+    ##########################
+    ######## 数组处理 ########
+    ##########################
 
     /**
      * 从一个数组中提取需要的key  缺失的key设置为空字符串
      * @param array $arr 原数组
      * @param array $need 需要的key 列表
+     * @param string $default 默认值
      * @return array 需要的key val数组
      */
-    public static function filter_keys(array $arr, array $need)
+    public static function filter_keys(array $arr, array $need, $default = '')
     {
         $rst = [];
         foreach ($need as $val) {
-            $rst[$val] = isset($arr[$val]) ? $arr[$val] : '';
+            $rst[$val] = isset($arr[$val]) ? $arr[$val] : $default;
         }
         return $rst;
     }
 
     /**
-     * 检查字符串是否包含指定关键词
-     * @param string $str 需检查的字符串
-     * @param string $filter_str 关键词字符串 使用 $split_str 分隔
-     * @param string $split_str 分割字符串
-     * @return bool 是否含有关键词
+     * 获取一个数组的指定键值 未设置则使用 默认值
+     * @param array $val
+     * @param string $key
+     * @param mixed $default 默认值 默认为 null
+     * @return mixed
      */
-    public static function pass_filter($str, $filter_str, $split_str)
+    public static function v(array $val, $key, $default = null)
     {
-        $filter = explode($split_str, $filter_str);
-        foreach ($filter as $key => $val) {
-            $val = trim($val);
-            if ($val != '') {
-                $test = stripos($str, $val);
-                if ($test !== false) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return isset($val[$key]) ? $val[$key] : $default;
     }
+
+    ##########################
+    ######## 时间处理 ########
+    ##########################
 
     /**
      * 在指定时间 上添加N个月的日期字符串
@@ -84,15 +79,15 @@ class Func
 
     /**
      * 计算两个时间戳的差值
-     * @param int $starttime 开始时间戳
-     * @param int $endtime 结束时间错
+     * @param int $stime 开始时间戳
+     * @param int $etime 结束时间错
      * @return array  时间差 ["day" => $days, "hour" => $hours, "min" => $mins, "sec" => $secs]
      */
-    public static function diff_time($starttime, $endtime)
+    public static function diff_time($stime, $etime)
     {
-        $timediff = $endtime - $starttime;
-        $days = intval($timediff / 86400);
-        $remain = $timediff % 86400;
+        $sub_sec = $etime - $stime;
+        $days = intval($sub_sec / 86400);
+        $remain = $sub_sec % 86400;
         $hours = intval($remain / 3600);
         $remain = $remain % 3600;
         $mins = intval($remain / 60);
@@ -102,13 +97,13 @@ class Func
 
     /**
      * 计算两个时间戳的差值 字符串
-     * @param int $starttime 开始时间戳
-     * @param int $endtime 结束时间错
+     * @param int $stime 开始时间戳
+     * @param int $etime 结束时间错
      * @return string  时间差 xx小时xx分xx秒
      */
-    public static function str_time($starttime, $endtime)
+    public static function str_time($stime, $etime)
     {
-        $c = abs(intval($endtime - $starttime));
+        $c = abs(intval($etime - $stime));
         $s = $c % 60;
         $c = ($c - $s) / 60;
         $m = $c % 60;
@@ -119,69 +114,95 @@ class Func
         return $rst;
     }
 
+    ##########################
+    ######## 字符串处理 ########
+    ##########################
+
     /**
-     * 把字节数 按照指定的单位显示
-     * @param int $num 数值
-     * @param string $in_tag 原单位 默认为空 表示 Byte
-     * @param string $out_tag 需要的单位 默认为空 表示自动选取合适单位
-     * @param int $dot_num 小数点位数 默认为2
-     * @return string  修复后的字符串  自动加上单位
+     * 检查字符串是否包含指定关键词
+     * @param string $str 需检查的字符串
+     * @param string $filter_str 关键词字符串 使用 $split_str 分隔
+     * @param string $split_str 分割字符串
+     * @return bool 是否含有关键词
      */
-    public static function byte_size($num, $in_tag = '', $out_tag = '', $dot_num = 2)
+    public static function pass_filter($str, $filter_str, $split_str)
+    {
+        $filter = explode($split_str, $filter_str);
+        foreach ($filter as $key => $val) {
+            $val = trim($val);
+            if ($val != '') {
+                $test = stripos($str, $val);
+                if ($test !== false) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Byte 数据大小  格式化 为 字符串
+     * @param int $num 大小
+     * @param string $in_tag 输入单位
+     * @param string $out_tag 输出单位  为空表示自动尝试 最适合的单位
+     * @param int $dot 小数位数 默认为2
+     * @return string
+     */
+    public static function byte2size($num, $in_tag = '', $out_tag = '', $dot = 2)
     {
         $num = $num * 1.0;
         $out_tag = strtoupper($out_tag);
         $in_tag = strtoupper($in_tag);
-        $dot_num = $dot_num > 0 ? intval($dot_num) : 0;
+        $dot = $dot > 0 ? intval($dot) : 0;
         $tag_map = ['K' => 1024, 'M' => 1024 * 1024, 'G' => 1024 * 1024 * 1024, 'T' => 1024 * 1024 * 1024 * 1024];
         if (!empty($in_tag) && isset($tag_map[$in_tag])) {
             $num = $num * $tag_map[$in_tag];  //正确转换输入数据 去掉单位
         }
         $zero_list = [];
-        for ($i = 0; $i < $dot_num; $i++) {
+        for ($i = 0; $i < $dot; $i++) {
             $zero_list[] = '0';
         }
-        $zero_str = '.' . join($zero_list, '');
+        $zero_str = '.' . join($zero_list, '');  // 构建字符串 .00 用于替换 1.00G 为 1G
         if ($num < 1024) {
-            return str_replace($zero_str, '', sprintf("%.{$dot_num}f", $num));
+            return str_replace($zero_str, '', sprintf("%.{$dot}f", $num));
         } else if (!empty($out_tag) && isset($tag_map[$out_tag])) {
-            $tmp = round($num / $tag_map[$out_tag], $dot_num);
-            return str_replace($zero_str, '', sprintf("%.{$dot_num}f", $tmp)) . $out_tag;  //使用设置的单位输出
+            $tmp = round($num / $tag_map[$out_tag], $dot);
+            return str_replace($zero_str, '', sprintf("%.{$dot}f", $tmp)) . $out_tag;  //使用设置的单位输出
         } else {
             foreach ($tag_map as $key => $val) {  //尝试找到一个合适的单位
-                $tmp = round($num / $val, $dot_num);
+                $tmp = round($num / $val, $dot);
                 if ($tmp >= 1 && $tmp < 1024) {
-                    return str_replace($zero_str, '', sprintf("%.{$dot_num}f", $tmp)) . $key;
+                    return str_replace($zero_str, '', sprintf("%.{$dot}f", $tmp)) . $key;
                 }
             }
-            //未找到合适的单位  使用T进行输出
-            return self::byte_size($num, '', 'T', $dot_num);
+            //未找到合适的单位  使用最大 tag T 进行输出
+            return self::byte2size($num, '', 'T', $dot);
         }
     }
 
-
-    public static function fix_telephone($telephone)
+    public static function anonymous_telephone($telephone, $start_num = 3, $end_num = 4)
     {
         if (empty($telephone)) {
             return '';
         }
         $len = strlen($telephone);
-        if ($len <= 7) {
-            return '';
+        $min_len = $start_num + $end_num;
+        if ($len <= $min_len) {
+            return $telephone;
         }
-        return substr($telephone, 0, 3) . str_repeat('*', $len - 7) . substr($telephone, -4);
+        return substr($telephone, 0, $start_num) . str_repeat('*', $len - $min_len) . substr($telephone, -$end_num);
     }
 
-    public static function fix_email($email)
+    public static function anonymous_email($email, $start_num = 3)
     {
         if (empty($email)) {
             return '';
         }
         $idx = strpos($email, '@');
-        if ($idx <= 3) {
-            return '';
+        if ($idx <= $start_num) {
+            return $email;
         }
-        return substr($email, 0, 3) . str_repeat('*', $idx - 3) . substr($email, $idx);
+        return substr($email, 0, $start_num) . str_repeat('*', $idx - $start_num) . substr($email, $idx);
     }
 
     public static function str_cmp($str1, $str2)
@@ -202,24 +223,9 @@ class Func
         }
     }
 
-    public static function str_icmp($str1, $str2)
+    public static function stri_cmp($str1, $str2)
     {
         return self::str_cmp(strtolower($str1), strtolower($str2));
-    }
-
-    public static function array_merge($arr1, $arr2, array $subkeys = [])
-    {
-        foreach ($subkeys as $subkey) {
-            if (isset($arr1[$subkey])) {
-                if (is_array($arr1[$subkey])) {
-                    $arr2[$subkey] = isset($arr2[$subkey]) && is_array($arr2[$subkey]) ? $arr2[$subkey] : [];
-                    $arr2[$subkey] = array_merge($arr1[$subkey], $arr2[$subkey]);
-                } else {
-                    $arr2[$subkey] = isset($arr2[$subkey]) ? $arr2[$subkey] : $arr1[$subkey];
-                }
-            }
-        }
-        return $arr2;
     }
 
     ##########################
@@ -293,9 +299,104 @@ class Func
         return $char;
     }
 
+
     ##########################
     ######## 编码相关 ########
     ##########################
+
+
+    public static function safe_base64_encode($str)
+    {
+        $str = rtrim(strtr(base64_encode($str), '+/', '-_'), '=');
+        return $str;
+    }
+
+    public static function safe_base64_decode($str)
+    {
+        $str = strtr(trim($str), '-_', '+/');
+        $last_len = strlen($str) % 4;
+        $str = $last_len == 2 ? $str . '==' : ($last_len == 3 ? $str . '=' : $str);
+        $str = base64_decode($str);
+        return $str;
+    }
+
+    /**
+     * @param int $length
+     * @return string
+     */
+    public static function rand_str($length)
+    {
+        if ($length <= 0) {
+            return '';
+        }
+        $str = '';
+        $tmp_str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
+        $max = strlen($tmp_str) - 1;
+        for ($i = 0; $i < $length; $i++) {
+            $str .= $tmp_str[rand(0, $max)];   //rand($min,$max)生成介于min和max两个数之间的一个随机整数
+        }
+        return $str;
+    }
+
+    /**
+     * @param string $string
+     * @param string $operation
+     * @param string $key
+     * @param int $expiry
+     * @param int $ckey_length  动态密匙长度，相同的明文会生成不同密文就是依靠动态密匙
+     * @return string
+     */
+    public static function authcode($string, $operation, $key, $expiry = 0, $ckey_length = 2)
+    {
+        $key = md5($key);// 密匙
+        $keya = md5(substr($key, 0, 16));// 密匙a会参与加解密
+        $keyb = md5(substr($key, 16, 16));// 密匙b会用来做数据完整性验证
+        $keyc = $ckey_length ? ($operation == 'DECODE' ? substr($string, 0, $ckey_length) : self::rand_str($ckey_length)) : '';// 密匙c用于变化生成的密文
+        $cryptkey = $keya . md5($keya . $keyc);// 参与运算的密匙
+        $key_length = strlen($cryptkey);
+        // 明文，前10位用来保存时间戳，解密时验证数据有效性，10到26位用来保存$keyb(密匙b)，
+        //解密时会通过这个密匙验证数据完整性
+        // 如果是解码的话，会从第$ckey_length位开始，因为密文前$ckey_length位保存 动态密匙，以保证解密正确
+        $string = $operation == 'DECODE' ? self::safe_base64_decode(substr($string, $ckey_length)) : pack('L', $expiry > 0 ? $expiry + time() : 0) . hex2bin(substr(md5($string . $keyb), 0, 8)) . $string;
+        $string_length = strlen($string);
+        $result = '';
+        $box = range(0, 255);
+        $rndkey = [];
+        // 产生密匙簿
+        for ($i = 0; $i <= 255; $i++) {
+            $rndkey[$i] = ord($cryptkey[$i % $key_length]);
+        }
+        // 用固定的算法，打乱密匙簿，增加随机性，好像很复杂，实际上对并不会增加密文的强度
+        for ($j = $i = 0; $i < 256; $i++) {
+            $j = ($j + $box[$i] + $rndkey[$i]) % 256;
+            $tmp = $box[$i];
+            $box[$i] = $box[$j];
+            $box[$j] = $tmp;
+        }
+        // 核心加解密部分
+        for ($a = $j = $i = 0; $i < $string_length; $i++) {
+            $a = ($a + 1) % 256;
+            $j = ($j + $box[$a]) % 256;
+            $tmp = $box[$a];
+            $box[$a] = $box[$j];
+            $box[$j] = $tmp;
+            // 从密匙簿得出密匙进行异或，再转成字符
+            $result .= chr(ord($string[$i]) ^ ($box[($box[$a] + $box[$j]) % 256]));
+        }
+        if ($operation == 'DECODE') {
+            // 验证数据有效性，请看未加密明文的格式
+            $time = unpack('L', substr($result, 0, 4))[1];
+            $string = substr($result, 8);
+            if (($time == 0 || $time > time()) && bin2hex(substr($result, 4, 4)) == substr(md5($string . $keyb), 0, 8)) {
+                return $string;
+            } else {
+                return '';
+            }
+        } else {
+            return $keyc . self::safe_base64_encode($result);
+        }
+    }
+
 
     /**
      * xss 清洗数组 尝试对数组中特定字段进行处理
@@ -337,126 +438,9 @@ EOT;
         return $val;
     }
 
-    /**
-     * 安全的base64编码 替换'+/' 为 '-_' 自动消去末尾等号
-     * @param string $str
-     * @return string
-     */
-    public static function ub64_encode($str)
-    {
-        $str = rtrim(strtr(base64_encode($str), '+/', '-_'), '=');
-        return $str;
-    }
-
-    /**
-     * 安全的base64解码
-     * @param string $str
-     * @return string
-     */
-    public static function ub64_decode($str)
-    {
-        $str = strtr(trim($str), '-_', '+/');
-        $last_len = strlen($str) % 4;
-        $str = $last_len == 2 ? $str . '==' : ($last_len == 3 ? $str . '=' : $str);
-        $str = base64_decode($str);
-        return $str;
-    }
-
-    /**
-     * 加密字符串
-     * @param string $crypt_key
-     * @param string $string
-     * @param int $expiry 有效期 秒数  默认为0表示永久有效
-     * @return string
-     */
-    public static function encrypt($crypt_key, $string, $expiry = 0)
-    {
-        return authcode($string, 'ENCODE', $crypt_key, $expiry);
-    }
-
-    /**
-     * 解密字符串
-     * @param string $crypt_key
-     * @param string $string
-     * @return string
-     */
-    public static function decrypt($crypt_key, $string)
-    {
-        return authcode($string, 'DECODE', $crypt_key);
-    }
-
-    /**
-     * 加解密操作
-     * @param $string
-     * @param $operation
-     * @param $key
-     * @param int $expiry
-     * @return string
-     */
-    public static function authcode($string, $operation, $key, $expiry = 0)
-    {
-        if (empty($string)) {
-            return '';
-        }
-        // 动态密匙长度，相同的明文会生成不同密文就是依靠动态密匙
-        $ckey_length = 4;
-        // 密匙
-        $key = md5($key);
-        // 密匙a会参与加解密
-        $keya = md5(substr($key, 0, 16));
-        // 密匙b会用来做数据完整性验证
-        $keyb = md5(substr($key, 16, 16));
-        // 密匙c用于变化生成的密文
-        $keyc = $ckey_length ? ($operation == 'DECODE' ? substr($string, 0, $ckey_length) :
-            substr(md5(microtime()), -$ckey_length)) : '';
-        // 参与运算的密匙
-        $cryptkey = $keya . md5($keya . $keyc);
-        $key_length = strlen($cryptkey);
-        // 明文，前10位用来保存时间戳，解密时验证数据有效性，10到26位用来保存$keyb(密匙b)，
-        //解密时会通过这个密匙验证数据完整性
-        // 如果是解码的话，会从第$ckey_length位开始，因为密文前$ckey_length位保存 动态密匙，以保证解密正确
-        $string = $operation == 'DECODE' ? safe_base64_decode(substr($string, $ckey_length)) : sprintf('%010d', $expiry ? $expiry + time() : 0) . substr(md5($string . $keyb), 0, 16) . $string;
-        $string_length = strlen($string);
-        $result = '';
-        $box = range(0, 255);
-        $rndkey = array();
-        // 产生密匙簿
-        for ($i = 0; $i <= 255; $i++) {
-            $rndkey[$i] = ord($cryptkey[$i % $key_length]);
-        }
-        // 用固定的算法，打乱密匙簿，增加随机性，好像很复杂，实际上对并不会增加密文的强度
-        for ($j = $i = 0; $i < 256; $i++) {
-            $j = ($j + $box[$i] + $rndkey[$i]) % 256;
-            $tmp = $box[$i];
-            $box[$i] = $box[$j];
-            $box[$j] = $tmp;
-        }
-        // 核心加解密部分
-        for ($a = $j = $i = 0; $i < $string_length; $i++) {
-            $a = ($a + 1) % 256;
-            $j = ($j + $box[$a]) % 256;
-            $tmp = $box[$a];
-            $box[$a] = $box[$j];
-            $box[$j] = $tmp;
-            // 从密匙簿得出密匙进行异或，再转成字符
-            $result .= chr(ord($string[$i]) ^ ($box[($box[$a] + $box[$j]) % 256]));
-        }
-        if ($operation == 'DECODE') {
-            // 验证数据有效性，请看未加密明文的格式
-            if ((substr($result, 0, 10) == 0 || substr($result, 0, 10) - time() > 0) &&
-                substr($result, 10, 16) == substr(md5(substr($result, 26) . $keyb), 0, 16)
-            ) {
-                return substr($result, 26);
-            } else {
-                return '';
-            }
-        } else {
-            // 把动态密匙保存在密文里，这也是为什么同样的明文，生产不同密文后能解密的原因
-            // 因为加密后的密文可能是一些特殊字符，复制过程可能会丢失，所以用base64编码
-            return $keyc . str_replace('=', '', safe_base64_encode($result));
-        }
-    }
-
+    ##########################
+    ######## URL相关 ########
+    ##########################
 
     /**
      * 拼接 url get 地址
@@ -476,17 +460,11 @@ EOT;
         return !empty($args_list) ? $base_url . join($args_list, '&') : $base_url;
     }
 
-    /**
-     * 获取一个数组的指定键值 未设置则使用 默认值
-     * @param array $val
-     * @param string $key
-     * @param mixed $default 默认值 默认为 null
-     * @return mixed
-     */
-    public static function v(array $val, $key, $default = null)
-    {
-        return isset($val[$key]) ? $val[$key] : $default;
-    }
+
+
+    #########################################
+    ########### 魔术常量相关函数 ############
+    #########################################
 
     /**
      * 根据魔术常量获取获取 类名
@@ -535,4 +513,23 @@ EOT;
         $str = static::class2name($str);
         return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
     }
+
+    /**
+     * 使用 seq 把 list 数组中的非空字符串连接起来  _join('_', [1,2,3]) = '1_2_3_'
+     * @param string $seq
+     * @param array $list
+     * @return string
+     */
+    public static function joinNotEmpty($seq, array $list)
+    {
+        $tmp_list = [];
+        foreach ($list as $item) {
+            $item = trim($item);
+            if (!empty($item)) {
+                $tmp_list[] = strval($item);
+            }
+        }
+        return join($seq, $tmp_list);
+    }
+
 }

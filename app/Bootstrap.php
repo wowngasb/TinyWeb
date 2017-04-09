@@ -28,6 +28,9 @@ final class Bootstrap extends BaseBootstrap
      */
     public static function bootstrap($appname, Application $app)
     {
+        if( $app->isBootstrapCompleted() ){
+            return $app;
+        }
         $app->addRoute('api', new RoutePrefix('api'), new ApiDispatch())
             ->addRoute('yar', new RoutePrefix('yar'), new YarDispatch())
             ->addRoute('simple', new RouteSimple('m', 'c', 'a'));  // 添加默认简单路由

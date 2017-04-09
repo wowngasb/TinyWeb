@@ -11,6 +11,7 @@ namespace app\develop\controllers;
 
 use app\common\Controller;
 use TinyWeb\Application;
+use TinyWeb\Func;
 use TinyWeb\Helper\ApiHelper;
 use TinyWeb\Request;
 
@@ -50,7 +51,7 @@ class deploy extends Controller
     public function buildApiModJs()
     {
         $dev_debug = Request::_get('dev_debug', 0) == 1;
-        $api_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$this->appname, 'api' . DIRECTORY_SEPARATOR]);
+        $api_path = ROOT_PATH . Func::joinNotEmpty(DIRECTORY_SEPARATOR, [$this->appname, 'api' . DIRECTORY_SEPARATOR]);
         $api_list = ApiHelper::getApiFileList($api_path);
         foreach ($api_list as $key => $val) {
             $class = str_replace('.php', '', $val['name']);
@@ -58,7 +59,7 @@ class deploy extends Controller
             $class_name = "\\{$this->appname}\\api\\{$class}";
             $method_list = ApiHelper::getApiMethodList($class_name);
             $js_str = ApiHelper::model2js($class, $method_list, $dev_debug);
-            $out_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$this->appname, 'static', 'apiMod' . DIRECTORY_SEPARATOR]);
+            $out_path = ROOT_PATH . Func::joinNotEmpty(DIRECTORY_SEPARATOR, [$this->appname, 'static', 'apiMod' . DIRECTORY_SEPARATOR]);
             if (!is_dir($out_path)) {
                 mkdir($out_path, 0777, true);
             }

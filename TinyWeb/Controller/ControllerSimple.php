@@ -11,6 +11,7 @@ namespace TinyWeb\Controller;
 
 use TinyWeb\Application;
 use TinyWeb\Base\AbstractController;
+use TinyWeb\Func;
 use TinyWeb\Request;
 use TinyWeb\Response;
 use TinyWeb\View\ViewSimple;
@@ -30,9 +31,9 @@ abstract class AbstractControllerSimple extends AbstractController
     protected function display($tpl_path = '')
     {
         if (empty($tpl_path)) {
-            $tpl_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$this->appname, $this->routeInfo[2], 'views', $this->routeInfo[0], $this->routeInfo[1] . '.php']);
+            $tpl_path = ROOT_PATH . Func::joinNotEmpty(DIRECTORY_SEPARATOR, [$this->appname, $this->routeInfo[2], 'views', $this->routeInfo[0], $this->routeInfo[1] . '.php']);
         } else {
-            $tpl_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$this->appname, $this->routeInfo[2], 'views', $tpl_path]);
+            $tpl_path = ROOT_PATH . Func::joinNotEmpty(DIRECTORY_SEPARATOR, [$this->appname, $this->routeInfo[2], 'views', $tpl_path]);
         }
         $view = $this->getView();
         $params = $view->getAssign();
@@ -52,7 +53,7 @@ abstract class AbstractControllerSimple extends AbstractController
         $appname = $this->appname;
         $params['routeInfo'] = $routeInfo;
         $params['appname'] = $appname;
-        $tpl_path = ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$appname, 'widget', $tpl_path]);
+        $tpl_path = ROOT_PATH . Func::joinNotEmpty(DIRECTORY_SEPARATOR, [$appname, 'widget', $tpl_path]);
 
         static::fire('preWidget', [$this, $tpl_path, $params]);
         $params['request'] = $this->request;

@@ -4,6 +4,7 @@ namespace app\develop\controllers;
 
 use app\common\Controller;
 use TinyWeb\Application;
+use TinyWeb\Func;
 use TinyWeb\Request;
 use TinyWeb\Helper\LogHelper;
 use TinyWeb\Helper\ApiHelper;
@@ -100,7 +101,7 @@ class sysLog extends Controller
         foreach ($arr_dir as $key => $val) {
             $val['ctime_str'] = date('Y-m-d H:i:s', $val['ctime']);
             $val['mtime_str'] = date('Y-m-d H:i:s', $val['mtime']);
-            $val['size_str'] = Application::byte2size($val['size']) . 'B';
+            $val['size_str'] = Func::byte2size($val['size']) . 'B';
             if ($val['type'] == 'file') {
                 $rst[] = [
                     'text' => $val['name'],
