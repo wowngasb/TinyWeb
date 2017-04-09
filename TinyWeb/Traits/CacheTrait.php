@@ -44,7 +44,7 @@ trait CacheTrait
         $now = time();
         $timeCache = intval($timeCache);
 
-        $InstanceCache = CacheManager::getInstance('predis', [
+        $mCache = CacheManager::getInstance('predis', [
             'host' => Application::getInstance()->getEnv('ENV_REDIS_HOST'),
             'port' => Application::getInstance()->getEnv('ENV_REDIS_PORT', 6379),
             'password' => Application::getInstance()->getEnv('ENV_REDIS_PASS', null),
@@ -53,14 +53,14 @@ trait CacheTrait
 
         $rKey = !empty($prefix) ? "{$prefix}:{$method}?{$tag}" : "{$method}?{$tag}";
 
-        if (empty($InstanceCache)) {
+        if (empty($mCache)) {
             LogTrait::error("CacheManager getInstance error", __METHOD__, __CLASS__, __LINE__);
             return $func();
         } else if ($timeCache < 0) {
-            $InstanceCache->deleteItem($rKey);
+            $mCache->deleteItem($rKey);
             return [];
         } else if ($timeCache > 0) {
-            $itemObj = $InstanceCache->getItem($rKey);
+            $itemObj = $mCache->getItem($rKey);
             $val = $itemObj->get();
             $val = !empty($val) ? $val : [];
             $val['_update_'] = isset($val['_update_']) ? $val['_update_'] : $now;
@@ -74,21 +74,21 @@ trait CacheTrait
         $val = ['_update_' => $now, 'data' => $func()];
         if ($filter($val['data'])) {
             if (($timeCache > 0)) {
-                $itemObj = $InstanceCache->getItem($rKey);
+                $itemObj = $mCache->getItem($rKey);
                 $itemObj->set($val)->expiresAfter($timeCache)->setTags($tags);
-                $InstanceCache->save($itemObj);
+                $mCache->save($itemObj);
             } else {
-                $InstanceCache->deleteItem($rKey);
+                $mCache->deleteItem($rKey);
             }
             if ($is_log) {
                 $log_msg = "cache func now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$val['_update_']}";
-                $status = $InstanceCache->getStats();
+                $status = $mCache->getStats();
                 LogTrait::debug($log_msg . ",status:" . json_encode($status), __METHOD__, __CLASS__, __LINE__);
             }
         } else {
             if ($is_log) {
                 $log_msg = "filter skip now:{$now}, method:{$method}, tag:{$tag}, timeCache:{$timeCache}, _update_:{$val['_update_']}";
-                $status = $InstanceCache->getStats();
+                $status = $mCache->getStats();
                 LogTrait::debug($log_msg . ",status:" . json_encode($status), __METHOD__, __CLASS__, __LINE__);
             }
         }

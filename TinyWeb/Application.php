@@ -271,11 +271,7 @@ final class Application implements DispatchInterface, RouteInterface
                 return [$route, $tmp,];
             }
         }
-        if( $request->getRequestPath()=='/' ){
-            return [$this->_route_name, [['index', 'index', 'index'], $request->_request()]];  //无匹配路由时 始终返回自己的默认路由
-        } else {
-            return [$this->_route_name, [$this->getDefaultRouteInfo(), $request->_request()]];  //无匹配路由时 始终返回自己的默认路由
-        }
+        return [$this->_route_name, [$this->getDefaultRouteInfo(), $request->_request()]];  //无匹配路由时 始终返回自己的默认路由
     }
 
     /**
@@ -295,7 +291,7 @@ final class Application implements DispatchInterface, RouteInterface
      */
     public static function getDefaultRouteInfo()
     {
-        return ['index', 'pageNotFound', 'index'];
+        return ['index', 'index', 'index'];
     }
 
     ###############################################################
