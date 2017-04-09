@@ -8,7 +8,8 @@
 
 namespace TinyWeb\OrmQuery;
 
-use model\Unit\Func;
+
+use TinyWeb\Func;
 
 abstract class AbstractQuery
 {

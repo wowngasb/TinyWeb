@@ -489,17 +489,6 @@ EOT;
     }
 
     /**
-     * 根据魔术常量获取获取 类名 并转换为 小写字母加下划线格式 的 数据表名
-     * @param string $str
-     * @return string
-     */
-    public static function class2table($str)
-    {
-        $str = static::class2name($str);
-        return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
-    }
-
-    /**
      * 根据魔术常量获取获取 类名
      * @param string $str
      * @return string
@@ -533,6 +522,17 @@ EOT;
     public static function method2field($str)
     {
         $str = static::method2name($str);
+        return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
+    }
+
+    /**
+     * 根据魔术常量获取获取 类名 并转换为 小写字母加下划线格式 的 数据表名
+     * @param string $str
+     * @return string
+     */
+    public static function class2table($str)
+    {
+        $str = static::class2name($str);
         return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
     }
 }
