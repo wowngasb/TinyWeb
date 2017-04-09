@@ -24,7 +24,7 @@ class BasicUser(Base):
     aodian_uin = Column(Integer, nullable=False, index=True, doc=u"""奥点云 uin""")
     access_id = Column(String(64), nullable=False, doc=u"""奥点云 access_id""")
     access_key = Column(String(64), nullable=False, doc=u"""奥点云 access_key""")
-    lss_app = Column(Integer, nullable=False, index=True, doc=u"""奥点云 uin""")
+    lss_app = Column(String(32), nullable=False, index=True, doc=u"""LSS app""")
     
     dms_id = Column(Integer, nullable=False, doc=u"""DMS id""")
     dms_sub_key = Column(String(64), nullable=False, doc=u"""DMS sub_key""")
