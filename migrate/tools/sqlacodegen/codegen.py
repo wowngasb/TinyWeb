@@ -591,7 +591,6 @@ Base = db.Model''', file=outfile)
         # Render the model tables and classes
         for model in self.models:
             out_str = '\n\n' + model.render(db_comments_map).rstrip('\n')
-            out_str = out_str.replace('DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP', 'TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP')
             print(out_str.encode('utf-8'), file=outfile)
 
         if self.footer:
