@@ -1,1 +1,0 @@
-sqlacodegen --outfile test_mpdel.py mysql://root:root@127.0.0.1:3306/vlss_demo

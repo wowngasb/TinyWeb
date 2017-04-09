@@ -2,13 +2,14 @@
 /cache/
 /public/
 /vendor/
-node_modules/
-apiMod/
+/composer.lock
+/run_server.bat
 /config/config.php
+
+node_modules/
+
 *.md.html
 *.pyc
-composer.lock
-/run_server.bat
 
-phpinfo.php
-test.php
+/phpinfo.php
+/test.php
