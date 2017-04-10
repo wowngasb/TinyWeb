@@ -10,6 +10,7 @@ namespace TinyWeb\View;
 
 
 use TinyWeb\Application;
+use TinyWeb\Func;
 use TinyWeb\Plugin\Fis;
 use TinyWeb\Plugin\FisResource;
 
@@ -19,8 +20,8 @@ class ViewFis extends ViewSimple
     public static function initFisResource($release_dir)
     {
         FisResource::setConfig(array(
-            'config_dir'    => ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$release_dir, 'tpl']),
-            'template_dir'  => ROOT_PATH . Application::join(DIRECTORY_SEPARATOR, [$release_dir, 'tpl']),
+            'config_dir'    => ROOT_PATH . Func::joinNotEmpty(DIRECTORY_SEPARATOR, [$release_dir, 'tpl']),
+            'template_dir'  => ROOT_PATH . Func::joinNotEmpty(DIRECTORY_SEPARATOR, [$release_dir, 'tpl']),
         ));
     }
 

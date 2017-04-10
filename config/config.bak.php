@@ -2,7 +2,11 @@
 !defined('REQUEST_MICROTIME') && define('REQUEST_MICROTIME', microtime(true));
 !defined('ROOT_PATH') && define("ROOT_PATH", dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR );
 
-if(!defined('DEV_MODEL')){
+if (!defined('DEV_MODEL')) {
+    ini_set('display_errors', 0);
+    ini_set('log_errors', 1);
+    date_default_timezone_set('Asia/Shanghai');
+
     define('DEV_MODEL', 'DEBUG');  //开发模式  DEBUG 调试  PRODUCT 产品
     //define('XHPROF', 'XHPROF:CPU+MEMORY+BUILTINS');  //开启XHPROF性能分析
     define('PLUGIN_PATH', ROOT_PATH . 'plugin' . DIRECTORY_SEPARATOR);

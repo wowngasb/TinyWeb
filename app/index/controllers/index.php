@@ -10,6 +10,7 @@ namespace app\index\controllers;
 
 use app\common\Controller;
 use TinyWeb\Application;
+use TinyWeb\Func;
 
 class index extends Controller
 {
@@ -31,7 +32,7 @@ class index extends Controller
     {
         $error_file = 'error.html';
         $error_str = self::_cacheDataByRedis(__METHOD__, "error_file={$error_file}", function () use ($error_file) {
-            return file_get_contents(Application::join('\\', [ROOT_PATH, Application::getInstance()->getAppName(), 'static', $error_file]));
+            return file_get_contents(Func::joinNotEmpty('\\', [ROOT_PATH, Application::getInstance()->getAppName(), 'static', $error_file]));
         }, function ($data) {
             return !empty($data);
         });

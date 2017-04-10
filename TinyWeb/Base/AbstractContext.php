@@ -16,7 +16,7 @@ use TinyWeb\Response;
  * 一个空的接口  实现此接口的类 才可以被分发器执行
  * @package TinyWeb
  */
-abstract class BaseContext
+abstract class AbstractContext
 {
     protected $request = null;
 

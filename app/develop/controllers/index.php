@@ -4,6 +4,7 @@ namespace app\develop\controllers;
 
 use app\common\Controller;
 use TinyWeb\Application;
+use TinyWeb\Func;
 use TinyWeb\Request;
 
 class index extends Controller
@@ -44,7 +45,7 @@ EOT;
     public static function authDevelopKey()
     {
         $tmp_key = md5(rand(0, 999999));
-        return Application::strCmp(Application::getInstance()->getEnv('DEVELOP_KEY', $tmp_key), Request::_session('develop_key', ''));
+        return Func::str_cmp(Application::getInstance()->getEnv('DEVELOP_KEY', $tmp_key), Request::_session('develop_key', ''));
     }
 
 }

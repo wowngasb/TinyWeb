@@ -97,12 +97,12 @@ abstract class BaseBootstrap
             self::debugConsole($data, get_class($obj) . ' #postDispatch', 1);
         });
 
-        BaseController::on('preDisplay', function (BaseController $obj, $tpl_path, array $params) {
+        AbstractController::on('preDisplay', function (AbstractController $obj, $tpl_path, array $params) {
             false && func_get_args();
             $data = ['params' => $params, 'tpl_path' => $tpl_path];
             self::debugConsole($data, get_class($obj) . ' #preDisplay', 1);
         });  // 注册 模版渲染 打印模版变量  用于调试
-        BaseController::on('preWidget', function (BaseController $obj, $tpl_path, array $params) {
+        AbstractController::on('preWidget', function (AbstractController $obj, $tpl_path, array $params) {
             false && func_get_args();
             $data = ['params' => $params, 'tpl_path' => $tpl_path];
             self::debugConsole($data, get_class($obj) . ' #preWidget', 1);

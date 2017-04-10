@@ -2,14 +2,14 @@
 
 namespace app\api;
 
-use TinyWeb\Base\BaseApi;
+use TinyWeb\Base\AbstractApi;
 
 /**
  * API类，封装 YAR异步调用hub
  *
  * @package api
  */
-class YarApiHub extends BaseApi {
+class YarApiHub extends AbstractApi {
     
 
     #####################################

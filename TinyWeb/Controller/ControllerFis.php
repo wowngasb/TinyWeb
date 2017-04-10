@@ -10,12 +10,13 @@ namespace TinyWeb\Controller;
 
 
 use TinyWeb\Application;
-use TinyWeb\Base\BaseController;
+use TinyWeb\Base\AbstractController;
+use TinyWeb\Func;
 use TinyWeb\Request;
 use TinyWeb\Response;
 use TinyWeb\View\ViewFis;
 
-abstract class ControllerFis extends BaseController
+abstract class ControllerFis extends AbstractController
 {
     private static $fis_release_dir = 'public';   //Fis3发布的目录  必须放置在 ROOT_PATH 下面
 
@@ -46,9 +47,9 @@ abstract class ControllerFis extends BaseController
     {
         ViewFis::initFisResource(self::$fis_release_dir);
         if (empty($tpl_path)) {
-            $tpl_path = Application::join('/', [$this->routeInfo[2], 'views', $this->routeInfo[0], $this->routeInfo[1] . '.php']);
+            $tpl_path = Func::joinNotEmpty('/', [$this->routeInfo[2], 'views', $this->routeInfo[0], $this->routeInfo[1] . '.php']);
         } else {
-            $tpl_path = Application::join('/', [$this->routeInfo[2], 'views', $tpl_path]);
+            $tpl_path = Func::joinNotEmpty('/', [$this->routeInfo[2], 'views', $tpl_path]);
         }
         $view = $this->getView();
         $params = $view->getAssign();
@@ -70,7 +71,7 @@ abstract class ControllerFis extends BaseController
         $appname = $this->appname;
         $params['routeInfo'] = $routeInfo;
         $params['appname'] = $appname;
-        $tpl_path = Application::join(DIRECTORY_SEPARATOR, ['widget', $tpl_path]);
+        $tpl_path = Func::joinNotEmpty(DIRECTORY_SEPARATOR, ['widget', $tpl_path]);
 
         static::fire('preWidget', [$this, $tpl_path, $params]);
         $params['request'] = $this->request;

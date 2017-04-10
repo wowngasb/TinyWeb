@@ -26,7 +26,6 @@ def main():
     parser.add_argument('--outfile', help='file to write output to (default: stdout)')
 
     fix_args = None
-    fix_args = 'mysql://dyy_root:dyy@root@121.40.128.45:3306/vlss_demo?charset=gbk'.split()
     args = parser.parse_args(fix_args)
 
     if args.version:

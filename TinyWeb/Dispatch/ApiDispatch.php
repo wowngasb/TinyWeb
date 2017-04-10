@@ -10,12 +10,13 @@ namespace TinyWeb\Dispatch;
 
 
 use app\Bootstrap;
-use TinyWeb\Base\BaseApi;
+use TinyWeb\Base\AbstractApi;
 use Exception;
 use TinyWeb\Application;
-use TinyWeb\Base\BaseContext;
+use TinyWeb\Base\AbstractContext;
 use TinyWeb\DispatchInterface;
 use TinyWeb\Exception\AppStartUpError;
+use TinyWeb\Func;
 use TinyWeb\Helper\ApiHelper;
 use TinyWeb\Traits\CacheTrait;
 use TinyWeb\Traits\LogTrait;
@@ -29,12 +30,12 @@ class ApiDispatch implements DispatchInterface
 
     /**
      * 根据对象和方法名 获取 修复后的参数
-     * @param BaseContext $object
+     * @param AbstractContext $object
      * @param string $action
      * @param array $params
      * @return array
      */
-    public static function initMethodParams(BaseContext $object, $action, array $params)
+    public static function initMethodParams(AbstractContext $object, $action, array $params)
     {
         if (isset($_SERVER['CONTENT_TYPE']) && stripos($_SERVER['CONTENT_TYPE'], 'application/json') !== false && $_SERVER['REQUEST_METHOD'] == "POST") {
             $json_str = file_get_contents('php://input') ?: '';
@@ -62,14 +63,14 @@ class ApiDispatch implements DispatchInterface
      * @param Response $response
      * @param array $routeInfo
      * @param string $action
-     * @return BaseApi 可返回实现此接口的 其他对象 方便做类型限制
+     * @return AbstractApi 可返回实现此接口的 其他对象 方便做类型限制
      * @throws AppStartUpError
      */
     public static function initMethodContext(Request $request, Response $response, array $routeInfo, $action)
     {
-        $namespace = "\\" . Application::join("\\", [Application::getInstance()->getAppName(), 'api', $routeInfo[0]]);
+        $namespace = "\\" . Func::joinNotEmpty("\\", [Application::getInstance()->getAppName(), 'api', $routeInfo[0]]);
         $context = new $namespace($request, $response);
-        if (!($context instanceof BaseApi)) {
+        if (!($context instanceof AbstractApi)) {
             throw new AppStartUpError("class:{$namespace} isn't instanceof BaseApiModel with routeInfo:" . json_encode($routeInfo));
         }
         if (!is_callable([$context, $action]) || ApiHelper::isIgnoreMethod($action)) {
@@ -79,7 +80,7 @@ class ApiDispatch implements DispatchInterface
         return $context;
     }
 
-    public static function dispatch(BaseContext $context, $action, array $params)
+    public static function dispatch(AbstractContext $context, $action, array $params)
     {
         try {
             $result = call_user_func_array([$context, $action], $params);

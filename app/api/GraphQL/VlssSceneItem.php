@@ -142,7 +142,7 @@ class VlssSceneItem extends AbstractObjectType
      */
     public static function _qGroupIdState($group_id, array $state = [])
     {
-        return [
+        $query = [
             'tag' => "group_id={$group_id}&state=" . join(',', $state),
             'free' => "group_id={$group_id}",
             'func' => function () use ($group_id, $state) {
@@ -152,6 +152,12 @@ class VlssSceneItem extends AbstractObjectType
                 return isset($data);  //空的数组也会缓存
             }
         ];
+
+        $dict = static::runSelect($query);
+
+        $log_msg = "group_id:{$group_id},timeCache:{$query['timeCache']},query:" . json_encode($query) . ',rst:' . json_encode($dict);
+        self::debug($log_msg, __METHOD__, __CLASS__, __LINE__);
+        return $dict;
     }
 
 }

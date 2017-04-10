@@ -11,10 +11,10 @@ namespace app\api;
 
 use app\api\GraphQL\Schema\Schema;
 use app\Bootstrap;
-use TinyWeb\Base\BaseApi;
+use TinyWeb\Base\AbstractApi;
 use Youshido\GraphQL\Execution\Processor;
 
-class GraphQL extends BaseApi
+class GraphQL extends AbstractApi
 {
 
     public function exec($query = '{hello}', array $variables = null)

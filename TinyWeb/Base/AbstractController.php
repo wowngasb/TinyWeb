@@ -21,7 +21,7 @@ use TinyWeb\ViewInterface;
  * Class Controller
  * @package TinyWeb
  */
-abstract class BaseController extends BaseContext
+abstract class AbstractController extends AbstractContext
 {
     use EventTrait,  LogTrait, RpcTrait, CacheTrait;
 

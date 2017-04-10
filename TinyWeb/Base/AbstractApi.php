@@ -7,7 +7,7 @@ use TinyWeb\Traits\CacheTrait;
 use TinyWeb\Traits\LogTrait;
 use TinyWeb\Traits\RpcTrait;
 
-abstract class BaseApi extends BaseContext {
+abstract class AbstractApi extends AbstractContext {
 
     use LogTrait, RpcTrait, CacheTrait;
 

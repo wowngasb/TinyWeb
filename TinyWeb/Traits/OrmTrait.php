@@ -9,25 +9,32 @@
 namespace TinyWeb\Traits;
 
 
-use TinyWeb\Application;
 use TinyWeb\Base\BaseBootstrap;
 use TinyWeb\Exception\OrmStartUpError;
 use TinyWeb\Helper\DbHelper;
-use TinyWeb\Helper\RedisHelper;
+use TinyWeb\OrmQuery\AbstractQuery;
+use TinyWeb\OrmQuery\OrmConfig;
+use TinyWeb\OrmQuery\Select;
 
 /**
  * Class BaseOrmModel
  * array $where  检索条件数组 格式为 dict 每个元素都表示一个检索条件  条件之间为 and 关系
- * ① [  `filed` => `value`, ]   例如 ['votes' => 100, ]
- *    key不为数值，value不是数组   表示 某个字段为某值的检索 对应 ->where('votes', 100)
- * ② [  `filed` => [``, ``], ]   例如 ['votes' => ['>', 100], ]
- *    key不为数值的元素 表示 某个字段为某值的检索 对应  ->where('votes', '>', 100)
+ * ① [  `filed` => `value`, ]
+ *    key不为数值，value不是数组   表示 某个字段为某值的 where = 检索
+ *    例如 ['votes' => 100, ]  对应 ->where('votes', '=', 100)
+ * ② [  `filed` => [``, ``], ]
+ *    key不为数值的元素 表示 某个字段为某值的 whereIn 检索
+ *    例如 ['id' => [1, 2, 3], ] 对应  ->whereIn('id', [1, 2, 3])
  * ③ [ [``, ``], ]
  *    key为数值的元素 表示 使用某种检索
  * 例如 [   ['whereBetween', 'votes', [1, 100]],  ]   对应  ->whereBetween('votes', [1, 100])
  * 例如 [   ['whereIn', 'id', [1, 2, 3]],  ]   对应  ->whereIn('id', [1, 2, 3])
  * 例如 [   ['whereNull', 'updated_at'],  ]   对应  ->whereNull('updated_at')
- *
+ * ② [  `filed` => AbstractQuery, ]
+ *    key不为数值的元素 value是 AbstractQuery 表示 某个字段为 AbstractQuery 定义的检索
+ * 例如 [   'votes' => whereBetween([1, 100])  ]   对应  ->whereBetween('votes', [1, 100])
+ * 例如 [   'id' => whereIn([1, 2, 3])  ]   对应  ->whereIn('id', [1, 2, 3])
+ * 例如 [   'updated_at' => whereNull() ],  ]   对应  ->whereNull('updated_at')
  * 注意：
  * $_REDIS_PREFIX_DB 下级数据缓存 建议只用数据表级缓存
  * 同一分类下的缓存数据必须来源于同一张表  不可缓存连表数据 防止无法分析依赖
@@ -36,7 +43,6 @@ use TinyWeb\Helper\RedisHelper;
  */
 trait OrmTrait
 {
-
     use CacheTrait, LogTrait;
 
     protected static $_REDIS_PREFIX_DB = 'DbCache';
@@ -44,23 +50,68 @@ trait OrmTrait
     private static $_db = null;
     private static $_cache_dict = [];
 
+    protected static $_orm_config = null;
+
+
     ####################################
     ############ 获取配置 ##############
     ####################################
 
+
+    /**
+     * @param array $where 检索条件数组 具体格式参见文档
+     * @return \Illuminate\Database\Query\Builder
+     */
+    protected static function tableItem(array $where = [])
+    {
+        $table_name = static::getOrmConfig()->table_name;
+        $table = static::_getDb()->table($table_name);
+        if (empty($where)) {
+            return $table;
+        }
+        $query_list = [];
+        foreach ($where as $key => $item) {
+            if (is_integer($key) && is_array($item)) {
+                $tag = $item[0];
+                $query = array_slice($item, 1);
+                $query_list[] = [$tag, $query];
+            } else if ($item instanceof AbstractQuery) {
+                $query_list[] = $item->buildQuery($key);  //list($enable, $action, $query)
+            } else {
+                if (is_array($item)) {
+                    $tag = 'whereIn';
+                    $query = [$key, $item];
+                } else {
+                    $tag = 'where';
+                    $query = [$key, '=', $item];
+                }
+                $query_list[] = [true, $tag, $query];
+            }
+        }
+        foreach ($query_list as $query_item) {
+            if (empty($query_item)) {
+                continue;
+            }
+            list($enable, $tag, $query) = $query_item; //只有 $enable 为 true 的情况下 条件才会生效
+            if (!$enable) {
+                continue;
+            }
+            call_user_func_array([$table, $tag], $query);
+        }
+        return $table;
+    }
+
+
     /**
      * 使用这个特性的子类必须 实现这个方法 返回特定格式的数组 表示数据表的配置
-     * @return array
+     * @return OrmConfig
      */
     protected static function getOrmConfig()
     {
-        return [
-            'table_name' => '',     //数据表名
-            'primary_key' => '',   //数据表主键
-            'max_select' => 5000,  //最多获取 5000 条记录 防止数据库拉取条目过多
-            'db_name' => '',       //数据库名
-            'cache_time' => 0,     //数据缓存时间
-        ];
+        if (is_null(static::$_orm_config)) {
+            static::$_orm_config = new OrmConfig('', '');
+        }
+        return static::$_orm_config;
     }
 
     ####################################
@@ -76,10 +127,10 @@ trait OrmTrait
     public static function getDataById($id, $timeCache = null)
     {
         $cfg = static::getOrmConfig();
-        $cache_time = $cfg['cache_time'];
-        $db_name = $cfg['db_name'];
-        $table_name = $cfg['table_name'];
-        $primary_key = $cfg['primary_key'];
+        $cache_time = $cfg->cache_time;
+        $db_name = $cfg->db_name;
+        $table_name = $cfg->table_name;
+        $primary_key = $cfg->primary_key;
 
         $timeCache = is_null($timeCache) ? $cache_time : intval($timeCache);
         $id = intval($id);
@@ -148,53 +199,25 @@ trait OrmTrait
     ####################################
 
     /**
-     * 根据前缀匹配来删除Query的缓存  只针对表一级的缓存
-     * @param array $query 查询数组 需要带有 free 字段  匹配前缀 可以使用通配符
-     * @return array
-     * @throws OrmStartUpError
-     */
-    protected static function freeQuery(array $query)
-    {
-        if (empty($query['free'])) {
-            throw new OrmStartUpError("freeQuery with empty free");
-        }
-        $cfg = static::getOrmConfig();
-        $db_name = $cfg['db_name'];
-        $table_name = $cfg['table_name'];
-        $query['method'] = !empty($query['method']) ? $query['method'] : "{$db_name}:{$table_name}";
-        $query['prefix'] = !empty($query['prefix']) ? $query['prefix'] : static::$_REDIS_PREFIX_DB;
-
-        $redis = RedisHelper::getInstance();
-        $preg = "{$query['prefix']}:{$query['method']}:*{$query['free']}*";   //模糊匹配所有影响到的key
-        $keys = $redis->keys($preg);
-        $redis->del($keys);  //删除匹配到的所有的key
-        return [];
-    }
-
-    /**
      * 运行查询 并给出缓存的key 缓存结果  默认只缓存非空结果
-     * @param array $query
+     * @param Select $select
+     * @param string $prefix
+     * @param bool $is_log
      * @return array
      * @throws OrmStartUpError
      */
-    protected static function runQuery(array $query)
+    protected static function runSelect(Select $select, $prefix = null, $is_log = false)
     {
-        if (empty($query['tag']) || empty($query['func'])) {
-            throw new OrmStartUpError("runQuery with empty tag or func");
+        if (empty($select->key)) {
+            throw new OrmStartUpError("runQuery with empty key");
         }
-        $cfg = static::getOrmConfig();
-        $db_name = $cfg['db_name'];
-        $table_name = $cfg['table_name'];
-        $cache_time = $cfg['cache_time'];
-        //默认只缓存非空的结果
-        $query['filter'] = !empty($query['filter']) ? $query['filter'] : function ($data) {
-            return !empty($data);
-        };
-        $query['method'] = !empty($query['method']) ? $query['method'] : "{$db_name}:{$table_name}";
-        $query['is_log'] = !empty($query['is_log']) ? $query['is_log'] : false;
-        $query['prefix'] = !empty($query['prefix']) ? $query['prefix'] : static::$_REDIS_PREFIX_DB;
-        $query['timeCache'] = !empty($query['timeCache']) ? $query['timeCache'] : $cache_time;
-        return static::_cacheDataByRedis($query['method'], $query['tag'], $query['func'], $query['filter'], $query['timeCache'], $query['is_log'], $query['prefix']);
+        if (empty($select->func) && $select->timeCache >= 0) {
+            throw new OrmStartUpError("runQuery with empty func but timeCache gte 0");  //timeCache 为负数时 可以允许空的 func
+        }
+
+        $prefix = !is_null($prefix) ? $prefix : static::$_REDIS_PREFIX_DB;
+
+        return static::_cacheDataByRedis($select->method, $select->key, $select->func, $select->filter, $select->timeCache, $is_log, $prefix, $select->tags);
     }
 
     ####################################
@@ -272,18 +295,17 @@ trait OrmTrait
             return self::$_db;
         }
         $cfg = static::getOrmConfig();
-        if (empty($cfg['table_name']) || empty($cfg['primary_key']) || empty($cfg['max_select']) || empty($cfg['db_name'])) {
+        if (empty($cfg->table_name) || empty($cfg->primary_key) || empty($cfg->max_select) || empty($cfg->db_name)) {
             throw new OrmStartUpError('Orm:' . __CLASS__ . 'with error config');
         }
-        self::$_db = DbHelper::initDb()->getConnection($cfg['db_name']);
+        self::$_db = DbHelper::initDb()->getConnection($cfg->db_name);
         return self::$_db;
     }
 
     protected static function debugSql($time, $sql, $param, $tag = 'sql')
     {
-        $cfg = static::getOrmConfig();
-        $db_name = $cfg['db_name'];
-        $table_name = $cfg['table_name'];
+        $db_name = static::getOrmConfig()->db_name;
+        $table_name = static::getOrmConfig()->table_name;
 
         $sql_str = static::showQuery($sql, $param);
         $use_str = round($time * 1000, 2) . 'ms';
@@ -319,43 +341,6 @@ trait OrmTrait
     ####################################
 
     /**
-     * @param array $where 检索条件数组 具体格式参见文档
-     * @return \Illuminate\Database\Query\Builder
-     */
-    protected static function tableItem(array $where = [])
-    {
-        $cfg = static::getOrmConfig();
-        $table_name = $cfg['table_name'];
-        $table = static::_getDb()->table($table_name);
-        $query_list = [];
-        foreach ($where as $key => $item) {
-            if (is_integer($key) && is_array($item)) {
-                $tag = $item[0];
-                $query = array_slice($item, 1);
-                $query_list[] = [$tag, $query];
-            } else {
-                $tag = 'where';
-                if (is_array($item)) {
-                    $query = [$key, self::_v($item, 0), self::_v($item, 1), self::_v($item, 2, 'and')];
-                } else {
-                    $query = [$key, '=', $item, 'and'];
-                }
-                $query_list[] = [$tag, $query];
-            }
-        }
-        foreach ($query_list as $query_item) {
-            list($tag, $query) = $query_item;
-            if (Application::striCmp('where', $tag)) {
-                list($column, $operator, $value, $boolean) = $query;
-                $table->where($column, $operator, $value, $boolean);
-            } else {
-                call_user_func_array([$table, $tag], $query);
-            }
-        }
-        return $table;
-    }
-
-    /**
      * 查询数据总量
      * @param array $where 检索条件数组 具体格式参见文档
      * @param array $columns 需要获取的列 格式为[`column_1`, ]  默认为所有
@@ -381,9 +366,8 @@ trait OrmTrait
      */
     public static function selectItem($start = 0, $limit = 0, array $sort_option = [], array $where = [], array $columns = ['*'])
     {
-        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $max_select = $cfg['max_select'];
+        $max_select = static::getOrmConfig()->max_select;
         $table = static::tableItem($where);
         $start = $start <= 0 ? 0 : $start;
         $limit = $limit > $max_select ? $max_select : $limit;
@@ -417,10 +401,9 @@ trait OrmTrait
      */
     public static function dictItem(array $where = [], array $columns = ['*'])
     {
-        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $max_select = $cfg['max_select'];
-        $primary_key = $cfg['primary_key'];
+        $max_select = static::getOrmConfig()->max_select;
+        $primary_key = static::getOrmConfig()->primary_key;
         $table = static::tableItem($where);
         $table->take($max_select);
         $data = $table->get($columns);
@@ -444,8 +427,7 @@ trait OrmTrait
      */
     public static function getItem($value, $filed = null, array $columns = ['*'])
     {
-        $cfg = static::getOrmConfig();
-        $primary_key = $cfg['primary_key'];
+        $primary_key = static::getOrmConfig()->primary_key;
         $filed = $filed ?: $primary_key;
         return static::firstItem([strtolower($filed) => $value], $columns);
     }
@@ -472,13 +454,13 @@ trait OrmTrait
      */
     public static function newItem(array $data)
     {
-        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $primary_key = $cfg['primary_key'];
+        $primary_key = static::getOrmConfig()->primary_key;
         unset($data[$primary_key]);
         $time_str = date('Y-m-d H:i:s');
         $default = [
-            'create_time' => $time_str,
+            'created_at' => $time_str,
+            'updated_at' => $time_str,
         ];
         $data = array_merge($default, $data);
         foreach ($data as $key => $value) {
@@ -500,10 +482,10 @@ trait OrmTrait
      */
     public static function setItem($id, array $data)
     {
-        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $primary_key = $cfg['primary_key'];
-        unset($data['create_time'], $data['uptime'], $data[$primary_key]);
+        $primary_key = static::getOrmConfig()->primary_key;
+        unset($data['created_at'], $data['updated_at'], $data[$primary_key]);
+        $data['updated_at'] = date('Y-m-d H:i:s');
         $table = static::tableItem()->where($primary_key, $id);
         $update = $table->update($data);
         static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
@@ -517,9 +499,8 @@ trait OrmTrait
      */
     public static function delItem($id)
     {
-        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $primary_key = $cfg['primary_key'];
+        $primary_key = static::getOrmConfig()->primary_key;
         $table = static::tableItem()->where($primary_key, $id);
         $delete = $table->delete();
         static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
@@ -533,11 +514,10 @@ trait OrmTrait
      * @param int $value 需要改变的值 默认为 1
      * @return int  操作影响的行数
      */
-    public function incItem($id, $filed, $value = 1)
+    public static function incItem($id, $filed, $value = 1)
     {
-        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $primary_key = $cfg['primary_key'];
+        $primary_key = static::getOrmConfig()->primary_key;
         $table = static::tableItem()->where($primary_key, $id);
         $increment = $table->increment($filed, $value);
         static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
@@ -551,11 +531,10 @@ trait OrmTrait
      * @param int $value 需要改变的值 默认为 1
      * @return int  操作影响的行数
      */
-    public function decItem($id, $filed, $value = 1)
+    public static function decItem($id, $filed, $value = 1)
     {
-        $cfg = static::getOrmConfig();
         $start_time = microtime(true);
-        $primary_key = $cfg['primary_key'];
+        $primary_key = static::getOrmConfig()->primary_key;
         $table = static::tableItem()->where($primary_key, $id);
         $decrement = $table->decrement($filed, $value);
         static::debugSql(microtime(true) - $start_time, $table->toSql(), $table->getBindings(), __METHOD__);
@@ -570,8 +549,7 @@ trait OrmTrait
      */
     public static function upsertItem(array $where, array $data)
     {
-        $cfg = static::getOrmConfig();
-        $primary_key = $cfg['primary_key'];
+        $primary_key = static::getOrmConfig()->primary_key;
         $tmp = static::firstItem($where);
         if (empty($tmp)) {
             return static::newItem($data);

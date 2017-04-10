@@ -12,11 +12,11 @@ use app\api\GraphQL\VlssApp;
 use app\api\GraphQL\VlssSceneItem;
 use phpFastCache\CacheManager;
 use TinyWeb\Application;
-use TinyWeb\Base\BaseApi;
+use TinyWeb\Base\AbstractApi;
 
 use Predis\Client as PredisClient;
 
-class VlssMgr extends BaseApi
+class VlssMgr extends AbstractApi
 {
     const TIME_CACHE = 300;
 
