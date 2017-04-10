@@ -11,6 +11,10 @@ namespace TinyWeb;
 
 class Func
 {
+    public static function _namespace()
+    {
+        return __NAMESPACE__;
+    }
 
     ##########################
     ######## 数组处理 ########
@@ -57,7 +61,7 @@ class Func
     public static function add_month($time_str, $add_month)
     {
         if ($add_month <= 0) {
-            return date('Y-m-d H:i:s');
+            return $time_str;
         }
 
         $arr = date_parse($time_str);
@@ -85,7 +89,7 @@ class Func
      */
     public static function diff_time($stime, $etime)
     {
-        $sub_sec = $etime - $stime;
+        $sub_sec = abs(intval($etime - $stime));
         $days = intval($sub_sec / 86400);
         $remain = $sub_sec % 86400;
         $hours = intval($remain / 3600);
@@ -110,7 +114,7 @@ class Func
         $h = ($c - $m) / 60;
         $rst = $h > 0 ? "{$h}小时" : '';
         $rst .= $m > 0 ? "{$m}分" : '';
-        $rst .= "{$s}秒";
+        $rst .= $s > 0 ? "{$s}秒" : '';
         return $rst;
     }
 
@@ -123,12 +127,12 @@ class Func
      * @param string $str 需检查的字符串
      * @param string $filter_str 关键词字符串 使用 $split_str 分隔
      * @param string $split_str 分割字符串
-     * @return bool 是否含有关键词
+     * @return bool 是否允许通过 true 不含关键词  false 含有关键词
      */
-    public static function pass_filter($str, $filter_str, $split_str)
+    public static function pass_filter($str, $filter_str, $split_str = '|')
     {
         $filter = explode($split_str, $filter_str);
-        foreach ($filter as $key => $val) {
+        foreach ($filter as $val) {
             $val = trim($val);
             if ($val != '') {
                 $test = stripos($str, $val);
@@ -339,11 +343,40 @@ class Func
     }
 
     /**
+     * 加密函数
+     * @param string $string 需要加密的字符串
+     * @param string $key
+     * @param int $expiry 加密生成的数据 的 有效期 为0表示永久有效， 单位 秒
+     * @return string 加密结果 使用了 safe_base64_encode
+     */
+    public static function encode($string, $key, $expiry = 0)
+    {
+        if (empty($string)) {
+            return '';
+        }
+        return self::authcode($string, 'ENCODE', $key, $expiry);
+    }
+
+    /**
+     * 解密函数 使用 配置 CRYPT_KEY 作为 key  成功返回原字符串  失败或过期 返回 空字符串
+     * @param string $string 需解密的 字符串 safe_base64_encode 格式编码
+     * @param string $key
+     * @return string 解密结果
+     */
+    public static function decode($string, $key)
+    {
+        if (empty($string)) {
+            return '';
+        }
+        return self::authcode($string, 'DECODE', $key);
+    }
+
+    /**
      * @param string $string
      * @param string $operation
      * @param string $key
      * @param int $expiry
-     * @param int $ckey_length  动态密匙长度，相同的明文会生成不同密文就是依靠动态密匙
+     * @param int $ckey_length 动态密匙长度，相同的明文会生成不同密文就是依靠动态密匙
      * @return string
      */
     public static function authcode($string, $operation, $key, $expiry = 0, $ckey_length = 2)
@@ -450,7 +483,11 @@ EOT;
      */
     public static function build_url($base_url, array $args = [])
     {
-        $base_url = stripos($base_url, '?') > 0 ? $base_url : "{$base_url}?";
+        if (empty($args)) {
+            return $base_url;
+        }
+        $base_url .= substr($base_url, -1, 1) == '/' ? '' : '/';
+        $base_url .= stripos($base_url, '?') > 0 ? '' : "?";
         $base_url = (substr($base_url, -1) == '?' || substr($base_url, -1) == '&') ? $base_url : "{$base_url}&";
         $args_list = [];
         foreach ($args as $key => $val) {

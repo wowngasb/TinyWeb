@@ -423,27 +423,19 @@ final class Application implements DispatchInterface, RouteInterface
      * @param string $string 需要加密的字符串
      * @param int $expiry 加密生成的数据 的 有效期 为0表示永久有效， 单位 秒
      * @return string 加密结果 使用了 safe_base64_encode
-     * @throws AppStartUpError
      */
     public static function encrypt($string, $expiry = 0)
     {
-        if (empty($string)) {
-            return '';
-        }
-        return Func::authcode($string, 'ENCODE', self::getEnv('CRYPT_KEY', ''), $expiry);
+        return Func::encode($string,self::getEnv('CRYPT_KEY', ''), $expiry);
     }
 
     /**
      * 解密函数 使用 配置 CRYPT_KEY 作为 key  成功返回原字符串  失败或过期 返回 空字符串
      * @param string $string 需解密的 字符串 safe_base64_encode 格式编码
      * @return string 解密结果
-     * @throws AppStartUpError
      */
     public static function decrypt($string)
     {
-        if (empty($string)) {
-            return '';
-        }
-        return Func::authcode($string, 'DECODE', self::getEnv('CRYPT_KEY', ''));
+        return Func::decode($string, self::getEnv('CRYPT_KEY', ''));
     }
 }
