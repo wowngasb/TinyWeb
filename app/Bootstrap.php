@@ -9,14 +9,14 @@
 
 namespace app;
 
-use TinyWeb\Base\BaseBootstrap;
+use TinyWeb\Base\AbstractBootstrap;
 use TinyWeb\Application;
 use TinyWeb\Dispatch\ApiDispatch;
 use TinyWeb\Dispatch\YarDispatch;
 use TinyWeb\Route\RoutePrefix;
 use TinyWeb\Route\RouteSimple;
 
-final class Bootstrap extends BaseBootstrap
+final class Bootstrap extends AbstractBootstrap
 {
 
     /** 在app run 之前, 设置app 命名空间 并 注册路由

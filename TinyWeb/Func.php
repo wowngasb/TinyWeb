@@ -211,6 +211,7 @@ class Func
 
     public static function str_cmp($str1, $str2)
     {
+        list($str1, $str2) = [strval($str1), strval($str2)];
         if (!function_exists('hash_equals')) {
             if (strlen($str1) != strlen($str2)) {
                 return false;

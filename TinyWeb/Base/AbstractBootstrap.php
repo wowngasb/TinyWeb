@@ -14,7 +14,7 @@ use TinyWeb\Application;
 use TinyWeb\Request;
 use TinyWeb\Response;
 
-abstract class BaseBootstrap
+abstract class AbstractBootstrap
 {
 
     /** 在app run 之前, 设置app 命名空间 并 注册路由

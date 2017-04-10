@@ -9,7 +9,7 @@
 namespace TinyWeb\Traits;
 
 
-use TinyWeb\Base\BaseBootstrap;
+use TinyWeb\Base\AbstractBootstrap;
 use TinyWeb\Exception\OrmStartUpError;
 use TinyWeb\Helper\DbHelper;
 use TinyWeb\OrmQuery\AbstractQuery;
@@ -311,7 +311,7 @@ trait OrmTrait
         $use_str = round($time * 1000, 2) . 'ms';
         self::debug("SQL({$use_str}) {$sql_str}", $tag, __CLASS__, __LINE__);
         $_tag = str_replace(__TRAIT__, "SQL >> {$db_name}.{$table_name}({$use_str})", $tag);
-        BaseBootstrap::_D($sql_str, $_tag);
+        AbstractBootstrap::_D($sql_str, $_tag);
     }
 
     protected static function showQuery($query, $params)
