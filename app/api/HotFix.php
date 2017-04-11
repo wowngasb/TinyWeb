@@ -9,11 +9,13 @@
 namespace app\api;
 
 
-class HotFix
+use TinyWeb\Base\AbstractApi;
+
+class HotFix  extends AbstractApi
 {
 
     public function clearDbCache(){
-
+        return ['db'=>'test'];
     }
 
 }

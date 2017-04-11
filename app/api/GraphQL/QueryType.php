@@ -10,11 +10,15 @@ namespace app\api\GraphQL;
 
 
 use app\api\GraphQL\Type\BasicUser;
+use app\Bootstrap;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
+use TinyWeb\Traits\LogTrait;
 
 class QueryType extends ObjectType
 {
+    use LogTrait;
+
     public function __construct()
     {
         $config = [
@@ -48,7 +52,9 @@ class QueryType extends ObjectType
     public function user($rootValue, $args)
     {
         false && func_get_args();
-        return BasicUser::getDataById($args['id']);
+        $user = BasicUser::getItem($args['id']);
+        Bootstrap::_D($user, 'test');
+        return $user;
     }
     public function hello()
     {
