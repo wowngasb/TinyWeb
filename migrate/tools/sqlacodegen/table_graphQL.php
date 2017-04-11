@@ -1,5 +1,5 @@
 <?php
-require(dirname(__DIR__) . "/config/config.php");
+require( dirname(dirname(dirname(__DIR__))) . "/config/config.php");
 
 $table_data = load_json(__DIR__ . '/table.json');  //读取数据库描述文件
 
@@ -114,7 +114,7 @@ EOT;
             if (method_exists($this, $info->fieldName)) {
                 return $this->{$info->fieldName}($value, $args, $context, $info);
             } else {
-                return $value->{$info->fieldName};
+                return is_array($value) ? $value[$info->fieldName] : $value->{$info->fieldName};
             }
         };
 EOT;
