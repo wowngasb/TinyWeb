@@ -538,7 +538,7 @@ EOT;
     public static function method2field($str)
     {
         $str = static::method2name($str);
-        return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
+        return self::humpToLine($str);
     }
 
     /**
@@ -549,6 +549,29 @@ EOT;
     public static function class2table($str)
     {
         $str = static::class2name($str);
+        return self::humpToLine($str);
+    }
+
+    /**
+     * 下划线转驼峰
+     * @param string $str
+     * @return string
+     */
+    public static function convertUnderline($str)
+    {
+        $str = preg_replace_callback('/([-_]+([a-z]{1}))/i', function ($matches) {
+            return strtoupper($matches[2]);
+        }, $str);
+        return $str;
+    }
+
+    /**
+     * 驼峰转下划线
+     * @param string $str
+     * @return string
+     */
+    public static function humpToLine($str)
+    {
         return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
     }
 

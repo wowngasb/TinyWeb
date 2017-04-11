@@ -558,4 +558,96 @@ class FuncTest extends PHPUnit_Framework_TestCase
         $test_r = "http://test.com/?a=1&b=2";
         PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
     }
+
+    #########################################
+    ########### 魔术常量相关函数 ############
+    #########################################
+
+    /**
+     * 根据魔术常量获取获取 类名
+     * @param string $str
+     * @return string
+     */
+    public function test_class2name()
+    {
+        $test_i = 'Foo\Test\aba::testName';
+        $test_o = Func::class2name($test_i);
+        $test_r = "testName";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+    }
+
+    /**
+     * 根据魔术常量获取获取 函数名
+     * @param string $str
+     * @return string
+     */
+    public static function method2name($str)
+    {
+        $idx = strripos($str, '::');
+        $str = $idx > 0 ? substr($str, $idx + 2) : $str;
+        return $str;
+    }
+
+    /**
+     * 根据魔术常量获取获取 函数名 并转换为 小写字母加下划线格式 的 字段名
+     * @param string $str
+     * @return string
+     */
+    public static function method2field($str)
+    {
+        $str = static::method2name($str);
+        return self::humpToLine($str);
+    }
+
+    /**
+     * 根据魔术常量获取获取 类名 并转换为 小写字母加下划线格式 的 数据表名
+     * @param string $str
+     * @return string
+     */
+    public static function class2table($str)
+    {
+        $str = static::class2name($str);
+        return self::humpToLine($str);
+    }
+
+    /**
+     * 下划线转驼峰
+     * @param string $str
+     * @return string
+     */
+    public static function convertUnderline($str)
+    {
+        $str = preg_replace_callback('/([-_]+([a-z]{1}))/i', function ($matches) {
+            return strtoupper($matches[2]);
+        }, $str);
+        return $str;
+    }
+
+    /**
+     * 驼峰转下划线
+     * @param string $str
+     * @return string
+     */
+    public static function humpToLine($str)
+    {
+        return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
+    }
+
+    /**
+     * 使用 seq 把 list 数组中的非空字符串连接起来  _join('_', [1,2,3]) = '1_2_3_'
+     * @param string $seq
+     * @param array $list
+     * @return string
+     */
+    public static function joinNotEmpty($seq, array $list)
+    {
+        $tmp_list = [];
+        foreach ($list as $item) {
+            $item = trim($item);
+            if (!empty($item)) {
+                $tmp_list[] = strval($item);
+            }
+        }
+        return join($seq, $tmp_list);
+    }
 }
