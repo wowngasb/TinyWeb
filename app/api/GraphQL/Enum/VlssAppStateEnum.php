@@ -2,7 +2,7 @@
 /**
  * Created by table_graphQL.
  * User: Administrator
- * Date: 2017-04-12 01:16:27
+ * Date: 2017-04-12 02:46:22
  */
 namespace app\api\GraphQL\Enum;
 
@@ -18,7 +18,7 @@ class VlssAppStateEnum extends EnumType
     public function __construct()
     {
         $config = [
-            'description' => 'VlssApp 数据表 state 字段 表示状态.',
+            'description' => 'vlss_app 数据表 state 字段 表示状态.',
             'values' => []
         ];
         $config['values']['NORMAL'] = ['value' => 1, 'description' => '正常'];

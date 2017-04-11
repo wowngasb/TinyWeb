@@ -2,7 +2,7 @@
 /**
  * Created by table_graphQL.
  * User: Administrator
- * Date: 2017-04-12 01:16:27
+ * Date: 2017-04-12 02:46:22
  */
 namespace app\api\GraphQL;
 
@@ -39,6 +39,19 @@ use GraphQL\Type\Definition\Type;
  */
 class Types
 {
+
+    ####################################
+    ########  root query type  #########
+    ####################################
+
+    private static $_mQuery = null;
+    /**
+     * @return QueryType
+     */
+    public static function query()
+    {
+        return self::$_mQuery ?: (self::$_mQuery = new QueryType());
+    }
 
     ####################################
     ##########  table types  ##########
