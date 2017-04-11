@@ -1,3 +1,4 @@
+# coding: utf-8
 """Contains the code generation logic and helper functions."""
 from __future__ import unicode_literals, division, print_function, absolute_import
 from collections import defaultdict
@@ -149,10 +150,6 @@ def _render_column(column, show_name, doc = None):
         column.index = True
         kwarg.append('index')
 
-    if doc:
-        column.doc = doc
-        kwarg.append('doc')
-
     if column.server_default:
         default_expr = _get_compiled_expression(column.server_default.arg)
         if '\n' in default_expr:
@@ -166,7 +163,8 @@ def _render_column(column, show_name, doc = None):
         [_render_constraint(x) for x in dedicated_fks] +
         [repr(x) for x in column.constraints] +
         ['{0}={1}'.format(k, repr(getattr(column, k))) for k in kwarg] +
-        ([server_default] if column.server_default else [])
+        ([server_default] if column.server_default else []) +
+        (['{0}=u"""{1}"""'.format('doc', doc)] if doc else [])
     ))
 
 
@@ -573,17 +571,13 @@ class CodeGenerator(object):
 
         # Render the collected imports
         # print(self.collector.render() + '\n\n', file=outfile)
-        import_code = """from sqlalchemy import BigInteger, Column, DateTime, Index, Integer, SmallInteger, String, Text, text, TIMESTAMP
-
-from app import db, app
-Base = db.Model
+        import_code = """from sqlalchemy import BigInteger, Column, DateTime, Index, Integer, SmallInteger, String, Text
 
 """
         print(import_code, file=outfile)
 
         if any(isinstance(model, ModelClass) for model in self.models):
             print('''from app import db, app
-
 Base = db.Model''', file=outfile)
         else:
             print('metadata = MetaData()', file=outfile)
@@ -591,6 +585,7 @@ Base = db.Model''', file=outfile)
         # Render the model tables and classes
         for model in self.models:
             out_str = '\n\n' + model.render(db_comments_map).rstrip('\n')
+            out_str = out_str.replace('DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP', 'TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP')
             print(out_str.encode('utf-8'), file=outfile)
 
         if self.footer:

@@ -7,8 +7,7 @@ import sys
 from sqlalchemy.engine import create_engine
 from sqlalchemy.schema import MetaData
 
-from sqlacodegen.codegen import CodeGenerator
-import sqlacodegen
+from codegen import CodeGenerator
 
 def main():
     parser = argparse.ArgumentParser(description='Generates SQLAlchemy model code from an existing database.')
@@ -28,9 +27,6 @@ def main():
     fix_args = None
     args = parser.parse_args(fix_args)
 
-    if args.version:
-        print(sqlacodegen.version)
-        return
     if not args.url:
         print('You must supply a url\n', file=sys.stderr)
         parser.print_help()
