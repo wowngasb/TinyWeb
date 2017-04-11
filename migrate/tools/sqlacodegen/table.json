@@ -1,5 +1,6 @@
 [
   {
+    "doc": "\u7528\u6237\u57fa\u672c\u4fe1\u606f\u8868", 
     "_columns": [
       [
         "id", 
@@ -69,7 +70,7 @@
       [
         "state", 
         "SMALLINT", 
-        "1\u6b63\u5e38\uff0c2\u51bb\u7ed3\uff0c9\u5220\u9664"
+        "1@NORMAL#\u6b63\u5e38;2@FROZEN#\u51bb\u7ed3;9@DELETED#\u5220\u9664"
       ], 
       [
         "created_at", 
@@ -345,7 +346,7 @@
         "supports_execution": false, 
         "server_default": null, 
         "key": "state", 
-        "doc": "1\u6b63\u5e38\uff0c2\u51bb\u7ed3\uff0c9\u5220\u9664", 
+        "doc": "1@NORMAL#\u6b63\u5e38;2@FROZEN#\u51bb\u7ed3;9@DELETED#\u5220\u9664", 
         "unique": null, 
         "is_clause_element": true, 
         "name": "state"
@@ -391,6 +392,7 @@
     ]
   }, 
   {
+    "doc": "RBAC\u6743\u9650\u8868", 
     "_columns": [
       [
         "id", 
@@ -566,6 +568,7 @@
     ]
   }, 
   {
+    "doc": "RBAC\u89d2\u8272\u8868", 
     "_columns": [
       [
         "id", 
@@ -693,6 +696,7 @@
     ]
   }, 
   {
+    "doc": "RBAC\u89d2\u8272-\u6743\u9650\u5173\u8054\u8868", 
     "_columns": [
       [
         "id", 
@@ -712,7 +716,7 @@
       [
         "state", 
         "SMALLINT", 
-        "1\u6709\u6548\uff0c2\u5931\u6548\uff0c9\u5220\u9664"
+        "1@NORMAL#\u6b63\u5e38;2@FROZEN#\u51bb\u7ed3;9@DELETED#\u5220\u9664"
       ], 
       [
         "created_at", 
@@ -798,7 +802,7 @@
         "supports_execution": false, 
         "server_default": null, 
         "key": "state", 
-        "doc": "1\u6709\u6548\uff0c2\u5931\u6548\uff0c9\u5220\u9664", 
+        "doc": "1@NORMAL#\u6b63\u5e38;2@FROZEN#\u51bb\u7ed3;9@DELETED#\u5220\u9664", 
         "unique": null, 
         "is_clause_element": true, 
         "name": "state"
@@ -844,6 +848,7 @@
     ]
   }, 
   {
+    "doc": "RBAC\u7528\u6237-\u89d2\u8272\u5173\u8054\u8868", 
     "_columns": [
       [
         "id", 
@@ -971,6 +976,7 @@
     ]
   }, 
   {
+    "doc": "\u7528\u6237\u7ba1\u7406\u540e\u53f0\u767b\u9646\u8bb0\u5f55\u8868", 
     "_columns": [
       [
         "id", 
@@ -1098,6 +1104,7 @@
     ]
   }, 
   {
+    "doc": "\u6f14\u64ad\u5385\u57fa\u672c\u4fe1\u606f\u8868", 
     "_columns": [
       [
         "id", 
@@ -1132,7 +1139,7 @@
       [
         "state", 
         "SMALLINT", 
-        "1\u6b63\u5e38\uff0c2\u51bb\u7ed3\uff0c9\u5220\u9664"
+        "1@NORMAL#\u6b63\u5e38;2@FROZEN#\u51bb\u7ed3;9@DELETED#\u5220\u9664"
       ], 
       [
         "created_at", 
@@ -1275,7 +1282,7 @@
         "supports_execution": false, 
         "server_default": null, 
         "key": "state", 
-        "doc": "1\u6b63\u5e38\uff0c2\u51bb\u7ed3\uff0c9\u5220\u9664", 
+        "doc": "1@NORMAL#\u6b63\u5e38;2@FROZEN#\u51bb\u7ed3;9@DELETED#\u5220\u9664", 
         "unique": null, 
         "is_clause_element": true, 
         "name": "state"
@@ -1321,6 +1328,7 @@
     ]
   }, 
   {
+    "doc": "\u6f14\u64ad\u5385\u573a\u666f\u7ec4\u8868", 
     "_columns": [
       [
         "id", 
@@ -1340,7 +1348,7 @@
       [
         "state", 
         "SMALLINT", 
-        "1\u6b63\u5e38\uff0c9\u5220\u9664"
+        "1@NORMAL#\u6b63\u5e38;9@DELETED#\u5220\u9664"
       ], 
       [
         "created_at", 
@@ -1426,7 +1434,7 @@
         "supports_execution": false, 
         "server_default": null, 
         "key": "state", 
-        "doc": "1\u6b63\u5e38\uff0c9\u5220\u9664", 
+        "doc": "1@NORMAL#\u6b63\u5e38;9@DELETED#\u5220\u9664", 
         "unique": null, 
         "is_clause_element": true, 
         "name": "state"
@@ -1472,6 +1480,7 @@
     ]
   }, 
   {
+    "doc": "\u6f14\u64ad\u5385\u573a\u666f\u5143\u7d20\u8868", 
     "_columns": [
       [
         "id", 
@@ -1506,7 +1515,7 @@
       [
         "state", 
         "SMALLINT", 
-        "1\u6b63\u5e38,2\u9690\u85cf,9\u5220\u9664"
+        "1@SHOW#\u663e\u793a;2@HIDE#\u9690\u85cf;9@DELETED#\u5220\u9664"
       ], 
       [
         "created_at", 
@@ -1649,7 +1658,7 @@
         "supports_execution": false, 
         "server_default": null, 
         "key": "state", 
-        "doc": "1\u6b63\u5e38,2\u9690\u85cf,9\u5220\u9664", 
+        "doc": "1@SHOW#\u663e\u793a;2@HIDE#\u9690\u85cf;9@DELETED#\u5220\u9664", 
         "unique": null, 
         "is_clause_element": true, 
         "name": "state"
@@ -1695,6 +1704,7 @@
     ]
   }, 
   {
+    "doc": "\u6f14\u64ad\u5385\u6a21\u7248\u8868", 
     "_columns": [
       [
         "id", 
@@ -1734,7 +1744,7 @@
       [
         "state", 
         "SMALLINT", 
-        "1\u6b63\u5e38,9\u5220\u9664"
+        "1@NORMAL#\u6b63\u5e38;9@DELETED#\u5220\u9664"
       ], 
       [
         "created_at", 
@@ -1896,7 +1906,7 @@
         "supports_execution": false, 
         "server_default": null, 
         "key": "state", 
-        "doc": "1\u6b63\u5e38,9\u5220\u9664", 
+        "doc": "1@NORMAL#\u6b63\u5e38;9@DELETED#\u5220\u9664", 
         "unique": null, 
         "is_clause_element": true, 
         "name": "state"

@@ -225,16 +225,6 @@ trait OrmTrait
     ####################################
 
     /**
-     * @param $name
-     * @param $arguments
-     * @return string
-     */
-    public static function __callStatic($name, $arguments)
-    {
-        return static::getFiledById($name, $arguments[0], isset($arguments[1]) ? $arguments[1] : null);
-    }
-
-    /**
      * 根据主键获取某个字段的值
      * @param string $name
      * @param int $id
@@ -245,44 +235,6 @@ trait OrmTrait
     {
         $tmp = self::getDataById($id);
         return isset($tmp[$name]) ? $tmp[$name] : $default;
-    }
-
-    /**
-     * 获取一个数组的指定键值 未设置则使用 默认值
-     * @param array $val
-     * @param string $key
-     * @param mixed $default 默认值 默认为 null
-     * @return mixed
-     */
-    protected static function _v(array $val, $key, $default = null)
-    {
-        return isset($val[$key]) ? $val[$key] : $default;
-    }
-
-    /**
-     * 根据魔术常量获取获取 类名 并转换为 小写字母加下划线格式 的 数据表名
-     * @param string $str
-     * @return string
-     */
-    protected static function _class2table($str)
-    {
-        $idx = strripos($str, '::');
-        $str = $idx > 0 ? substr($str, 0, $idx) : $str;
-        $idx = strripos($str, '\\');
-        $str = $idx > 0 ? substr($str, $idx + 1) : $str;
-        return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
-    }
-
-    /**
-     * 根据魔术常量获取获取 函数名 并转换为 小写字母加下划线格式 的 字段名
-     * @param string $str
-     * @return string
-     */
-    protected static function _method2field($str)
-    {
-        $idx = strripos($str, '::');
-        $str = $idx > 0 ? substr($str, $idx + 2) : $str;
-        return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
     }
 
     /**

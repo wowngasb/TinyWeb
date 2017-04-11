@@ -36,7 +36,7 @@ abstract class AbstractBootstrap
     public static function debugConsole($data, $tags = null, $ignoreTraceCalls = 0)
     {
         if (!empty($tags)) {
-            $tags = strval($tags) . ':' . Application::getInstance()->usedMilliSecond() . 'ms';
+            $tags = strval($tags) . ':' . Application::usedMilliSecond() . 'ms';
         }
         Connector::getInstance()->getDebugDispatcher()->dispatchDebug($data, $tags, $ignoreTraceCalls);
     }

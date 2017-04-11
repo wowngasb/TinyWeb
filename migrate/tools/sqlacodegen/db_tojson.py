@@ -58,6 +58,7 @@ for tbl in tbl_list:
     tmp = {
         'table_name': tbl.__tablename__,
         'columns': get_columns(tbl),
+        'doc': tbl.__doc__.decode('utf-8'),
     }
     tmp['_columns'] = [[col.get('name', ''), col.get('type', ''), col.get('doc', '') if col.get('doc', '') else ''] for col in tmp['columns']]
     tbl_json.append(tmp)

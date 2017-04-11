@@ -43,10 +43,13 @@ final class Application implements DispatchInterface, RouteInterface
      */
     public static function getInstance()
     {
+        if (is_null(self::$_instance)) {
+            self::$_instance = new self();
+        }
         return self::$_instance;
     }
 
-    public function usedMilliSecond()
+    public static function usedMilliSecond()
     {
         return round(microtime(true) - REQUEST_MICROTIME, 3) * 1000;
     }
@@ -426,7 +429,7 @@ final class Application implements DispatchInterface, RouteInterface
      */
     public static function encrypt($string, $expiry = 0)
     {
-        return Func::encode($string,self::getEnv('CRYPT_KEY', ''), $expiry);
+        return Func::encode($string, self::getEnv('CRYPT_KEY', ''), $expiry);
     }
 
     /**
