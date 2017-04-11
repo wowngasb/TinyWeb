@@ -1,6 +1,7 @@
 <?php
 !defined('REQUEST_MICROTIME') && define('REQUEST_MICROTIME', microtime(true));
 !defined('ROOT_PATH') && define("ROOT_PATH", dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR );
+require(ROOT_PATH . 'vendor/autoload.php');
 
 if (!defined('DEV_MODEL')) {
     ini_set('display_errors', 0);
@@ -13,9 +14,8 @@ if (!defined('DEV_MODEL')) {
     define('CACHE_PATH', ROOT_PATH . 'cache' . DIRECTORY_SEPARATOR);  //缓存文件存放地址
     define('LOG_PATH', ROOT_PATH . 'logs' . DIRECTORY_SEPARATOR);  //日志文件存放地址
     define('LOG_LEVEL', 'DEBUG');  //日志记录级别['ALL' => 0, 'DEBUG' => 10, 'INFO' => 20, 'WARN' => 30, 'ERROR' => 40, 'FATAL' => 50, 'OFF' => 60,]
-    define('SYSTEM_HOST', (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on" ? 'https://' : 'http://') . "{$_SERVER['HTTP_HOST']}/");  //HTTP HOST 常量
+    define('SYSTEM_HOST', (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on" ? 'https://' : 'http://') . ( isset($_SERVER['HTTP_HOST']) ? "{$_SERVER['HTTP_HOST']}/" : 'test.app/') );  //HTTP HOST 常量
 }
-
 return [
     'ENV_MYSQL_DB' => 'demo',
     'ENV_MYSQL_USER' => 'demo',

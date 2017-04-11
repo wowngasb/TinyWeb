@@ -565,89 +565,175 @@ class FuncTest extends PHPUnit_Framework_TestCase
 
     /**
      * 根据魔术常量获取获取 类名
-     * @param string $str
-     * @return string
      */
     public function test_class2name()
     {
-        $test_i = 'Foo\Test\aba::testName';
+        $test_i = 'Foo\Test\testClass::testFunc';
         $test_o = Func::class2name($test_i);
-        $test_r = "testName";
+        $test_r = "testClass";
         PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
     }
 
     /**
      * 根据魔术常量获取获取 函数名
-     * @param string $str
-     * @return string
      */
-    public static function method2name($str)
+    public function test_method2name()
     {
-        $idx = strripos($str, '::');
-        $str = $idx > 0 ? substr($str, $idx + 2) : $str;
-        return $str;
+        $test_i = 'Foo\Test\testClass::testFunc';
+        $test_o = Func::method2name($test_i);
+        $test_r = "testFunc";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
     }
 
     /**
      * 根据魔术常量获取获取 函数名 并转换为 小写字母加下划线格式 的 字段名
-     * @param string $str
-     * @return string
      */
-    public static function method2field($str)
+    public function test_method2field()
     {
-        $str = static::method2name($str);
-        return self::humpToLine($str);
+        $test_i = 'Foo\Test\testClass::testFunc';
+        $test_o = Func::method2field($test_i);
+        $test_r = "test_func";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
     }
 
     /**
      * 根据魔术常量获取获取 类名 并转换为 小写字母加下划线格式 的 数据表名
-     * @param string $str
-     * @return string
      */
-    public static function class2table($str)
+    public function test_class2table()
     {
-        $str = static::class2name($str);
-        return self::humpToLine($str);
+        $test_i = 'Foo\Test\testClass::testFunc';
+        $test_o = Func::class2table($test_i);
+        $test_r = "test_class";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
     }
 
     /**
      * 下划线转驼峰
-     * @param string $str
-     * @return string
      */
-    public static function convertUnderline($str)
+    public function test_convertUnderline()
     {
-        $str = preg_replace_callback('/([-_]+([a-z]{1}))/i', function ($matches) {
-            return strtoupper($matches[2]);
-        }, $str);
-        return $str;
+        $test_i = 'test_class';
+        $test_o = Func::convertUnderline($test_i);
+        $test_r = "testClass";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i = '_test_class';
+        $test_o = Func::convertUnderline($test_i);
+        $test_r = "TestClass";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i = '_Test_class';
+        $test_o = Func::convertUnderline($test_i);
+        $test_r = "TestClass";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i = '_Test_clasS';
+        $test_o = Func::convertUnderline($test_i);
+        $test_r = "TestClasS";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i = '__Test_class';
+        $test_o = Func::convertUnderline($test_i);
+        $test_r = "TestClass";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i = '__test_class';
+        $test_o = Func::convertUnderline($test_i);
+        $test_r = "TestClass";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
     }
 
     /**
      * 驼峰转下划线
-     * @param string $str
-     * @return string
      */
-    public static function humpToLine($str)
+    public function test_humpToLine()
     {
-        return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
+        $test_i = 'testClass';
+        $test_o = Func::humpToLine($test_i);
+        $test_r = "test_class";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i = 'TestClass';
+        $test_o = Func::humpToLine($test_i);
+        $test_r = "test_class";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i = 'TestClassSSS';
+        $test_o = Func::humpToLine($test_i);
+        $test_r = "test_class_sss";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i = 'ABCTestClass';
+        $test_o = Func::humpToLine($test_i);
+        $test_r = "abctest_class";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i = '123TestClass';
+        $test_o = Func::humpToLine($test_i);
+        $test_r = "123test_class";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i = 'TestClass123';
+        $test_o = Func::humpToLine($test_i);
+        $test_r = "test_class123";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i = 'TestClasS123';
+        $test_o = Func::humpToLine($test_i);
+        $test_r = "test_clas_s123";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i = 'TestClassEx123';
+        $test_o = Func::humpToLine($test_i);
+        $test_r = "test_class_ex123";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
     }
 
     /**
-     * 使用 seq 把 list 数组中的非空字符串连接起来  _join('_', [1,2,3]) = '1_2_3_'
-     * @param string $seq
-     * @param array $list
-     * @return string
+     * 使用 seq 把 list 数组中的非空字符串连接起来  _join('_', [1,2,3]) = '1_2_3'
      */
-    public static function joinNotEmpty($seq, array $list)
+    public function test_joinNotEmpty()
     {
-        $tmp_list = [];
-        foreach ($list as $item) {
-            $item = trim($item);
-            if (!empty($item)) {
-                $tmp_list[] = strval($item);
-            }
-        }
-        return join($seq, $tmp_list);
+        $test_i_1 = '_';
+        $test_i_2 = [1, 2, 3];
+        $test_o = Func::joinNotEmpty($test_i_1, $test_i_2);
+        $test_r = "1_2_3";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i_1 = '_';
+        $test_i_2 = [0, 1, 2, 3];
+        $test_o = Func::joinNotEmpty($test_i_1, $test_i_2);
+        $test_r = "0_1_2_3";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i_1 = '_';
+        $test_i_2 = [0, '', 2, 3];
+        $test_o = Func::joinNotEmpty($test_i_1, $test_i_2);
+        $test_r = "0_2_3";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i_1 = '_';
+        $test_i_2 = [0, '', 2, ''];
+        $test_o = Func::joinNotEmpty($test_i_1, $test_i_2);
+        $test_r = "0_2";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i_1 = '_';
+        $test_i_2 = ['', ''];
+        $test_o = Func::joinNotEmpty($test_i_1, $test_i_2);
+        $test_r = "";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i_1 = '_';
+        $test_i_2 = [];
+        $test_o = Func::joinNotEmpty($test_i_1, $test_i_2);
+        $test_r = "";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
+
+        $test_i_1 = '';
+        $test_i_2 = [];
+        $test_o = Func::joinNotEmpty($test_i_1, $test_i_2);
+        $test_r = "";
+        PHPUnit_Framework_Assert::assertEquals($test_r, $test_o);
     }
 }

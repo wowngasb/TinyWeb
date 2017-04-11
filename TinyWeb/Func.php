@@ -576,7 +576,7 @@ EOT;
     }
 
     /**
-     * 使用 seq 把 list 数组中的非空字符串连接起来  _join('_', [1,2,3]) = '1_2_3_'
+     * 使用 seq 把 list 数组中的非空字符串连接起来  _join('_', [1,2,3]) = '1_2_3'
      * @param string $seq
      * @param array $list
      * @return string
@@ -585,8 +585,8 @@ EOT;
     {
         $tmp_list = [];
         foreach ($list as $item) {
-            $item = trim($item);
-            if (!empty($item)) {
+            $item = trim(strval($item));
+            if ($item !== '') {
                 $tmp_list[] = strval($item);
             }
         }
