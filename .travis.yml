@@ -9,6 +9,6 @@ php:
 before_script:
   - cp config/config.php.bak config/config.php
   - composer self-update
-  - composer install --prefer-source --no-interaction
+  - composer update
 
 script: phpunit -c phpunit.xml
