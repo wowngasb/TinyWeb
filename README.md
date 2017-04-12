@@ -36,7 +36,7 @@ cd TinyWeb
 ### Edit config/config.php from config/config.bak.php:
 
 ```bash
-cp config/config.bak.php config/config.php
+cp config/config.php.bak config/config.php
 vi config/config.php
 ```
 
@@ -73,7 +73,7 @@ The index.php is single entry file, so you should add [rewrite](http://www.larue
 2. Module bundler: [fex-team/fis3](https://github.com/fex-team/fis3)
 3. Debug in Google Chrome with [php-console](https://chrome.google.com/webstore/detail/php-console/nfhmhhlpfleoednkpnnnkolmclajemef)
 4. Build php API class to javascript and use it with require.
-5. Simple [log viewer](http://127.0.0.1/index.php?m=develop&c=syslog&a=index) and API [debug tool](http://127.0.0.1/index.php?m=develop&c=syslog&a=selectapi). (default auth key : dev_123)
+5. Simple [log viewer](http://127.0.0.1/index.php?m=develop&c=syslog&a=index) and API [debug tool](http://127.0.0.1/index.php?m=develop&c=syslog&a=selectapi). (DEVELOP_KEY defined in config/config.php)
 ## License
 
 The TinyWeb framework is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT)

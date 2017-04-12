@@ -2,12 +2,12 @@ language: php
 
 # list any PHP version you want to test against
 php:
-  - 5.4
   - 5.5
   - 5.6
   - 7.0
 
 before_script:
+  - cp config/config.php.bak config/config.php
   - composer self-update
   - composer install --prefer-source --no-interaction
 
