@@ -56,6 +56,7 @@ class QueryType extends ObjectType
         Bootstrap::_D($user, 'test');
         return $user;
     }
+
     public function hello()
     {
         return 'Your graphql-php endpoint is ready! Use GraphiQL to browse API';

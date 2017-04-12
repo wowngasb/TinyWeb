@@ -166,7 +166,7 @@ db.session.commit()
 scene_list_data = [
     {
         "title":"预告",
-        "scene_type":"hsms-trailer",
+        "scene_type":"hsms_trailer",
         "scene_sort":1,
         "scene_config": json.dumps({
             "position":"2",
@@ -180,7 +180,7 @@ scene_list_data = [
     },
     {
         "title":"图片",
-        "scene_type":"hsms-logo",
+        "scene_type":"hsms_logo",
         "scene_sort":2,
         "scene_config": json.dumps({
             "src":"http://1436.long-vod.cdn.aodianyun.com/mfs/1436/wis/0x0/0be50bc3a2cdbc1987b598d36e4a946e.png",
@@ -189,7 +189,7 @@ scene_list_data = [
     },
     {
         "title":"字幕",
-        "scene_type":"hsms-subtitle",
+        "scene_type":"hsms_subtitle",
         "scene_sort":3,
         "scene_config": json.dumps({
             "backgound":"http://1436.long-vod.cdn.aodianyun.com/mfs/1436/wis/0x0/8fb26f08142738c4a7e5115252f328fb.png",

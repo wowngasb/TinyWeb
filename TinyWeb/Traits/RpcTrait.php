@@ -49,10 +49,10 @@ trait RpcTrait
     ########### RPC 的具体实现 ##############
     #####################################
 
-    protected static function _syncApi($class_name, $method_name, $params_arr, $init_params = [])
+    protected static function _syncApi($class_name, $method_name, $params_arr)
     {
         foreach ($params_arr as $key => $val) {
-            self::$_yar_ret_list[] = [];
+            self::$_yar_ret_list[] = call_user_func_array([$class_name, $method_name], $params_arr);
         }
         return self::$_yar_ret_list;
     }
