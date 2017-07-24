@@ -6,7 +6,7 @@ import re
 
 __version__ = '0.6.5'
 __all__ = ['Schema',
-           'And', 'Or', 'Regex', 'Optional', 'Use',
+           'And', 'Or', 'Regex', 'Optional',
            'SchemaError',
            'SchemaWrongKeyError',
            'SchemaMissingKeyError',
@@ -66,10 +66,8 @@ class And(object):
     """
     def __init__(self, *args, **kw):
         self._args = args
-        assert sorted(list(kw)) in (['error', 'schema'], ['error'], [])
+        assert list(kw) in (['error'], [])
         self._error = kw.get('error')
-        # You can pass your inherited Schema class.
-        self._schema = kw.get('schema', Schema)
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__,
@@ -82,7 +80,7 @@ class And(object):
         :param data: to be validated with sub defined schemas.
         :return: returns validated data
         """
-        for s in [self._schema(s, error=self._error) for s in self._args]:
+        for s in [Schema(s, error=self._error) for s in self._args]:
             data = s.validate(data)
         return data
 
@@ -98,7 +96,7 @@ class Or(And):
         :return: return validated data if not validation
         """
         x = SchemaError([], [])
-        for s in [self._schema(s, error=self._error) for s in self._args]:
+        for s in [Schema(s, error=self._error) for s in self._args]:
             try:
                 return s.validate(data)
             except SchemaError as _x:
@@ -178,9 +176,6 @@ class Use(object):
                               if self._error else None)
 
 
-
-
-
 class Schema(object):
     """
     Entry point of the library, use this class to instantiate validation
@@ -202,13 +197,12 @@ class Schema(object):
         return _priority(s)
 
     def validate(self, data):
-        Schema = self.__class__
         s = self._schema
         e = self._error
         flavor = _priority(s)
         if flavor == ITERABLE:
             data = Schema(type(s), error=e).validate(data)
-            o = Or(*s, error=e, schema=Schema)
+            o = Or(*s, error=e)
             return type(data)(o.validate(d) for d in data)
         if flavor == DICT:
             data = Schema(dict, error=e).validate(data)
@@ -224,15 +218,10 @@ class Schema(object):
                     except SchemaError:
                         pass
                     else:
-                        try:
-                            nvalue = Schema(svalue, error=e).validate(value)
-                        except SchemaError as x:
-                            k = "Key '%s' error:" % nkey
-                            raise SchemaError([k] + x.autos, [e] + x.errors)
-                        else:
-                            new[nkey] = nvalue
-                            coverage.add(skey)
-                            break
+                        nvalue = Schema(svalue, error=e).validate(value)
+                        new[nkey] = nvalue
+                        coverage.add(skey)
+                        break
             required = set(k for k in s if type(k) is not Optional)
             if not required.issubset(coverage):
                 missing_keys = required - coverage
@@ -313,3 +302,24 @@ def _callable_str(callable_):
     if hasattr(callable_, '__name__'):
         return callable_.__name__
     return str(callable_)
+
+
+COMPARABLE, CALLABLE, VALIDATOR, TYPE, DICT, ITERABLE = range(6)
+
+
+def _priority(s):
+    """Return priority for a given object."""
+    if type(s) in (list, tuple, set, frozenset):
+        return ITERABLE
+    if type(s) is dict:
+        return DICT
+    if issubclass(type(s), type):
+        return TYPE
+    if hasattr(s, 'validate'):
+        return VALIDATOR
+    if callable(s):
+        return CALLABLE
+    else:
+        return COMPARABLE
+
+
